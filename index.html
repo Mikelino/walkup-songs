@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -503,6 +503,29 @@
       transition: color 0.15s;
     }
     .add-jersey-btn:hover { color: var(--orange); }
+
+    .player-pronunciation {
+      font-family: 'Barlow', sans-serif;
+      font-size: 10px;
+      color: rgba(255,255,255,0.35);
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 160px;
+      cursor: text;
+    }
+    .add-pronunciation {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 10px;
+      letter-spacing: 1px;
+      color: rgba(255,255,255,0.15);
+      margin-top: 2px;
+      cursor: pointer;
+      display: none;
+    }
+    body.edit-mode .add-pronunciation { display: block; }
+    body.edit-mode .player-pronunciation { color: rgba(255,255,255,0.5); }
 
     .jersey-num.editing {
       background: rgba(255,69,0,0.1);
@@ -1577,7 +1600,7 @@
         overflow-y: auto;
       }
 
-      /* Grille joueur : song-info visible sur mobile */
+      /* Grille player : song-info visible sur mobile */
       .player-card {
         grid-template-columns: 20px 30px 44px 1fr 32px;
         gap: 6px;
@@ -1836,6 +1859,34 @@
       background: rgba(204,34,0,0.08);
     }
 
+    /* ── INTERFACE SUB-TABS ── */
+    .if-sub-btn {
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--muted);
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 10px 16px 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .if-sub-btn:hover { color: var(--offwhite); }
+    .if-sub-btn.active {
+      color: var(--orange);
+      border-bottom-color: var(--orange);
+    }
+    .if-sub-panel { display: none; }
+    .if-sub-panel.active { display: block; }
+
+    @media (max-width: 540px) {
+      .if-sub-btn { font-size: 11px; padding: 8px 10px 10px; letter-spacing: 1px; }
+    }
+
   </style>
 </head>
 
@@ -1875,12 +1926,12 @@
     </div>
 
     <!-- ✅ BOUTON MODE MODIFICATION (AJOUT) -->
-    <button class="team-action-btn" id="editModeBtn" onclick="toggleEditMode()" title="Mode modification">✏️</button>
+    <button class="team-action-btn" id="editModeBtn" onclick="toggleEditMode()" title="Edit mode">✏️</button>
 
     <!-- BOUTON CONFIG -->
-    <button class="team-action-btn config-btn" id="configNavBtn" onclick="openConfig()" title="Configuration des équipes">⚙️</button>
+    <button class="team-action-btn config-btn" id="configNavBtn" onclick="openConfig()" title="Team settings">⚙️</button>
 
-    <div id="saveIndicator" class="save-indicator">✓ Sauvé</div>
+    <div id="saveIndicator" class="save-indicator">✓ Saved</div>
   </header>
 
   <!-- NOW PLAYING -->
@@ -1889,8 +1940,8 @@
       <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z"/></svg>
     </div>
     <div class="now-text">
-      <div class="now-label" id="nowLabel">En attente</div>
-      <div class="now-name" id="nowName">Sélectionne un joueur</div>
+      <div class="now-label" id="nowLabel">Waiting</div>
+      <div class="now-name" id="nowName">Select a player</div>
       <div class="now-song" id="nowSong"></div>
     </div>
     <div class="progress-wrap" id="progressWrap" style="display:none">
@@ -1920,60 +1971,144 @@
       <!-- PANEL : BATTING ORDER -->
       <div class="main-panel active" id="mainPanelBatting">
         <main>
-          <div class="section-label" id="sectionLabel">⚾ Batting Order — U12</div>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">
+            <div class="section-label" id="sectionLabel" style="margin-bottom:0;flex:1">⚾ Batting Order — U12</div>
+            <button id="introBtn" onclick="startTeamIntro()" title="Team Introduction — plays all walk-up songs in sequence"
+              style="display:flex;align-items:center;gap:8px;background:var(--orange);border:none;border-radius:3px;color:#fff;font-family:'Oswald',sans-serif;font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:8px 16px;cursor:pointer;transition:background 0.15s;flex-shrink:0"
+              onmouseover="this.style.background='#e64000'" onmouseout="this.style.background='var(--orange)'">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M3 5v14l11-7z"/><path d="M14 5v14l7-4.5V9.5z"/></svg>
+              Team Intro
+            </button>
+          </div>
           <div class="lineup" id="lineup"></div>
+
+          <!-- SEQUENTIAL INTRO OVERLAY -->
+          <div id="introOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:300;flex-direction:column;align-items:center;justify-content:center;gap:0">
+
+            <!-- Header -->
+            <div style="position:absolute;top:0;left:0;right:0;height:5px;background:var(--orange)"></div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:5px;color:var(--orange);text-transform:uppercase;margin-bottom:18px">Team Introduction</div>
+
+            <!-- Progress dots -->
+            <div id="introDotsWrap" style="display:flex;gap:6px;margin-bottom:32px;flex-wrap:wrap;justify-content:center;max-width:320px"></div>
+
+            <!-- Player card -->
+            <div style="text-align:center;width:100%;max-width:480px;padding:0 24px">
+
+              <!-- Batting order number -->
+              <div id="introOrderNum" style="font-family:'Oswald',sans-serif;font-size:clamp(72px,18vw,130px);font-weight:700;color:var(--border);line-height:0.9;margin-bottom:8px">1</div>
+
+              <!-- Photo -->
+              <div id="introAvatar" style="width:110px;height:110px;border-radius:50%;border:3px solid var(--orange);margin:0 auto 14px;overflow:hidden;background:var(--gray);display:flex;align-items:center;justify-content:center">
+                <svg width="60" height="60" viewBox="-16 -44 32 52" fill="none">
+                  <ellipse cx="0" cy="-18" rx="12" ry="14" fill="#555"/>
+                  <ellipse cx="0" cy="-30" rx="15" ry="7" fill="rgba(255,69,0,0.5)"/>
+                  <rect x="-15" y="-34" width="30" height="5" rx="2" fill="rgba(255,69,0,0.5)"/>
+                  <rect x="-14" y="-2" width="28" height="20" rx="3" fill="#333"/>
+                </svg>
+              </div>
+
+              <!-- "Playing [position label]" -->
+              <div id="introPlayingLabel" style="font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:4px;color:rgba(255,255,255,0.4);text-transform:uppercase;margin-bottom:2px"></div>
+
+              <!-- Position code badge -->
+              <div id="introPosBadge" style="display:inline-block;font-family:'Oswald',sans-serif;font-size:13px;font-weight:700;letter-spacing:2px;color:var(--orange);background:rgba(255,69,0,0.1);border:1px solid rgba(255,69,0,0.3);border-radius:3px;padding:2px 10px;margin-bottom:10px;text-transform:uppercase"></div>
+
+              <!-- Jersey + Name row -->
+              <div style="display:flex;align-items:baseline;justify-content:center;gap:12px;margin-bottom:4px">
+                <div id="introJersey" style="font-family:'Oswald',sans-serif;font-size:clamp(20px,5vw,30px);font-weight:700;color:var(--orange);letter-spacing:1px"></div>
+                <div id="introName" style="font-family:'Oswald',sans-serif;font-size:clamp(30px,8vw,56px);font-weight:700;color:#fff;letter-spacing:3px;text-transform:uppercase;line-height:1">—</div>
+              </div>
+
+              <!-- Song removed from Team Intro -->
+              <div style="margin-bottom:28px"></div>
+
+              <div style="margin-bottom:28px"></div>
+            </div>
+
+            <!-- Controls -->
+            <div style="display:flex;align-items:center;gap:16px">
+              <button onclick="introPrev()" title="Previous"
+                style="width:44px;height:44px;border-radius:50%;border:1px solid var(--border);background:var(--gray);color:var(--muted);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s"
+                onmouseover="this.style.borderColor='var(--orange)';this.style.color='var(--orange)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg>
+              </button>
+              <button onclick="introTogglePause()" id="introPauseBtn"
+                style="width:64px;height:64px;border-radius:50%;border:2px solid var(--orange);background:var(--orange);color:#fff;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s;box-shadow:0 0 20px rgba(255,69,0,0.4)">
+                <svg id="introPauseIcon" width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+              </button>
+              <button onclick="introNext()" title="Next"
+                style="width:44px;height:44px;border-radius:50%;border:1px solid var(--border);background:var(--gray);color:var(--muted);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s"
+                onmouseover="this.style.borderColor='var(--orange)';this.style.color='var(--orange)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zm2.5-6 5.5 3.9V8.1L8.5 12zM16 6h2v12h-2z"/></svg>
+              </button>
+              <button onclick="stopTeamIntro()" title="Stop"
+                style="width:44px;height:44px;border-radius:50%;border:1px solid #cc2200;background:transparent;color:#cc2200;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s;margin-left:8px"
+                onmouseover="this.style.background='rgba(204,34,0,0.15)'" onmouseout="this.style.background='transparent'">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h12v12H6z"/></svg>
+              </button>
+            </div>
+
+            <!-- Player count -->
+            <div id="introCounter" style="font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-top:24px">1 / 9</div>
+            <div style="position:absolute;bottom:0;left:0;right:0;height:4px;background:var(--orange);opacity:0.3"></div>
+          </div>
 
           <div class="divider"></div>
 
-          <div class="section-label">+ Joueur</div>
+          <div class="section-label">+ Player</div>
           <div class="add-card">
-            <button class="add-toggle" onclick="toggleForm()">+ Ajouter un joueur à cette équipe</button>
+            <button class="add-toggle" onclick="toggleForm()">+ Add a player to this team</button>
             <div class="add-form" id="addForm">
               <div class="form-group">
-                <label class="form-label">Nom</label>
-                <input class="form-input" id="newName" placeholder="Prénom Nom" />
+                <label class="form-label">Name</label>
+                <input class="form-input" id="newName" placeholder="First Last" />
               </div>
               <div class="form-group">
-                <label class="form-label">N° Maillot</label>
-                <input class="form-input" id="newJersey" placeholder="Ex: 7" type="number" min="0" max="99" />
+                <label class="form-label">Pronunciation <span style="color:var(--muted);font-size:10px;letter-spacing:1px">(optional)</span></label>
+                <input class="form-input" id="newPronunciation" placeholder='e.g. "Doo-PON" for Dupont' />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Jersey #</label>
+                <input class="form-input" id="newJersey" placeholder="e.g. 7" type="number" min="0" max="99" />
               </div>
               <div class="form-group">
                 <label class="form-label">Position</label>
                 <select class="form-input" id="newPos">
-                  <option value="">— Choisir —</option>
-                  <option value="P">P — Lanceur</option>
-                  <option value="C">C — Receveur</option>
-                  <option value="1B">1B — 1ère base</option>
-                  <option value="2B">2B — 2e base</option>
-                  <option value="3B">3B — 3e base</option>
-                  <option value="SS">SS — Arrêt-court</option>
-                  <option value="CF">CF — Champ centre</option>
-                  <option value="LF">LF — Champ gauche</option>
-                  <option value="RF">RF — Champ droit</option>
+                  <option value="">— Choose —</option>
+                  <option value="P">P — Pitcher</option>
+                  <option value="C">C — Catcher</option>
+                  <option value="1B">1B — First Base</option>
+                  <option value="2B">2B — Second Base</option>
+                  <option value="3B">3B — Third Base</option>
+                  <option value="SS">SS — Shortstop</option>
+                  <option value="CF">CF — Center Field</option>
+                  <option value="LF">LF — Left Field</option>
+                  <option value="RF">RF — Right Field</option>
                 </select>
               </div>
               <div class="form-group">
-                <label class="form-label">Chanson</label>
+                <label class="form-label">Song</label>
                 <input class="form-input" id="newSong" placeholder="Eye of the Tiger" />
               </div>
               <div class="form-group">
-                <label class="form-label">Artiste</label>
+                <label class="form-label">Artist</label>
                 <input class="form-input" id="newArtist" placeholder="Survivor" />
               </div>
 
               <div class="form-group" style="min-width:100%">
-                <label class="form-label">Fichier audio</label>
+                <label class="form-label">Audio file</label>
                 <label class="audio-upload-label" id="audioUploadLabel">
-                  <span id="audioUploadText">📂 Choisir un fichier mp3 / wav…</span>
+                  <span id="audioUploadText">📂 Choose an mp3 / wav file…</span>
                   <input type="file" id="newAudioFile" accept="audio/*" style="display:none" onchange="handleAudioUpload(this)" />
                 </label>
                 <audio id="audioPreview" controls style="display:none;width:100%;margin-top:8px;height:32px;"></audio>
               </div>
               <div class="form-group">
-                <label class="form-label">Départ (sec)</label>
+                <label class="form-label">Start (sec)</label>
                 <input class="form-input" id="newStart" type="number" placeholder="30" value="0" />
               </div>
-              <button class="add-btn" onclick="addPlayer().catch(e => console.error(e))">Ajouter</button>
+              <button class="add-btn" onclick="addPlayer().catch(e => console.error(e))">Add</button>
             </div>
           </div>
         </main>
@@ -1984,109 +2119,115 @@
         <main>
 
           <!-- STORY LINEUP -->
-          <div class="section-label">📋 Story Lineup</div>
+          <div class="section-label">📋 Lineup Story</div>
           <div class="add-card">
-            <button class="add-toggle" onclick="toggleStoryForm()">📸 Exporter le lineup en story Instagram</button>
+            <button class="add-toggle" onclick="toggleStoryForm()">📸 Export lineup as Instagram story</button>
             <div class="add-form" id="storyForm">
               <div class="form-group">
-                <label class="form-label">Date du match</label>
+                <label class="form-label">Match date</label>
                 <input class="form-input" id="storyDate" type="date" />
               </div>
               <div class="form-group">
-                <label class="form-label">Adversaire</label>
-                <input class="form-input" id="storyOpponent" placeholder="Ex: Brussels Kangaroos" />
+                <label class="form-label">Opponent</label>
+                <select class="form-input" id="storyOpponentSelect" onchange="toggleOpponentInput('story')" style="margin-bottom:6px">
+                  <option value="">— Manual entry —</option>
+                </select>
+                <input class="form-input" id="storyOpponent" placeholder="e.g. Brussels Kangaroos" />
               </div>
               <div class="form-group">
-                <label class="form-label">Joueur en avant</label>
+                <label class="form-label">Featured player</label>
                 <select class="form-input" id="storyFeatured">
-                  <option value="">— Aucun —</option>
+                  <option value="">— None —</option>
                 </select>
               </div>
               <div class="form-group" id="featuredPhotoGroup" style="display:none">
-                <label class="form-label">Photo fond transparent (PNG)</label>
+                <label class="form-label">Transparent background photo (PNG)</label>
                 <label class="audio-upload-label" id="featuredPhotoLabel">
-                  <span id="featuredPhotoText">📂 Choisir une photo PNG…</span>
+                  <span id="featuredPhotoText">📂 Choose a PNG photo…</span>
                   <input type="file" id="featuredPhotoFile" accept="image/png,image/webp" style="display:none" onchange="handleFeaturedPhoto(this)" />
                 </label>
               </div>
-              <button class="add-btn" onclick="exportStory().catch(e => { console.error(e); alert('Erreur: ' + e.message); })">Générer la story</button>
+              <button class="add-btn" onclick="exportStory().catch(e => { console.error(e); alert('Error: ' + e.message); })">Generate story</button>
             </div>
           </div>
 
           <div class="divider"></div>
 
           <!-- STORY SCORE -->
-          <div class="section-label">🏆 Story Score</div>
+          <div class="section-label">🏆 Score Story</div>
           <div class="add-card">
-            <button class="add-toggle" onclick="toggleScoreForm()">🏆 Exporter le score en story Instagram</button>
+            <button class="add-toggle" onclick="toggleScoreForm()">🏆 Export score as Instagram story</button>
             <div class="add-form" id="scoreForm">
               <div class="form-group">
-                <label class="form-label">Date du match</label>
+                <label class="form-label">Match date</label>
                 <input class="form-input" id="scoreDate" type="date" />
               </div>
               <div class="form-group">
-                <label class="form-label">Adversaire</label>
-                <input class="form-input" id="scoreOpponent" placeholder="Ex: Brussels Kangaroos" />
+                <label class="form-label">Opponent</label>
+                <select class="form-input" id="scoreOpponentSelect" onchange="toggleOpponentInput('score')" style="margin-bottom:6px">
+                  <option value="">— Manual entry —</option>
+                </select>
+                <input class="form-input" id="scoreOpponent" placeholder="e.g. Brussels Kangaroos" />
               </div>
               <div class="form-group" style="max-width:100px">
-                <label class="form-label">Score Your Team</label>
+                <label class="form-label">Your Team Score</label>
                 <input class="form-input" id="scoreHome" type="number" min="0" placeholder="0" style="font-size:22px;font-family:'Oswald',sans-serif;text-align:center" />
               </div>
               <div class="form-group" style="max-width:100px">
-                <label class="form-label">Score Adversaire</label>
+                <label class="form-label">Opponent Score</label>
                 <input class="form-input" id="scoreAway" type="number" min="0" placeholder="0" style="font-size:22px;font-family:'Oswald',sans-serif;text-align:center" />
               </div>
               <div class="form-group" style="min-width:100%">
-                <label class="form-label">Résultat</label>
+                <label class="form-label">Result</label>
                 <div style="display:flex;gap:8px">
                   <label class="social-radio-label" id="scoreWinLabel">
-                    <input type="radio" name="scoreResult" value="win" id="scoreWin" onchange="updateScoreResult()" /> Victoire ✅
+                    <input type="radio" name="scoreResult" value="win" id="scoreWin" onchange="updateScoreResult()" /> Win ✅
                   </label>
                   <label class="social-radio-label" id="scoreLossLabel">
-                    <input type="radio" name="scoreResult" value="loss" id="scoreLoss" onchange="updateScoreResult()" /> Défaite ❌
+                    <input type="radio" name="scoreResult" value="loss" id="scoreLoss" onchange="updateScoreResult()" /> Loss ❌
                   </label>
                   <label class="social-radio-label" id="scoreTieLabel">
-                    <input type="radio" name="scoreResult" value="tie" id="scoreTie" onchange="updateScoreResult()" /> Nul 🤝
+                    <input type="radio" name="scoreResult" value="tie" id="scoreTie" onchange="updateScoreResult()" /> Tie 🤝
                   </label>
                 </div>
               </div>
-              <button class="add-btn" onclick="exportScoreStory().catch(e => { console.error(e); alert('Erreur: ' + e.message); })">Générer la story</button>
+              <button class="add-btn" onclick="exportScoreStory().catch(e => { console.error(e); alert('Error: ' + e.message); })">Generate story</button>
             </div>
           </div>
 
           <div class="divider"></div>
 
           <!-- STORY MVP -->
-          <div class="section-label">⭐ Story MVP</div>
+          <div class="section-label">⭐ MVP Story</div>
           <div class="add-card">
-            <button class="add-toggle" onclick="toggleMvpForm()">⭐ Exporter le MVP en story Instagram</button>
+            <button class="add-toggle" onclick="toggleMvpForm()">⭐ Export MVP as Instagram story</button>
             <div class="add-form" id="mvpForm">
               <div class="form-group">
-                <label class="form-label">Date du match</label>
+                <label class="form-label">Match date</label>
                 <input class="form-input" id="mvpDate" type="date" />
               </div>
               <div class="form-group">
-                <label class="form-label">Adversaire</label>
-                <input class="form-input" id="mvpOpponent" placeholder="Ex: Brussels Kangaroos" />
+                <label class="form-label">Opponent</label>
+                <input class="form-input" id="mvpOpponent" placeholder="e.g. Brussels Kangaroos" />
               </div>
               <div class="form-group">
-                <label class="form-label">Joueur MVP</label>
+                <label class="form-label">MVP Player</label>
                 <select class="form-input" id="mvpPlayer" onchange="updateMvpPhoto()">
-                  <option value="">— Choisir le MVP —</option>
+                  <option value="">— Choose MVP —</option>
                 </select>
               </div>
               <div class="form-group" id="mvpPhotoGroup">
-                <label class="form-label">Photo du joueur (PNG fond transparent)</label>
+                <label class="form-label">Player photo (transparent PNG)</label>
                 <label class="audio-upload-label" id="mvpPhotoLabel">
-                  <span id="mvpPhotoText">📂 Choisir une photo PNG…</span>
+                  <span id="mvpPhotoText">📂 Choose a PNG photo…</span>
                   <input type="file" id="mvpPhotoFile" accept="image/png,image/webp" style="display:none" onchange="handleMvpPhoto(this)" />
                 </label>
               </div>
               <div class="form-group" style="min-width:100%">
-                <label class="form-label">Citation / Message</label>
-                <input class="form-input" id="mvpQuote" placeholder="Ex: Match parfait, 3 for 3 !" />
+                <label class="form-label">Quote / Message</label>
+                <input class="form-input" id="mvpQuote" placeholder="e.g. Perfect game, 3 for 3!" />
               </div>
-              <button class="add-btn" onclick="exportMvpStory().catch(e => { console.error(e); alert('Erreur: ' + e.message); })">Générer la story</button>
+              <button class="add-btn" onclick="exportMvpStory().catch(e => { console.error(e); alert('Error: ' + e.message); })">Generate story</button>
             </div>
           </div>
 
@@ -2113,13 +2254,13 @@
     <div class="config-header">
       <button class="config-back-btn" onclick="closeConfig()">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
-        Retour
+        Back
       </button>
       <div class="config-header-title">
         <div class="config-title-main">Configuration</div>
-        <div class="config-title-sub" id="cfgSubtitle">Équipes</div>
+        <div class="config-title-sub" id="cfgSubtitle">Teams</div>
       </div>
-      <div id="configSaveIndicator" class="save-indicator">✓ Sauvé</div>
+      <div id="configSaveIndicator" class="save-indicator">✓ Saved</div>
     </div>
 
     <!-- CONFIG BODY : sidebar + content -->
@@ -2131,7 +2272,7 @@
           <span class="cfg-nav-icon">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
           </span>
-          <span class="cfg-nav-label">Équipes</span>
+          <span class="cfg-nav-label">Teams</span>
         </button>
         <button class="cfg-nav-btn" id="cfgNavInterface" onclick="cfgSwitchTab('interface')">
           <span class="cfg-nav-icon">
@@ -2145,11 +2286,17 @@
           </span>
           <span class="cfg-nav-label">Positions</span>
         </button>
+        <button class="cfg-nav-btn" id="cfgNavOpponents" onclick="cfgSwitchTab('opponents')">
+          <span class="cfg-nav-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+          </span>
+          <span class="cfg-nav-label">Opponents</span>
+        </button>
         <button class="cfg-nav-btn" id="cfgNavSecurite" onclick="cfgSwitchTab('securite')">
           <span class="cfg-nav-icon">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 4l5 2.18V11c0 3.5-2.33 6.79-5 7.93-2.67-1.14-5-4.43-5-7.93V7.18L12 5zm-1 4v2h2V9h-2zm0 4v2h2v-2h-2z"/></svg>
           </span>
-          <span class="cfg-nav-label">Sécurité</span>
+          <span class="cfg-nav-label">Security</span>
         </button>
       </nav>
 
@@ -2160,24 +2307,24 @@
         <div class="config-panel active" id="cfgPanelTeams">
 
           <div class="config-section">
-            <div class="config-section-label">+ Nouvelle équipe</div>
+            <div class="config-section-label">+ New team</div>
             <div class="config-add-form">
               <div class="config-form-row">
                 <div class="form-group">
-                  <label class="form-label">Nom de l'équipe</label>
-                  <input class="form-input" id="cfgNewTeamName" placeholder="Ex: Seniors D1" />
+                  <label class="form-label">Team name</label>
+                  <input class="form-input" id="cfgNewTeamName" placeholder="e.g. Seniors D1" />
                 </div>
                 <div class="form-group" style="max-width:160px">
-                  <label class="form-label">Identifiant court</label>
-                  <input class="form-input" id="cfgNewTeamKey" placeholder="Ex: SeniorsD1" />
+                  <label class="form-label">Short ID</label>
+                  <input class="form-input" id="cfgNewTeamKey" placeholder="e.g. SeniorsD1" />
                 </div>
-                <button class="add-btn" style="margin-top:auto;padding:9px 24px" onclick="cfgAddTeam()">Créer</button>
+                <button class="add-btn" style="margin-top:auto;padding:9px 24px" onclick="cfgAddTeam()">Create</button>
               </div>
             </div>
           </div>
 
           <div class="config-section">
-            <div class="config-section-label">⚾ Équipes existantes</div>
+            <div class="config-section-label">⚾ Existing teams</div>
             <div id="cfgTeamList" class="cfg-team-list"></div>
           </div>
 
@@ -2186,163 +2333,293 @@
         <!-- PANEL : INTERFACE -->
         <div class="config-panel" id="cfgPanelInterface">
 
-          <!-- Identité du club -->
-          <div class="config-section">
-            <div class="config-section-label">🏷️ Identité du club</div>
-            <div class="config-add-form">
-              <div class="config-form-row" style="flex-wrap:wrap;gap:14px">
-                <div class="form-group">
-                  <label class="form-label">Nom du club</label>
-                  <input class="form-input" id="ifClubName" placeholder="Ex: Mon Club" />
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Sous-titre</label>
-                  <input class="form-input" id="ifClubSub" placeholder="Ex: Walk-Up Songs" />
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Site web (affiché sur les stories)</label>
-                  <input class="form-input" id="ifClubWebsite" placeholder="Ex: monclub.be" />
-                </div>
-                <div class="form-group" style="min-width:100%">
-                  <label class="form-label">Logo (fichier image)</label>
-                  <label class="audio-upload-label" id="ifLogoLabel" style="cursor:pointer">
-                    <span id="ifLogoText">📂 Choisir une image…</span>
-                    <input type="file" id="ifLogoFile" accept="image/*" style="display:none" onchange="ifHandleLogo(this)" />
-                  </label>
-                </div>
-                <div style="display:flex;align-items:center;gap:16px;min-width:100%">
-                  <div id="ifLogoPreview" style="display:none">
-                    <img id="ifLogoImg" src="" alt="Logo" style="height:44px;width:auto;border-radius:3px;border:1px solid var(--border)" />
-                  </div>
-                  <button class="add-btn" style="margin-top:0;padding:9px 24px" onclick="ifSaveIdentity()">Appliquer</button>
-                </div>
-              </div>
-            </div>
+          <!-- Sub-tab nav -->
+          <div style="display:flex;gap:2px;margin-bottom:24px;border-bottom:1px solid var(--border);padding-bottom:0">
+            <button class="if-sub-btn active" id="ifSubBtnIdentity"   onclick="ifSwitchSub('identity')"   >🏷️ Identity</button>
+            <button class="if-sub-btn"         id="ifSubBtnAppearance" onclick="ifSwitchSub('appearance')" >🎨 Appearance</button>
+            <button class="if-sub-btn"         id="ifSubBtnPlayback"   onclick="ifSwitchSub('playback')"   >▶ Playback</button>
+            <button class="if-sub-btn"         id="ifSubBtnStories"    onclick="ifSwitchSub('stories')"    >🖼️ Stories</button>
           </div>
 
-          <!-- Couleurs -->
-          <div class="config-section">
-            <div class="config-section-label">🎨 Couleurs</div>
-            <div class="config-add-form">
-              <div class="config-form-row" style="gap:20px;align-items:flex-end;flex-wrap:wrap">
-                <div class="form-group" style="flex:0 0 auto">
-                  <label class="form-label">Couleur principale</label>
-                  <div class="if-color-row">
-                    <input type="color" class="if-color-input" id="ifColorAccent" value="#FF4500" oninput="ifPreviewColor()" />
-                    <span class="if-color-hex" id="ifColorAccentHex">#FF4500</span>
+          <!-- SUB-PANEL : IDENTITY -->
+          <div class="if-sub-panel active" id="ifSubPanelIdentity">
+
+            <div class="config-section">
+              <div class="config-section-label">🏷️ Club identity</div>
+              <div class="config-add-form">
+                <div class="config-form-row" style="flex-wrap:wrap;gap:14px">
+                  <div class="form-group">
+                    <label class="form-label">Club name</label>
+                    <input class="form-input" id="ifClubName" placeholder="e.g. My Club" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Subtitle</label>
+                    <input class="form-input" id="ifClubSub" placeholder="e.g. Walk-Up Songs" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Website (shown on stories)</label>
+                    <input class="form-input" id="ifClubWebsite" placeholder="e.g. myclub.com" />
+                  </div>
+                  <div class="form-group" style="min-width:100%">
+                    <label class="form-label">Logo (image file)</label>
+                    <label class="audio-upload-label" id="ifLogoLabel" style="cursor:pointer">
+                      <span id="ifLogoText">📂 Choose an image…</span>
+                      <input type="file" id="ifLogoFile" accept="image/*" style="display:none" onchange="ifHandleLogo(this)" />
+                    </label>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:16px;min-width:100%">
+                    <div id="ifLogoPreview" style="display:none">
+                      <img id="ifLogoImg" src="" alt="Logo" style="height:44px;width:auto;border-radius:3px;border:1px solid var(--border)" />
+                    </div>
+                    <button class="add-btn" style="margin-top:0;padding:9px 24px" onclick="ifSaveIdentity()">Apply</button>
                   </div>
                 </div>
-                <div class="form-group" style="flex:0 0 auto">
-                  <label class="form-label">Couleur de fond</label>
-                  <div class="if-color-row">
-                    <input type="color" class="if-color-input" id="ifColorBg" value="#0a0a0a" oninput="ifPreviewColor()" />
-                    <span class="if-color-hex" id="ifColorBgHex">#0a0a0a</span>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- SUB-PANEL : APPEARANCE -->
+          <div class="if-sub-panel" id="ifSubPanelAppearance">
+
+            <div class="config-section">
+              <div class="config-section-label">🎨 Colors</div>
+              <div class="config-add-form">
+                <div class="config-form-row" style="gap:20px;align-items:flex-end;flex-wrap:wrap">
+                  <div class="form-group" style="flex:0 0 auto">
+                    <label class="form-label">Primary color</label>
+                    <div class="if-color-row">
+                      <input type="color" class="if-color-input" id="ifColorAccent" value="#FF4500" oninput="ifPreviewColor()" />
+                      <span class="if-color-hex" id="ifColorAccentHex">#FF4500</span>
+                    </div>
+                  </div>
+                  <div class="form-group" style="flex:0 0 auto">
+                    <label class="form-label">Background color</label>
+                    <div class="if-color-row">
+                      <input type="color" class="if-color-input" id="ifColorBg" value="#0a0a0a" oninput="ifPreviewColor()" />
+                      <span class="if-color-hex" id="ifColorBgHex">#0a0a0a</span>
+                    </div>
+                  </div>
+                  <div style="display:flex;gap:8px;margin-top:auto">
+                    <button class="add-btn" style="margin-top:0;padding:9px 24px" onclick="ifSaveColors()">Apply</button>
+                    <button class="cfg-modal-cancel" style="margin-top:0" onclick="ifResetColors()">Reset</button>
                   </div>
                 </div>
-                <div style="display:flex;gap:8px;margin-top:auto">
-                  <button class="add-btn" style="margin-top:0;padding:9px 24px" onclick="ifSaveColors()">Appliquer</button>
-                  <button class="cfg-modal-cancel" style="margin-top:0" onclick="ifResetColors()">Réinitialiser</button>
+                <div class="if-color-preview" id="ifColorPreview">
+                  <div class="if-preview-bar" id="ifPreviewBar" style="background:#FF4500"></div>
+                  <span class="if-preview-label" id="ifPreviewLabel">YOUR TEAM</span>
                 </div>
               </div>
-              <div class="if-color-preview" id="ifColorPreview">
-                <div class="if-preview-bar" id="ifPreviewBar" style="background:#FF4500"></div>
-                <span class="if-preview-label" id="ifPreviewLabel">YOUR TEAM</span>
+            </div>
+
+            <div class="config-section">
+              <div class="config-section-label">🔤 Fonts</div>
+              <div class="config-add-form">
+                <p style="font-family:'Barlow',sans-serif;font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.5">Choose a font combination for headings and body text.</p>
+                <div id="ifFontGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:16px"></div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+                  <button class="add-btn" style="margin-top:0;padding:9px 24px" onclick="ifSaveFonts()">Apply</button>
+                  <button class="cfg-modal-cancel" style="margin-top:0" onclick="ifResetFonts()">Reset</button>
+                </div>
+                <div id="ifFontPreview" style="margin-top:16px;background:#0a0a0a;border:1px solid var(--border);border-radius:3px;padding:16px 18px">
+                  <div id="ifFontPreviewTitle" style="font-size:22px;font-weight:700;letter-spacing:3px;color:#fff;text-transform:uppercase;line-height:1.1">YOUR TEAM</div>
+                  <div id="ifFontPreviewSub" style="font-size:11px;letter-spacing:4px;color:var(--orange);text-transform:uppercase;margin-top:4px">Walk-Up Songs</div>
+                  <div id="ifFontPreviewBody" style="font-size:13px;color:rgba(255,255,255,0.5);margin-top:10px">John Smith · #7 · Eye of the Tiger</div>
+                </div>
               </div>
             </div>
+
           </div>
 
-          <!-- Polices -->
-          <div class="config-section">
-            <div class="config-section-label">🔤 Polices d'écriture</div>
-            <div class="config-add-form">
-              <p style="font-family:'Barlow',sans-serif;font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.5">Choisissez une combinaison de polices pour les titres et le texte courant.</p>
-              <div id="ifFontGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:16px"></div>
-              <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-                <button class="add-btn" style="margin-top:0;padding:9px 24px" onclick="ifSaveFonts()">Appliquer</button>
-                <button class="cfg-modal-cancel" style="margin-top:0" onclick="ifResetFonts()">Réinitialiser</button>
-              </div>
-              <!-- Aperçu -->
-              <div id="ifFontPreview" style="margin-top:16px;background:#0a0a0a;border:1px solid var(--border);border-radius:3px;padding:16px 18px">
-                <div id="ifFontPreviewTitle" style="font-size:22px;font-weight:700;letter-spacing:3px;color:#fff;text-transform:uppercase;line-height:1.1">YOUR TEAM</div>
-                <div id="ifFontPreviewSub" style="font-size:11px;letter-spacing:4px;color:var(--orange);text-transform:uppercase;margin-top:4px">Walk-Up Songs</div>
-                <div id="ifFontPreviewBody" style="font-size:13px;color:rgba(255,255,255,0.5);margin-top:10px">John Smith · #7 · Eye of the Tiger</div>
+          <!-- SUB-PANEL : PLAYBACK -->
+          <div class="if-sub-panel" id="ifSubPanelPlayback">
+
+            <div class="config-section">
+              <div class="config-section-label">▶ Play duration</div>
+              <div class="config-add-form">
+                <div class="config-form-row" style="align-items:flex-end;gap:20px;flex-wrap:wrap">
+                  <div class="form-group" style="flex:1;min-width:200px">
+                    <label class="form-label">Duration — <span id="ifDurationVal">15</span> sec</label>
+                    <input type="range" class="if-slider" id="ifDuration" min="5" max="60" step="1" value="15"
+                      oninput="document.getElementById('ifDurationVal').textContent = this.value" />
+                    <div class="if-slider-labels"><span>5s</span><span>30s</span><span>60s</span></div>
+                  </div>
+                  <button class="add-btn" style="margin-top:0;padding:9px 24px;flex-shrink:0" onclick="ifSaveDuration()">Apply</button>
+                </div>
               </div>
             </div>
+
+            <div class="config-section">
+              <div class="config-section-label">🎙️ Announcements</div>
+              <div class="config-add-form">
+                <div class="config-form-row" style="flex-wrap:wrap;gap:14px">
+
+                  <div class="form-group" style="min-width:100%">
+                    <label style="display:flex;align-items:center;gap:12px;cursor:pointer">
+                      <div id="ttsToggle" onclick="ttsToggleEnabled()" style="width:44px;height:24px;border-radius:12px;background:var(--border);cursor:pointer;position:relative;transition:background 0.2s;flex-shrink:0">
+                        <div id="ttsToggleKnob" style="width:20px;height:20px;border-radius:50%;background:#fff;position:absolute;top:2px;left:2px;transition:left 0.2s;box-shadow:0 1px 4px rgba(0,0,0,0.4)"></div>
+                      </div>
+                      <span style="font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:2px;text-transform:uppercase;color:var(--offwhite)">Enable announcements before walk-up songs</span>
+                    </label>
+                  </div>
+
+                  <div class="form-group" style="min-width:100%" id="ttsSettingsGroup">
+                    <label class="form-label">Announcement template</label>
+                    <!-- Quick template buttons -->
+                    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
+                      <button onclick="ttsSetTemplate('en')" style="font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1px;text-transform:uppercase;padding:4px 10px;border-radius:3px;border:1px solid var(--border);background:var(--gray);color:var(--muted);cursor:pointer;transition:all 0.15s" onmouseover="this.style.borderColor='var(--orange)';this.style.color='var(--orange)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">🇬🇧 English</button>
+                      <button onclick="ttsSetTemplate('fr')" style="font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1px;text-transform:uppercase;padding:4px 10px;border-radius:3px;border:1px solid var(--border);background:var(--gray);color:var(--muted);cursor:pointer;transition:all 0.15s" onmouseover="this.style.borderColor='var(--orange)';this.style.color='var(--orange)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">🇫🇷 Français</button>
+                      <button onclick="ttsSetTemplate('en-short')" style="font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1px;text-transform:uppercase;padding:4px 10px;border-radius:3px;border:1px solid var(--border);background:var(--gray);color:var(--muted);cursor:pointer;transition:all 0.15s" onmouseover="this.style.borderColor='var(--orange)';this.style.color='var(--orange)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">🇬🇧 Short</button>
+                      <button onclick="ttsSetTemplate('fr-short')" style="font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1px;text-transform:uppercase;padding:4px 10px;border-radius:3px;border:1px solid var(--border);background:var(--gray);color:var(--muted);cursor:pointer;transition:all 0.15s" onmouseover="this.style.borderColor='var(--orange)';this.style.color='var(--orange)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">🇫🇷 Court</button>
+                    </div>
+                    <input class="form-input" id="ttsTemplate" placeholder='e.g. Now batting, number {jersey}, {name}!' value="Now batting, number {jersey}, {name}!" />
+                    <p style="font-family:'Barlow',sans-serif;font-size:12px;color:var(--muted);margin-top:6px;line-height:1.5">
+                      Variables: <code style="color:var(--orange)">{name}</code> &nbsp;<code style="color:var(--orange)">{jersey}</code> &nbsp;<code style="color:var(--orange)">{position}</code> &nbsp;<code style="color:var(--orange)">{team}</code>
+                    </p>
+                  </div>
+
+                  <div class="form-group" id="ttsEngineGroup">
+                    <label class="form-label">Voice engine</label>
+                    <select class="form-input" id="ttsEngine" onchange="ttsEngineChanged()">
+                      <option value="webspeech">🌐 Web Speech (free, built-in)</option>
+                      <option value="openai">✨ OpenAI TTS (natural voices)</option>
+                      <option value="elevenlabs">🎙️ ElevenLabs (multilingual, free tier)</option>
+                    </select>
+                  </div>
+
+                  <div class="form-group" id="ttsLangGroup">
+                    <label class="form-label">Announcement language</label>
+                    <select class="form-input" id="ttsLang">
+                      <option value="en">🇬🇧 English</option>
+                      <option value="fr">🇫🇷 Français</option>
+                    </select>
+                  </div>
+
+                  <div class="form-group" id="ttsVoiceGroup">
+                    <label class="form-label">Voice</label>
+                    <select class="form-input" id="ttsVoiceSelect"></select>
+                  </div>
+
+                  <div id="ttsOpenAIGroup" style="display:none;min-width:100%">
+                    <div class="config-form-row" style="gap:14px;flex-wrap:wrap">
+                      <div class="form-group" style="flex:1;min-width:200px">
+                        <label class="form-label">OpenAI API Key</label>
+                        <input class="form-input" type="password" id="ttsOpenAIKey" placeholder="sk-..." autocomplete="off" />
+                      </div>
+                      <div class="form-group" style="flex:0 0 auto">
+                        <label class="form-label">Voice</label>
+                        <select class="form-input" id="ttsOpenAIVoice">
+                          <option value="onyx">Onyx (deep, stadium)</option>
+                          <option value="echo">Echo (clear, energetic)</option>
+                          <option value="fable">Fable (warm)</option>
+                          <option value="alloy">Alloy (neutral)</option>
+                          <option value="nova">Nova (bright)</option>
+                          <option value="shimmer">Shimmer (smooth)</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- ElevenLabs settings -->
+                  <div id="ttsElevenLabsGroup" style="display:none;min-width:100%">
+                    <div class="config-form-row" style="gap:14px;flex-wrap:wrap">
+                      <div class="form-group" style="flex:1;min-width:200px">
+                        <label class="form-label">ElevenLabs API Key</label>
+                        <input class="form-input" type="password" id="ttsElevenLabsKey" placeholder="sk_..." autocomplete="off" />
+                        <p style="font-family:'Barlow',sans-serif;font-size:11px;color:var(--muted);margin-top:5px;line-height:1.5">
+                          Free tier: 10,000 chars/month — <a href="https://elevenlabs.io" target="_blank" style="color:var(--orange)">elevenlabs.io</a>
+                        </p>
+                      </div>
+                      <div class="form-group" style="flex:0 0 auto;min-width:160px">
+                        <label class="form-label">Voice</label>
+                        <select class="form-input" id="ttsElevenLabsVoice">
+                          <option value="pNInz6obpgDQGcFmaJgB">Adam (deep, EN)</option>
+                          <option value="ErXwobaYiN019PkySvjV">Antoni (warm, EN)</option>
+                          <option value="VR6AewLTigWG4xSOukaG">Arnold (strong, EN)</option>
+                          <option value="yoZ06aMxZJJ28mfd3POQ">Sam (clear, EN)</option>
+                          <option value="onwK4e9ZLuTAKqWW03F9">Daniel (authoritative, EN/FR)</option>
+                          <option value="TX3LPaxmHKxFdv7VOQHJ">Liam (neutral, EN/FR)</option>
+                          <option value="XB0fDUnXU5powFXDhCwa">Charlotte (warm, FR/EN)</option>
+                          <option value="Xb7hH8MSUJpSbSDYk0k2">Alice (clear, FR/EN)</option>
+                        </select>
+                      </div>
+                      <div class="form-group" style="flex:0 0 auto;min-width:120px">
+                        <label class="form-label">Language hint</label>
+                        <select class="form-input" id="ttsElevenLabsLang">
+                          <option value="">Auto-detect</option>
+                          <option value="en">English</option>
+                          <option value="fr">Français</option>
+                        </select>
+                      </div>
+                    </div>
+                    <button onclick="ttsLoadElevenLabsVoices()" style="margin-top:8px;font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:1px;text-transform:uppercase;padding:6px 14px;border-radius:3px;border:1px solid var(--border);background:var(--gray);color:var(--muted);cursor:pointer" onmouseover="this.style.borderColor='var(--orange)';this.style.color='var(--orange)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">🔄 Load my voices from ElevenLabs</button>
+                  </div>
+
+                  <div class="form-group" id="ttsFadeGroup">
+                    <label class="form-label">Fade-in after announcement — <span id="ttsFadeVal">1.5</span>s</label>
+                    <input type="range" class="if-slider" id="ttsFade" min="0" max="4" step="0.5" value="1.5"
+                      oninput="document.getElementById('ttsFadeVal').textContent = this.value" />
+                    <div class="if-slider-labels"><span>0s</span><span>2s</span><span>4s</span></div>
+                  </div>
+
+                  <div class="form-group" style="min-width:100%;display:flex;gap:10px;flex-wrap:wrap" id="ttsTestGroup">
+                    <button class="add-btn" style="margin-top:0;padding:9px 24px" onclick="ttsTest()">🔊 Test announcement</button>
+                    <button class="add-btn" style="margin-top:0;padding:9px 24px;background:var(--gray);border:1px solid var(--border)" onclick="ttsSave()">Save settings</button>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+
           </div>
 
-          <!-- Lecture -->
-          <div class="config-section">
-            <div class="config-section-label">▶ Lecture</div>
-            <div class="config-add-form">
-              <div class="config-form-row" style="align-items:flex-end;gap:20px;flex-wrap:wrap">
-                <div class="form-group" style="flex:1;min-width:200px">
-                  <label class="form-label">Durée de lecture — <span id="ifDurationVal">15</span> sec</label>
-                  <input type="range" class="if-slider" id="ifDuration" min="5" max="60" step="1" value="15"
-                    oninput="document.getElementById('ifDurationVal').textContent = this.value" />
-                  <div class="if-slider-labels"><span>5s</span><span>30s</span><span>60s</span></div>
+          <!-- SUB-PANEL : STORIES -->
+          <div class="if-sub-panel" id="ifSubPanelStories">
+
+            <div class="config-section">
+              <div class="config-section-label">🖼️ Story backgrounds</div>
+              <div class="config-add-form">
+                <p class="cfg-bg-hint">Upload a 1080×1920px image (Instagram story format) for each type. Content will appear on top with an overlay for readability.</p>
+
+                <div class="cfg-bg-row">
+                  <div class="cfg-bg-preview" id="bgPreviewLineup">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+                  </div>
+                  <div class="cfg-bg-info">
+                    <div class="cfg-bg-label">Lineup Story</div>
+                    <div class="cfg-bg-sub" id="bgSubLineup">No background loaded</div>
+                  </div>
+                  <label class="cfg-bg-btn" title="Choose an image">📂<input type="file" accept="image/*" style="display:none" onchange="ifHandleStoryBg(this,'lineup')" /></label>
+                  <button class="cfg-bg-clear" title="Delete" onclick="ifClearStoryBg('lineup')" id="bgClearLineup" style="display:none">✕</button>
                 </div>
-                <button class="add-btn" style="margin-top:0;padding:9px 24px;flex-shrink:0" onclick="ifSaveDuration()">Appliquer</button>
+
+                <div class="cfg-bg-row">
+                  <div class="cfg-bg-preview" id="bgPreviewScore">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+                  </div>
+                  <div class="cfg-bg-info">
+                    <div class="cfg-bg-label">Score Story</div>
+                    <div class="cfg-bg-sub" id="bgSubScore">No background loaded</div>
+                  </div>
+                  <label class="cfg-bg-btn" title="Choose an image">📂<input type="file" accept="image/*" style="display:none" onchange="ifHandleStoryBg(this,'score')" /></label>
+                  <button class="cfg-bg-clear" title="Delete" onclick="ifClearStoryBg('score')" id="bgClearScore" style="display:none">✕</button>
+                </div>
+
+                <div class="cfg-bg-row">
+                  <div class="cfg-bg-preview" id="bgPreviewMvp">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+                  </div>
+                  <div class="cfg-bg-info">
+                    <div class="cfg-bg-label">MVP Story</div>
+                    <div class="cfg-bg-sub" id="bgSubMvp">No background loaded</div>
+                  </div>
+                  <label class="cfg-bg-btn" title="Choose an image">📂<input type="file" accept="image/*" style="display:none" onchange="ifHandleStoryBg(this,'mvp')" /></label>
+                  <button class="cfg-bg-clear" title="Delete" onclick="ifClearStoryBg('mvp')" id="bgClearMvp" style="display:none">✕</button>
+                </div>
+
               </div>
             </div>
-          </div>
 
-          <!-- Sécurité : déplacé dans l'onglet dédié -->
-
-          <!-- Backgrounds Stories -->
-          <div class="config-section">
-            <div class="config-section-label">🖼️ Backgrounds des stories</div>
-            <div class="config-add-form">
-              <p class="cfg-bg-hint">Chargez une image 1080×1920px (format story Instagram) pour chaque type. Le contenu s'affichera par-dessus avec un overlay pour la lisibilité.</p>
-
-              <!-- Lineup -->
-              <div class="cfg-bg-row">
-                <div class="cfg-bg-preview" id="bgPreviewLineup">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
-                </div>
-                <div class="cfg-bg-info">
-                  <div class="cfg-bg-label">Story Lineup</div>
-                  <div class="cfg-bg-sub" id="bgSubLineup">Aucun background chargé</div>
-                </div>
-                <label class="cfg-bg-btn" title="Choisir une image">
-                  📂
-                  <input type="file" accept="image/*" style="display:none" onchange="ifHandleStoryBg(this,'lineup')" />
-                </label>
-                <button class="cfg-bg-clear" title="Supprimer" onclick="ifClearStoryBg('lineup')" id="bgClearLineup" style="display:none">✕</button>
-              </div>
-
-              <!-- Score -->
-              <div class="cfg-bg-row">
-                <div class="cfg-bg-preview" id="bgPreviewScore">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
-                </div>
-                <div class="cfg-bg-info">
-                  <div class="cfg-bg-label">Story Score</div>
-                  <div class="cfg-bg-sub" id="bgSubScore">Aucun background chargé</div>
-                </div>
-                <label class="cfg-bg-btn" title="Choisir une image">
-                  📂
-                  <input type="file" accept="image/*" style="display:none" onchange="ifHandleStoryBg(this,'score')" />
-                </label>
-                <button class="cfg-bg-clear" title="Supprimer" onclick="ifClearStoryBg('score')" id="bgClearScore" style="display:none">✕</button>
-              </div>
-
-              <!-- MVP -->
-              <div class="cfg-bg-row">
-                <div class="cfg-bg-preview" id="bgPreviewMvp">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
-                </div>
-                <div class="cfg-bg-info">
-                  <div class="cfg-bg-label">Story MVP</div>
-                  <div class="cfg-bg-sub" id="bgSubMvp">Aucun background chargé</div>
-                </div>
-                <label class="cfg-bg-btn" title="Choisir une image">
-                  📂
-                  <input type="file" accept="image/*" style="display:none" onchange="ifHandleStoryBg(this,'mvp')" />
-                </label>
-                <button class="cfg-bg-clear" title="Supprimer" onclick="ifClearStoryBg('mvp')" id="bgClearMvp" style="display:none">✕</button>
-              </div>
-
-            </div>
           </div>
 
         </div><!-- close cfgPanelInterface -->
@@ -2351,40 +2628,73 @@
         <div class="config-panel" id="cfgPanelPositions">
 
           <div class="config-section">
-            <div class="config-section-label">🔒 Positions de base (obligatoires)</div>
+            <div class="config-section-label">🔒 Base positions (mandatory)</div>
             <div class="config-add-form" style="padding:12px 16px">
               <div id="cfgBasePosList" style="display:flex;flex-wrap:wrap;gap:8px;padding:4px 0"></div>
-              <p style="font-family:'Barlow',sans-serif;font-size:13px;color:var(--muted);margin-top:10px;line-height:1.5">Ces positions sont fixes et ne peuvent pas être modifiées ou supprimées.</p>
+              <p style="font-family:'Barlow',sans-serif;font-size:13px;color:var(--muted);margin-top:10px;line-height:1.5">These positions are fixed and cannot be modified or deleted.</p>
             </div>
           </div>
 
           <div class="config-section">
-            <div class="config-section-label">⚙️ Positions personnalisées</div>
+            <div class="config-section-label">⚙️ Custom positions</div>
             <div class="config-add-form">
               <div class="config-form-row" style="align-items:flex-end;gap:10px;flex-wrap:wrap">
                 <div class="form-group" style="flex:0 0 auto;min-width:110px;max-width:140px">
-                  <label class="form-label">Code (ex: DH)</label>
+                  <label class="form-label">Code (e.g. DH)</label>
                   <input class="form-input" id="cfgNewPosCode" placeholder="DH" maxlength="4" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()" />
                 </div>
                 <div class="form-group" style="flex:1;min-width:160px">
-                  <label class="form-label">Libellé (ex: Designated Hitter)</label>
+                  <label class="form-label">Label (e.g. Designated Hitter)</label>
                   <input class="form-input" id="cfgNewPosLabel" placeholder="Designated Hitter" />
                 </div>
                 <div class="form-group" style="flex:0 0 auto">
-                  <label class="form-label">Multiple joueurs</label>
+                  <label class="form-label">Multiple players</label>
                   <label style="display:flex;align-items:center;gap:8px;height:37px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:1px;color:var(--offwhite)">
                     <input type="checkbox" id="cfgNewPosMulti" style="width:16px;height:16px;accent-color:var(--orange)" />
-                    Autorisé
+                    Allowed
                   </label>
                 </div>
-                <button class="add-btn" style="margin-top:auto;padding:9px 24px;flex-shrink:0" onclick="cfgAddCustomPos()">Ajouter</button>
+                <button class="add-btn" style="margin-top:auto;padding:9px 24px;flex-shrink:0" onclick="cfgAddCustomPos()">Add</button>
               </div>
             </div>
           </div>
 
           <div class="config-section">
-            <div class="config-section-label">📋 Liste des positions personnalisées</div>
+            <div class="config-section-label">📋 Custom positions list</div>
             <div id="cfgCustomPosList" class="cfg-team-list"></div>
+          </div>
+
+        </div>
+
+        <!-- PANEL : OPPONENTS -->
+        <div class="config-panel" id="cfgPanelOpponents">
+
+          <div class="config-section">
+            <div class="config-section-label">+ Add opponent</div>
+            <div class="config-add-form">
+              <div class="config-form-row" style="align-items:flex-end;gap:10px;flex-wrap:wrap">
+                <div class="form-group" style="flex:1;min-width:160px">
+                  <label class="form-label">Club name</label>
+                  <input class="form-input" id="cfgNewOppName" placeholder="e.g. Brussels Kangaroos" />
+                </div>
+                <div class="form-group" style="flex:0 0 auto">
+                  <label class="form-label">Logo (optional)</label>
+                  <label class="audio-upload-label" id="cfgNewOppLogoLabel" style="cursor:pointer;padding:7px 12px">
+                    <span id="cfgNewOppLogoText">📂 Choose image…</span>
+                    <input type="file" id="cfgNewOppLogoFile" accept="image/*" style="display:none" onchange="cfgHandleOppLogo(this)" />
+                  </label>
+                </div>
+                <div id="cfgNewOppLogoPreview" style="display:none;flex-shrink:0">
+                  <img id="cfgNewOppLogoImg" src="" style="height:36px;width:auto;border-radius:3px;border:1px solid var(--border)" />
+                </div>
+                <button class="add-btn" style="margin-top:auto;padding:9px 24px;flex-shrink:0" onclick="cfgAddOpponent()">Add</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="config-section">
+            <div class="config-section-label">🏟️ Opponent clubs</div>
+            <div id="cfgOpponentList" class="cfg-team-list"></div>
           </div>
 
         </div>
@@ -2393,23 +2703,23 @@
         <div class="config-panel" id="cfgPanelSecurite">
 
           <div class="config-section">
-            <div class="config-section-label">🔒 Mot de passe admin</div>
+            <div class="config-section-label">🔒 Admin password</div>
             <div class="config-add-form">
               <div class="config-form-row" style="flex-wrap:wrap;gap:14px">
                 <div class="form-group" style="min-width:180px">
-                  <label class="form-label">Mot de passe actuel</label>
+                  <label class="form-label">Current password</label>
                   <input class="form-input" type="password" id="ifPwdCurrent" placeholder="••••••••" autocomplete="current-password" />
                 </div>
                 <div class="form-group" style="min-width:180px">
-                  <label class="form-label">Nouveau mot de passe</label>
+                  <label class="form-label">New password</label>
                   <input class="form-input" type="password" id="ifPwdNew" placeholder="••••••••" autocomplete="new-password" />
                 </div>
                 <div class="form-group" style="min-width:180px">
-                  <label class="form-label">Confirmer</label>
+                  <label class="form-label">Confirm</label>
                   <input class="form-input" type="password" id="ifPwdConfirm" placeholder="••••••••" autocomplete="new-password"
                     onkeydown="if(event.key==='Enter') ifSavePassword()" />
                 </div>
-                <button class="add-btn" style="margin-top:auto;padding:9px 24px;flex-shrink:0" onclick="ifSavePassword()">Changer</button>
+                <button class="add-btn" style="margin-top:auto;padding:9px 24px;flex-shrink:0" onclick="ifSavePassword()">Change</button>
               </div>
               <div id="ifPwdMsg" class="if-pwd-msg" style="display:none"></div>
             </div>
@@ -2423,14 +2733,14 @@
 
   <div id="renameModal" class="cfg-modal-overlay" style="display:none" onclick="cfgCloseRenameModal(event)">
     <div class="cfg-modal">
-      <div class="cfg-modal-title">Renommer l'équipe</div>
+      <div class="cfg-modal-title">Rename team</div>
       <div class="form-group" style="margin-bottom:16px">
-        <label class="form-label">Nouveau nom</label>
-        <input class="form-input" id="renameInput" placeholder="Nom de l'équipe" onkeydown="if(event.key==='Enter') cfgConfirmRename()" />
+        <label class="form-label">New name</label>
+        <input class="form-input" id="renameInput" placeholder="Team name" onkeydown="if(event.key==='Enter') cfgConfirmRename()" />
       </div>
       <div class="cfg-modal-actions">
-        <button class="cfg-modal-cancel" onclick="cfgCloseRenameModal()">Annuler</button>
-        <button class="cfg-modal-confirm" onclick="cfgConfirmRename()">Renommer</button>
+        <button class="cfg-modal-cancel" onclick="cfgCloseRenameModal()">Cancel</button>
+        <button class="cfg-modal-confirm" onclick="cfgConfirmRename()">Rename</button>
       </div>
     </div>
   </div>
@@ -2438,12 +2748,12 @@
   <!-- MODAL DELETE -->
   <div id="deleteModal" class="cfg-modal-overlay" style="display:none" onclick="cfgCloseDeleteModal(event)">
     <div class="cfg-modal cfg-modal-danger">
-      <div class="cfg-modal-title">⚠️ Supprimer l'équipe</div>
-      <div class="cfg-modal-body" id="deleteModalBody">Voulez-vous vraiment supprimer cette équipe ?</div>
-      <div class="cfg-modal-warning">Cette action supprimera tous les joueurs de l'équipe.</div>
+      <div class="cfg-modal-title">⚠️ Delete team</div>
+      <div class="cfg-modal-body" id="deleteModalBody">Are you sure you want to delete this team?</div>
+      <div class="cfg-modal-warning">This action will delete all players from the team.</div>
       <div class="cfg-modal-actions">
-        <button class="cfg-modal-cancel" onclick="cfgCloseDeleteModal()">Annuler</button>
-        <button class="cfg-modal-confirm cfg-modal-confirm-danger" onclick="cfgConfirmDelete()">Supprimer</button>
+        <button class="cfg-modal-cancel" onclick="cfgCloseDeleteModal()">Cancel</button>
+        <button class="cfg-modal-confirm cfg-modal-confirm-danger" onclick="cfgConfirmDelete()">Delete</button>
       </div>
     </div>
   </div>
@@ -2458,14 +2768,14 @@
     // ── DATA ──
     const EMOJIS = ['⚾','🏃','💥','🎯','⚡','🔥','💪','🌟','🎸','🏆','👊','🦅','🐻','💫','🎺'];
 
-    // Répertoire global des joueurs (nom, emoji)
-    // Répertoire global des joueurs — chargé depuis Supabase
+    // Répertoire global des players (nom, emoji)
+    // Répertoire global des players — chargé depuis Supabase
     let allPlayers = {};
 
     // Chaque équipe a sa lineup : liste d'objets { pid, song, artist, url, start, present }
     // Équipes par défaut depuis config.js — écrasées au chargement par Supabase
     let teams = Object.fromEntries(
-      Object.entries(APP_CONFIG.defaultTeams || { Equipe1: 'Équipe 1' })
+      Object.entries(APP_CONFIG.defaultTeams || { Team1: 'Team 1' })
         .map(([k, label]) => [k, { label, lineup: [] }])
     );
 
@@ -2486,6 +2796,20 @@
       adminPassword: APP_CONFIG.adminPassword || 'ChangeMe2024!',
       playDuration:  APP_CONFIG.playDuration  || 15,
       extraPositions: [], // [{code, label, multi}]
+      opponents: [],      // [{id, name, logo}]
+      tts: {
+        enabled:          false,
+        engine:           'webspeech',
+        lang:             'en',
+        template:         'Now batting, number {jersey}, {name}!',
+        voiceName:        '',
+        openAIKey:        '',
+        openAIVoice:      'onyx',
+        elevenLabsKey:    '',
+        elevenLabsVoice:  'onwK4e9ZLuTAKqWW03F9',
+        elevenLabsLang:   '',
+        fadeDelay:        1.5,
+      },
     };
 
     // Identité du club — persistée dans Supabase
@@ -2542,7 +2866,7 @@
       // Bouton état
       const btn = document.getElementById('editModeBtn');
       if (btn) {
-        btn.title = isEditMode ? 'Quitter le mode modification' : 'Mode modification';
+        btn.title = isEditMode ? 'Exit edit mode' : 'Edit mode';
         btn.textContent = isEditMode ? '✅' : '✏️';
       }
 
@@ -2584,7 +2908,7 @@
       // Positions autorisées plusieurs fois
       const MULTI_POS = extra.filter(p => p.multi).map(p => p.code);
 
-      // Positions prises par d'autres joueurs : uniquement les positions UNIQUES
+      // Positions prises par d'autres players : uniquement les positions UNIQUES
       const takenPos = entries
       .map((e, j) => (j !== i ? e.pos : null))
       .filter(p => p && !MULTI_POS.includes(p));
@@ -2600,10 +2924,10 @@
 
         // ✅ AJOUT classes editable-field sur les champs modifiables
         card.innerHTML = `
-          <div class="drag-handle" title="Déplacer">⠿</div>
+          <div class="drag-handle" title="Move">⠿</div>
           <div class="order-num">${orderNum}</div>
 
-          <button class="presence-btn ${isAbsent ? '' : 'present'}" title="${isAbsent ? 'Absent' : 'Présent'}"></button>
+          <button class="presence-btn ${isAbsent ? '' : 'present'}" title="${isAbsent ? 'Absent' : 'Present'}"></button>
 
           <div class="player-avatar">
             <select class="pos-select" title="Position">
@@ -2612,7 +2936,7 @@
             </select>
           </div>
 
-          <label class="photo-btn" title="Cliquer pour changer la photo">
+          <label class="photo-btn" title="Click to change photo">
             ${player.photo
               ? `<img src="${player.photo}" class="photo-img" alt="${player.name}">`
               : `<svg width="28" height="28" viewBox="-16 -44 32 52" fill="none">
@@ -2628,17 +2952,18 @@
 
           <div class="player-info">
             <div class="player-name-wrap">
-              <div class="player-name editable-field" title="Double-cliquer pour modifier">${player.name}</div>
-              ${entry.jersey ? `<span class="jersey-num editable-field" title="Double-cliquer pour modifier">#${entry.jersey}</span>` : ''}
+              <div class="player-name editable-field" title="Double-click to edit">${player.name}</div>
+              ${entry.jersey ? `<span class="jersey-num editable-field" title="Double-click to edit">#${entry.jersey}</span>` : ''}
             </div>
+            ${player.pronunciation ? `<div class="player-pronunciation editable-field" title="Double-click to edit pronunciation">🔊 ${player.pronunciation}</div>` : `<div class="player-pronunciation add-pronunciation" title="Add pronunciation">+ pronunciation</div>`}
           </div>
 
           <div class="song-info">
-            <div class="song-title editable-field" title="Double-cliquer pour modifier">${entry.song || '—'}</div>
-            <div class="song-artist editable-field" title="Double-cliquer pour modifier">${entry.artist || '—'}</div>
+            <div class="song-title editable-field" title="Double-click to edit">${entry.song || '—'}</div>
+            <div class="song-artist editable-field" title="Double-click to edit">${entry.artist || '—'}</div>
           </div>
 
-          <button class="upload-btn ${entry.url ? 'has-file' : ''}" title="${entry.url ? 'Fichier sauvé — cliquer pour changer' : 'Uploader un fichier audio'}">
+          <button class="upload-btn ${entry.url ? 'has-file' : ''}" title="${entry.url ? 'File saved — click to change' : 'Upload audio file'}">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z"/></svg>
             <input type="file" accept="audio/*" style="display:none" data-entry-index="${i}">
           </button>
@@ -2647,10 +2972,10 @@
             ${isPlaying ? '⏹' : '▶'}
           </button>
 
-          <button class="delete-btn" title="Supprimer">✕</button>
+          <button class="delete-btn" title="Delete">✕</button>
         `;
 
-        // Upload photo joueur → Supabase
+        // Upload photo player → Supabase
         card.querySelector('.photo-btn').addEventListener('click', (e) => e.stopPropagation());
         card.querySelector('.photo-btn input[type="file"]').addEventListener('change', async (e) => {
           e.stopPropagation();
@@ -2685,7 +3010,7 @@
             render();
             saveConfig();
           } catch (err) {
-            alert('Erreur upload photo : ' + err.message);
+            alert('Photo upload error: ' + err.message);
             photoBtn.style.opacity = '1';
           }
         });
@@ -2704,7 +3029,7 @@
         card.querySelector('.delete-btn').addEventListener('click', (e) => {
           e.stopPropagation();
           const idx = parseInt(card.dataset.index);
-          if (confirm(`Supprimer ${player.name} de cette équipe ?`)) {
+          if (confirm(`Remove ${player.name} from this team?`)) {
             if (currentPid === entry.pid) stopPlayback();
             currentLineup().splice(idx, 1);
             render();
@@ -2712,7 +3037,7 @@
           }
         });
 
-        // Nom du joueur — double-clic pour modifier
+        // Nom du player — double-clic pour modifier
         card.querySelector('.player-name').addEventListener('dblclick', (e) => {
           e.stopPropagation();
           makeEditable(card.querySelector('.player-name'), val => {
@@ -2739,10 +3064,10 @@
           const addJerseyBtn = document.createElement('span');
           addJerseyBtn.className = 'add-jersey-btn';
           addJerseyBtn.textContent = '+#';
-          addJerseyBtn.title = 'Ajouter un numéro de maillot';
+          addJerseyBtn.title = 'Add jersey number';
           addJerseyBtn.addEventListener('click', (e) => {
             e.stopPropagation();
-            const num = prompt('Numéro de maillot :');
+            const num = prompt('Jersey number:');
             if (num && num.trim()) {
               currentLineup()[i].jersey = num.trim().replace('#', '');
               render();
@@ -2798,7 +3123,7 @@
             saveConfig();
           } catch (err) {
             label.textContent = '❌';
-            alert('Erreur upload : ' + err.message);
+            alert('Upload error: ' + err.message);
             setTimeout(() => render(), 2000);
           }
         });
@@ -2909,6 +3234,23 @@
       document.getElementById('featuredPhotoLabel').classList.add('has-file');
     }
 
+    function toggleOpponentInput(prefix) {
+      const sel = document.getElementById(prefix + 'OpponentSelect');
+      const inp = document.getElementById(prefix + 'Opponent');
+      if (!sel || !inp) return;
+      if (sel.value) {
+        const opp = (appSettings.opponents || []).find(o => o.id === sel.value);
+        if (opp) {
+          inp.value = opp.name;
+          inp.style.display = 'none';
+        }
+      } else {
+        inp.value = '';
+        inp.style.display = '';
+        inp.focus();
+      }
+    }
+
     function toggleStoryForm() {
       const form = document.getElementById('storyForm');
       form.classList.toggle('open');
@@ -2917,9 +3259,9 @@
         document.getElementById('storyDate').value = new Date().toISOString().split('T')[0];
       }
 
-      // Peupler le select joueur en avant
+      // Peupler le select player en avant
       const sel = document.getElementById('storyFeatured');
-      sel.innerHTML = '<option value="">— Aucun —</option>';
+      sel.innerHTML = '<option value="">— None —</option>';
 
       currentLineup().filter(e => e.present !== false).forEach((entry) => {
         const player = allPlayers[entry.pid];
@@ -2952,10 +3294,19 @@
       const {r:ar, g:ag, b:ab} = hexToRgb(accent);
       const accentAlpha = (a) => `rgba(${ar},${ag},${ab},${a})`;
       const date = document.getElementById('storyDate').value;
-      const opponent = document.getElementById('storyOpponent').value.trim();
+      const oppInfo = getOpponentInfo('storyOpponentSelect', 'storyOpponent');
+      const opponent = oppInfo.name;
       const featuredPid = document.getElementById('storyFeatured').value;
       const team = teams[currentTeamId];
       const entries = team.lineup.filter(e => e.present !== false);
+
+      // Load opponent logo if available
+      let oppLogoImg = null;
+      if (oppInfo.logo) {
+        oppLogoImg = new Image();
+        await new Promise(r => { oppLogoImg.onload = r; oppLogoImg.onerror = r; oppLogoImg.src = oppInfo.logo; });
+        if (!oppLogoImg.naturalWidth) oppLogoImg = null;
+      }
 
       const W = 1080, H = 1920;
       const canvas = document.getElementById('storyCanvas');
@@ -3015,16 +3366,48 @@
       // ── DATE & ADVERSAIRE ──
       if (date) {
         const d = new Date(date);
-        const dateStr = d.toLocaleDateString('fr-BE', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+        const dateStr = d.toLocaleDateString('en-US', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
         ctx.fillStyle = 'rgba(255,255,255,0.5)';
         ctx.font = '32px Barlow Condensed, sans-serif';
         ctx.fillText(dateStr.toUpperCase(), W/2, 510);
       }
 
       if (opponent) {
+        // Club logo (left) — VS — Opponent logo (right)
+        const vsY = 565;
+        const logoSize = 80;
+
+        // Our club logo
+        const myLogoImg = new Image();
+        myLogoImg.src = clubSettings.logo || '';
+        await new Promise(r => { myLogoImg.onload = r; myLogoImg.onerror = r; });
+
+        if (myLogoImg.naturalWidth > 0) {
+          const lw = (myLogoImg.width / myLogoImg.height) * logoSize;
+          ctx.drawImage(myLogoImg, W/2 - 180 - lw, vsY - logoSize/2 - 10, lw, logoSize);
+        }
+
+        // VS text
         ctx.fillStyle = '#FFFFFF';
         ctx.font = 'bold 40px Oswald, sans-serif';
-        ctx.fillText('VS ' + opponent.toUpperCase(), W/2, 565);
+        ctx.textAlign = 'center';
+        ctx.fillText('VS', W/2, vsY);
+
+        // Opponent logo or name
+        if (oppLogoImg) {
+          const lw = (oppLogoImg.width / oppLogoImg.height) * logoSize;
+          ctx.drawImage(oppLogoImg, W/2 + 180, vsY - logoSize/2 - 10, lw, logoSize);
+          // Opponent name below logo
+          ctx.fillStyle = 'rgba(255,255,255,0.7)';
+          ctx.font = '28px Barlow Condensed, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText(opponent.toUpperCase(), W/2 + 180 + logoSize/2, vsY + logoSize/2 + 10);
+        } else {
+          ctx.fillStyle = '#FFFFFF';
+          ctx.font = 'bold 40px Oswald, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('VS ' + opponent.toUpperCase(), W/2, vsY);
+        }
       }
 
       // ── TITRE LINEUP ──
@@ -3062,7 +3445,7 @@
         ctx.textAlign = 'left';
         ctx.fillText(String(idx + 1), 80, mid + rowH * 0.16);
 
-        // Photo joueur en rond
+        // Photo player en rond
         const photoSize = Math.round(rowH * 0.72);
         const photoX = 150, photoY = mid - photoSize / 2;
 
@@ -3175,7 +3558,7 @@
 
     // ── GESTION ÉQUIPES (CONFIG PAGE) ──
     function checkAdmin() {
-      const pwd = prompt('Mot de passe admin :');
+      const pwd = prompt('Admin password:');
       return pwd === appSettings.adminPassword;
     }
 
@@ -3257,7 +3640,7 @@
       startPlayback(entry, entryIndex);
     }
 
-    function startPlayback(entry, entryIndex) {
+    async function startPlayback(entry, entryIndex) {
       const player = allPlayers[entry.pid];
       if (!player) return;
 
@@ -3266,7 +3649,7 @@
       const np = document.getElementById('nowPlaying');
       np.classList.add('active');
 
-      document.getElementById('nowLabel').textContent = '▶ En cours — Batter up!';
+      document.getElementById('nowLabel').textContent = '▶ Batter up!';
       document.getElementById('nowName').textContent = player.name;
       document.getElementById('nowSong').textContent = (entry.song || '') + (entry.artist ? ' — ' + entry.artist : '');
       document.getElementById('progressWrap').style.display = 'block';
@@ -3279,11 +3662,48 @@
 
       showCheer(player.name.split(' ')[0].toUpperCase());
 
+      const t = appSettings.tts || {};
       const audioSrc = entry.blobUrl || entry.url;
-      if (audioSrc) {
+
+      if (t.enabled) {
+        // ── Phase 1 : annonce TTS ──
+        document.getElementById('nowLabel').textContent = '🎙️ Announcing…';
+        try {
+          const text = ttsBuildText(entry);
+          await ttsSpeak(text);
+        } catch(e) {
+          console.warn('TTS failed:', e);
+        }
+
+        // ── Phase 2 : délai fade ──
+        const fadeDelay = (t.fadeDelay ?? 1.5) * 1000;
+        if (fadeDelay > 0) await new Promise(r => setTimeout(r, fadeDelay));
+
+        // Vérifier que la lecture n'a pas été stoppée entretemps
+        if (currentPid !== entry.pid) return;
+        document.getElementById('nowLabel').textContent = '▶ Batter up!';
+      }
+
+      // ── Phase 3 : walk-up song ──
+      if (audioSrc && currentPid === entry.pid) {
         currentAudio = new Audio(audioSrc);
         currentAudio.currentTime = entry.start || 0;
-        currentAudio.play().catch(() => {});
+        if (t.enabled && (t.fadeDelay ?? 1.5) > 0) {
+          // Fade-in audio
+          currentAudio.volume = 0;
+          currentAudio.play().catch(() => {});
+          const fadeDuration = Math.min((t.fadeDelay ?? 1.5) * 500, 1000);
+          const steps = 20;
+          const stepTime = fadeDuration / steps;
+          let step = 0;
+          const fadeIn = setInterval(() => {
+            step++;
+            if (currentAudio) currentAudio.volume = Math.min(step / steps, 1);
+            if (step >= steps) clearInterval(fadeIn);
+          }, stepTime);
+        } else {
+          currentAudio.play().catch(() => {});
+        }
       }
 
       let elapsed = 0;
@@ -3307,11 +3727,12 @@
     function stopPlayback() {
       if (currentAudio) { currentAudio.pause(); currentAudio = null; }
       clearInterval(progressInterval);
+      if (window.speechSynthesis) speechSynthesis.cancel();
       currentPid = null;
 
       document.getElementById('nowPlaying').classList.remove('active');
-      document.getElementById('nowLabel').textContent = 'En attente';
-      document.getElementById('nowName').textContent = 'Sélectionne un joueur';
+      document.getElementById('nowLabel').textContent = 'Waiting';
+      document.getElementById('nowName').textContent = 'Select a player';
       document.getElementById('nowSong').textContent = '';
       document.getElementById('progressWrap').style.display = 'none';
       document.getElementById('progressFill').style.width = '0%';
@@ -3376,58 +3797,62 @@
     }
 
     async function addPlayer() {
-      const name = document.getElementById('newName').value.trim();
+      const name          = document.getElementById('newName').value.trim();
+      const pronunciation = document.getElementById('newPronunciation').value.trim();
       const jersey = document.getElementById('newJersey').value.trim();
       const pos = document.getElementById('newPos').value;
       const song = document.getElementById('newSong').value.trim();
       const artist = document.getElementById('newArtist').value.trim();
       const start = parseInt(document.getElementById('newStart').value) || 0;
 
-      if (!name) { alert('Le nom du joueur est requis !'); return; }
+      if (!name) { alert('Player name is required!'); return; }
 
       // Upload du fichier audio sur Supabase si présent
       let url = uploadedAudioURL || '';
       if (uploadedAudioFile) {
         const addBtn = document.querySelector('.add-btn');
-        addBtn.textContent = '⏳ Upload…';
+        addBtn.textContent = '⏳ Uploading…';
         addBtn.disabled = true;
 
         try {
           url = await uploadToSupabase(uploadedAudioFile, currentTeamId, name);
         } catch (err) {
-          alert('Erreur upload audio : ' + err.message);
-          addBtn.textContent = 'Ajouter';
+          alert('Audio upload error: ' + err.message);
+          addBtn.textContent = 'Add';
           addBtn.disabled = false;
           return;
         }
 
-        addBtn.textContent = 'Ajouter';
+        addBtn.textContent = 'Add';
         addBtn.disabled = false;
       }
 
-      // Cherche si ce joueur existe déjà dans allPlayers
+      // Cherche si ce player existe déjà dans allPlayers
       let pid = Object.keys(allPlayers).find(k => allPlayers[k].name.toLowerCase() === name.toLowerCase());
       if (!pid) {
         pid = Date.now();
         allPlayers[pid] = {
           name,
+          pronunciation: pronunciation || null,
           emoji: EMOJIS[Object.keys(allPlayers).length % EMOJIS.length]
         };
+      } else if (pronunciation) {
+        allPlayers[pid].pronunciation = pronunciation;
       }
 
       if (currentLineup().find(e => e.pid == pid)) {
-        alert('Ce joueur est déjà dans cette équipe !');
+        alert('This player is already on this team!');
         return;
       }
 
       currentLineup().push({ pid: parseInt(pid) || pid, pos, jersey, song, artist, url, start, present: true });
 
       // Reset form
-      ['newName','newSong','newArtist','newJersey'].forEach(id => document.getElementById(id).value = '');
+      ['newName','newPronunciation','newSong','newArtist','newJersey'].forEach(id => document.getElementById(id).value = '');
       document.getElementById('newPos').value = '';
       document.getElementById('newStart').value = '0';
       document.getElementById('newAudioFile').value = '';
-      document.getElementById('audioUploadText').textContent = '📂 Choisir un fichier mp3 / wav…';
+      document.getElementById('audioUploadText').textContent = '📂 Choose an mp3 / wav file…';
       document.getElementById('audioUploadLabel').classList.remove('has-file');
       document.getElementById('audioPreview').style.display = 'none';
       document.getElementById('audioPreview').src = '';
@@ -3461,7 +3886,7 @@
         });
         showSaveIndicator();
       } catch (err) {
-        console.warn('Sauvegarde échouée:', err);
+        console.warn('Save failed:', err);
       }
     }
 
@@ -3536,13 +3961,13 @@
           }
         }
       } catch (err) {
-        console.warn('Chargement config échoué:', err);
+        console.warn('Config load failed:', err);
       }
     }
 
     function showSaveIndicator() {
       const el = document.getElementById('saveIndicator');
-      el.textContent = '✓ Sauvé';
+      el.textContent = '✓ Saved';
       el.classList.add('visible');
       setTimeout(() => el.classList.remove('visible'), 2000);
     }
@@ -3619,7 +4044,7 @@
     let cfgDeleteTargetKey = null;
 
     function cfgSwitchTab(tab) {
-      const tabs = { teams: 'Équipes', interface: 'Interface', positions: 'Positions', securite: 'Sécurité' };
+      const tabs = { teams: 'Teams', interface: 'Interface', positions: 'Positions', opponents: 'Opponents', securite: 'Security' };
       document.querySelectorAll('.cfg-nav-btn').forEach(b => b.classList.remove('active'));
       document.getElementById('cfgNav' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
       document.querySelectorAll('.config-panel').forEach(p => p.classList.remove('active'));
@@ -3627,19 +4052,20 @@
       document.getElementById('cfgSubtitle').textContent = tabs[tab] || '';
       if (tab === 'interface') ifInitPanel();
       if (tab === 'positions') cfgRenderPositions();
+      if (tab === 'opponents') cfgRenderOpponents();
     }
 
     // ── POSITIONS MANAGEMENT ──
     const BASE_POSITIONS = [
-      { code: 'P',  label: 'Lanceur' },
-      { code: 'C',  label: 'Receveur' },
-      { code: '1B', label: '1ère base' },
-      { code: '2B', label: '2e base' },
-      { code: '3B', label: '3e base' },
-      { code: 'SS', label: 'Arrêt-court' },
-      { code: 'LF', label: 'Champ gauche' },
-      { code: 'CF', label: 'Champ centre' },
-      { code: 'RF', label: 'Champ droit' },
+      { code: 'P',  label: 'Pitcher' },
+      { code: 'C',  label: 'Catcher' },
+      { code: '1B', label: 'First Base' },
+      { code: '2B', label: 'Second Base' },
+      { code: '3B', label: 'Third Base' },
+      { code: 'SS', label: 'Shortstop' },
+      { code: 'LF', label: 'Left Field' },
+      { code: 'CF', label: 'Center Field' },
+      { code: 'RF', label: 'Right Field' },
     ];
 
     function cfgRenderPositions() {
@@ -3661,7 +4087,7 @@
       customList.innerHTML = '';
       const extra = appSettings.extraPositions || [];
       if (extra.length === 0) {
-        customList.innerHTML = `<div style="color:var(--muted);font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:2px;padding:20px;text-align:center;text-transform:uppercase;background:var(--darkgray);border:1px dashed var(--border)">Aucune position personnalisée</div>`;
+        customList.innerHTML = `<div style="color:var(--muted);font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:2px;padding:20px;text-align:center;text-transform:uppercase;background:var(--darkgray);border:1px dashed var(--border)">No custom positions</div>`;
         return;
       }
       extra.forEach((pos, idx) => {
@@ -3673,13 +4099,13 @@
               <span style="font-family:'Oswald',sans-serif;font-weight:700;font-size:18px;letter-spacing:2px;color:var(--orange);min-width:36px">${pos.code}</span>
               <span id="cfgPosLabelDisplay_${idx}" style="font-family:'Barlow',sans-serif;font-size:14px;color:var(--offwhite)">${pos.label || '—'}</span>
             </div>
-            <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:2px;color:var(--muted);margin-top:3px;text-transform:uppercase">${pos.multi ? 'Plusieurs joueurs autorisés' : 'Position unique'}</div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:2px;color:var(--muted);margin-top:3px;text-transform:uppercase">${pos.multi ? 'Plusieurs players autorisés' : 'Unique position'}</div>
           </div>
           <div></div>
           <button class="cfg-team-action" title="Modifier" onclick="cfgEditCustomPos(${idx})">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
           </button>
-          <button class="cfg-team-action delete-action" title="Supprimer" onclick="cfgDeleteCustomPos(${idx})">
+          <button class="cfg-team-action delete-action" title="Delete" onclick="cfgDeleteCustomPos(${idx})">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
           </button>
         `;
@@ -3691,10 +4117,10 @@
       const code = document.getElementById('cfgNewPosCode').value.trim().toUpperCase();
       const label = document.getElementById('cfgNewPosLabel').value.trim();
       const multi = document.getElementById('cfgNewPosMulti').checked;
-      if (!code) { alert('Le code de position est requis !'); return; }
-      if (code.length > 4) { alert('Le code doit faire 4 caractères maximum.'); return; }
+      if (!code) { alert('Position code is required!'); return; }
+      if (code.length > 4) { alert('Code must be 4 characters maximum.'); return; }
       const allCodes = [...BASE_POSITIONS.map(p => p.code), ...(appSettings.extraPositions || []).map(p => p.code)];
-      if (allCodes.includes(code)) { alert(`La position "${code}" existe déjà.`); return; }
+      if (allCodes.includes(code)) { alert(`Position "${code}" already exists.`); return; }
       if (!appSettings.extraPositions) appSettings.extraPositions = [];
       appSettings.extraPositions.push({ code, label, multi });
       document.getElementById('cfgNewPosCode').value = '';
@@ -3708,7 +4134,7 @@
     function cfgEditCustomPos(idx) {
       const pos = (appSettings.extraPositions || [])[idx];
       if (!pos) return;
-      const newLabel = prompt('Nouveau libellé pour ' + pos.code + ' :', pos.label || '');
+      const newLabel = prompt('New label for ' + pos.code + ' :', pos.label || '');
       if (newLabel === null) return;
       appSettings.extraPositions[idx].label = newLabel.trim();
       cfgRenderPositions();
@@ -3718,7 +4144,7 @@
     function cfgDeleteCustomPos(idx) {
       const pos = (appSettings.extraPositions || [])[idx];
       if (!pos) return;
-      if (!confirm(`Supprimer la position "${pos.code} — ${pos.label}" ?`)) return;
+      if (!confirm(`Delete position "${pos.code} — ${pos.label}"?`)) return;
       appSettings.extraPositions.splice(idx, 1);
       cfgRenderPositions();
       refreshNewPosSelect();
@@ -3740,12 +4166,141 @@
       });
     }
 
+    // ── OPPONENTS MANAGEMENT ──
+    let _cfgNewOppLogoDataURL = null;
+
+    function cfgHandleOppLogo(input) {
+      const file = input.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        _cfgNewOppLogoDataURL = e.target.result;
+        document.getElementById('cfgNewOppLogoImg').src = _cfgNewOppLogoDataURL;
+        document.getElementById('cfgNewOppLogoPreview').style.display = 'block';
+        document.getElementById('cfgNewOppLogoText').textContent = '🖼️ ' + file.name;
+        document.getElementById('cfgNewOppLogoLabel').classList.add('has-file');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function cfgAddOpponent() {
+      const name = document.getElementById('cfgNewOppName').value.trim();
+      if (!name) { alert('Club name is required!'); return; }
+      if (!appSettings.opponents) appSettings.opponents = [];
+      const id = 'opp_' + Date.now();
+      appSettings.opponents.push({ id, name, logo: _cfgNewOppLogoDataURL || null });
+      // Reset form
+      document.getElementById('cfgNewOppName').value = '';
+      document.getElementById('cfgNewOppLogoFile').value = '';
+      document.getElementById('cfgNewOppLogoText').textContent = '📂 Choose image…';
+      document.getElementById('cfgNewOppLogoPreview').style.display = 'none';
+      document.getElementById('cfgNewOppLogoLabel').classList.remove('has-file');
+      _cfgNewOppLogoDataURL = null;
+      cfgRenderOpponents();
+      refreshOpponentSelects();
+      saveConfig();
+      showCfgSaveIndicator();
+    }
+
+    function cfgRenderOpponents() {
+      const container = document.getElementById('cfgOpponentList');
+      if (!container) return;
+      const opponents = appSettings.opponents || [];
+      if (opponents.length === 0) {
+        container.innerHTML = `<div style="color:var(--muted);font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:2px;padding:20px;text-align:center;text-transform:uppercase;background:var(--darkgray);border:1px dashed var(--border)">No opponents added yet</div>`;
+        return;
+      }
+      container.innerHTML = '';
+      opponents.forEach((opp, idx) => {
+        const row = document.createElement('div');
+        row.className = 'cfg-team-row';
+        row.innerHTML = `
+          <div class="cfg-team-info" style="display:flex;align-items:center;gap:14px">
+            <div style="width:44px;height:44px;border-radius:4px;border:1px solid var(--border);background:var(--gray);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden">
+              ${opp.logo
+                ? `<img src="${opp.logo}" style="width:100%;height:100%;object-fit:contain;padding:4px" />`
+                : `<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="color:var(--border)"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>`
+              }
+            </div>
+            <div>
+              <div class="cfg-team-name">${opp.name}</div>
+              <div class="cfg-team-key">${opp.logo ? 'Logo uploaded' : 'No logo'}</div>
+            </div>
+          </div>
+          <div></div>
+          <label class="cfg-team-action" title="Change logo" style="cursor:pointer">
+            📷
+            <input type="file" accept="image/*" style="display:none" onchange="cfgUpdateOppLogo(this, '${opp.id}')" />
+          </label>
+          <button class="cfg-team-action delete-action" title="Delete" onclick="cfgDeleteOpponent('${opp.id}')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+          </button>
+        `;
+        container.appendChild(row);
+      });
+    }
+
+    function cfgUpdateOppLogo(input, id) {
+      const file = input.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        const opp = (appSettings.opponents || []).find(o => o.id === id);
+        if (!opp) return;
+        opp.logo = e.target.result;
+        cfgRenderOpponents();
+        refreshOpponentSelects();
+        saveConfig();
+        showCfgSaveIndicator();
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function cfgDeleteOpponent(id) {
+      const opp = (appSettings.opponents || []).find(o => o.id === id);
+      if (!opp) return;
+      if (!confirm(`Delete opponent "${opp.name}"?`)) return;
+      appSettings.opponents = appSettings.opponents.filter(o => o.id !== id);
+      cfgRenderOpponents();
+      refreshOpponentSelects();
+      saveConfig();
+      showCfgSaveIndicator();
+    }
+
+    function refreshOpponentSelects() {
+      ['storyOpponentSelect', 'scoreOpponentSelect'].forEach(selId => {
+        const sel = document.getElementById(selId);
+        if (!sel) return;
+        const current = sel.value;
+        sel.innerHTML = '<option value="">— Manual entry —</option>';
+        (appSettings.opponents || []).forEach(opp => {
+          const opt = document.createElement('option');
+          opt.value = opp.id;
+          opt.textContent = opp.name;
+          sel.appendChild(opt);
+        });
+        sel.value = current;
+        // Trigger UI update
+        sel.dispatchEvent(new Event('change'));
+      });
+    }
+
+    function getOpponentInfo(selectId, inputId) {
+      const sel = document.getElementById(selectId);
+      const inp = document.getElementById(inputId);
+      if (sel && sel.value) {
+        const opp = (appSettings.opponents || []).find(o => o.id === sel.value);
+        return opp || { name: inp?.value?.trim() || 'Opponent', logo: null };
+      }
+      return { name: inp?.value?.trim() || 'Opponent', logo: null };
+    }
+
     function openConfig() {
       // Demander le mot de passe si pas encore déverrouillé
       if (!cfgAdminUnlocked) {
-        const pwd = prompt('Mot de passe admin :');
+        const pwd = prompt('Admin password:');
         if (pwd !== appSettings.adminPassword) {
-          alert('Mot de passe incorrect.');
+          alert('Incorrect password.');
           return;
         }
         cfgAdminUnlocked = true;
@@ -3764,6 +4319,7 @@
         document.getElementById('cfgNewTeamKey').value = k;
       };
       cfgRenderTeamList();
+      refreshOpponentSelects();
       cfgSwitchTab('teams');
     }
 
@@ -3790,14 +4346,14 @@
         row.innerHTML = `
           <div class="cfg-team-info">
             <div class="cfg-team-name">${team.label}</div>
-            <div class="cfg-team-key">ID : ${key}</div>
-            <div class="cfg-team-count">${playerCount} joueur${playerCount !== 1 ? 's' : ''}</div>
+            <div class="cfg-team-key">ID: ${key}</div>
+            <div class="cfg-team-count">${playerCount} player${playerCount !== 1 ? 's' : ''}</div>
           </div>
           ${isCurrent ? '<div class="cfg-current-badge">Active</div>' : '<div></div>'}
-          <button class="cfg-team-action" title="Renommer" onclick="cfgOpenRenameModal('${key}')">
+          <button class="cfg-team-action" title="Rename" onclick="cfgOpenRenameModal('${key}')">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
           </button>
-          <button class="cfg-team-action delete-action" title="Supprimer" ${entries.length <= 1 ? 'disabled style="opacity:0.3;cursor:not-allowed"' : ''} onclick="cfgOpenDeleteModal('${key}')">
+          <button class="cfg-team-action delete-action" title="Delete" ${entries.length <= 1 ? 'disabled style="opacity:0.3;cursor:not-allowed"' : ''} onclick="cfgOpenDeleteModal('${key}')">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
           </button>
         `;
@@ -3810,10 +4366,10 @@
       const name = document.getElementById('cfgNewTeamName').value.trim();
       let key = document.getElementById('cfgNewTeamKey').value.trim().replace(/[^a-zA-Z0-9]/g, '');
 
-      if (!name) { alert('Le nom de l\'équipe est requis.'); return; }
+      if (!name) { alert('Team name is required.'); return; }
       if (!key) { key = name.replace(/\s+/g, '').replace(/[^a-zA-Z0-9]/g, ''); }
       if (!key) { alert('L\'identifiant court est invalide.'); return; }
-      if (teams[key]) { alert(`Une équipe avec l'identifiant "${key}" existe déjà !`); return; }
+      if (teams[key]) { alert(`A team with ID "${key}" already exists!`); return; }
 
       teams[key] = { label: name, lineup: [] };
       updateTeamSelector();
@@ -3868,12 +4424,12 @@
     function cfgOpenDeleteModal(key) {
       const allKeys = Object.keys(teams);
       if (allKeys.length <= 1) {
-        alert('Impossible de supprimer la dernière équipe.');
+        alert('Cannot delete the last team.');
         return;
       }
       cfgDeleteTargetKey = key;
       document.getElementById('deleteModalBody').textContent =
-        `Voulez-vous vraiment supprimer l'équipe "${teams[key].label}" ?`;
+        `Are you sure you want to delete the team "${teams[key].label}"?`;
       document.getElementById('deleteModal').style.display = 'flex';
     }
 
@@ -3900,7 +4456,7 @@
 
     function showCfgSaveIndicator() {
       const el = document.getElementById('configSaveIndicator');
-      el.textContent = '✓ Sauvé';
+      el.textContent = '✓ Saved';
       el.classList.add('visible');
       setTimeout(() => el.classList.remove('visible'), 2000);
     }
@@ -4065,8 +4621,25 @@
       showCfgSaveIndicator();
     }
 
+    function ifSwitchSub(sub) {
+      document.querySelectorAll('.if-sub-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.if-sub-panel').forEach(p => p.classList.remove('active'));
+      const cap = sub.charAt(0).toUpperCase() + sub.slice(1);
+      document.getElementById('ifSubBtn'   + cap)?.classList.add('active');
+      document.getElementById('ifSubPanel' + cap)?.classList.add('active');
+      if (sub === 'appearance') {
+        selectedFontId = appSettings.fontPairId || 'default';
+        const activePair = FONT_PAIRS.find(p => p.id === selectedFontId) || FONT_PAIRS[0];
+        ifUpdateFontPreview(activePair);
+        ifRenderFontGrid();
+      }
+    }
+
     function ifInitPanel() {
-      // Identité — depuis clubSettings (source de vérité)
+      // Reset to first sub-tab
+      ifSwitchSub('identity');
+
+      // Identity
       document.getElementById('ifClubName').value    = clubSettings.name    || '';
       document.getElementById('ifClubSub').value     = clubSettings.sub     || '';
       document.getElementById('ifClubWebsite').value = clubSettings.website || '';
@@ -4074,29 +4647,26 @@
       if (clubSettings.logo) {
         document.getElementById('ifLogoImg').src = clubSettings.logo;
         document.getElementById('ifLogoPreview').style.display = 'block';
-        document.getElementById('ifLogoText').textContent = '🖼️ Logo enregistré';
+        document.getElementById('ifLogoText').textContent = '🖼️ Logo saved';
         document.getElementById('ifLogoLabel').classList.add('has-file');
       }
 
-      // Couleurs
+      // Colors
       const style = getComputedStyle(document.documentElement);
-      const accent = rgbToHex(style.getPropertyValue('--orange').trim()) || accent;
-      const bg     = rgbToHex(style.getPropertyValue('--black').trim())  || '#0a0a0a';
-      document.getElementById('ifColorAccent').value = accent;
+      const accentVal = rgbToHex(style.getPropertyValue('--orange').trim()) || '#FF4500';
+      const bg        = rgbToHex(style.getPropertyValue('--black').trim())  || '#0a0a0a';
+      document.getElementById('ifColorAccent').value = accentVal;
       document.getElementById('ifColorBg').value = bg;
-      document.getElementById('ifColorAccentHex').textContent = accent;
+      document.getElementById('ifColorAccentHex').textContent = accentVal;
       document.getElementById('ifColorBgHex').textContent = bg;
       ifPreviewColor();
 
-      // Durée
+      // Playback duration
       document.getElementById('ifDuration').value = PLAY_DURATION;
       document.getElementById('ifDurationVal').textContent = PLAY_DURATION;
 
-      // Polices
-      selectedFontId = appSettings.fontPairId || 'default';
-      const activePair = FONT_PAIRS.find(p => p.id === selectedFontId) || FONT_PAIRS[0];
-      ifUpdateFontPreview(activePair);
-      ifRenderFontGrid();
+      // TTS
+      ttsInitPanel();
     }
 
     // Convertit "rgb(r,g,b)" ou "#hex" en "#rrggbb"
@@ -4152,7 +4722,7 @@
       const capType = type.charAt(0).toUpperCase() + type.slice(1);
       const preview = document.getElementById('bgPreview' + capType);
       preview.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>`;
-      document.getElementById('bgSub' + capType).textContent = 'Aucun background chargé';
+      document.getElementById('bgSub' + capType).textContent = 'No background loaded';
       document.getElementById('bgClear' + capType).style.display = 'none';
 
       saveConfig();
@@ -4167,7 +4737,7 @@
           const preview = document.getElementById('bgPreview' + capType);
           if (preview) preview.innerHTML = `<img src="${clubSettings[key]}" alt="bg" />`;
           const sub = document.getElementById('bgSub' + capType);
-          if (sub) sub.textContent = 'Background chargé ✓';
+          if (sub) sub.textContent = 'Background loaded ✓';
           const clearBtn = document.getElementById('bgClear' + capType);
           if (clearBtn) clearBtn.style.display = 'flex';
         }
@@ -4287,6 +4857,269 @@
       }
     }
 
+    // ── TTS — ANNOUNCEMENTS ──
+
+    function ttsInitPanel() {
+      const t = appSettings.tts || {};
+      ttsSetToggleUI(!!t.enabled);
+      ttsSetGroupsVisible(!!t.enabled);
+      const tmpl = document.getElementById('ttsTemplate');
+      if (tmpl) tmpl.value = t.template || TTS_TEMPLATES['en'];
+      const eng = document.getElementById('ttsEngine');
+      if (eng) { eng.value = t.engine || 'webspeech'; ttsEngineChanged(); }
+      const langSel = document.getElementById('ttsLang');
+      if (langSel) langSel.value = t.lang || 'en';
+      const fade = document.getElementById('ttsFade');
+      if (fade) { fade.value = t.fadeDelay ?? 1.5; document.getElementById('ttsFadeVal').textContent = fade.value; }
+      const key = document.getElementById('ttsOpenAIKey');
+      if (key) key.value = t.openAIKey || '';
+      const oVoice = document.getElementById('ttsOpenAIVoice');
+      if (oVoice) oVoice.value = t.openAIVoice || 'onyx';
+      const elKey = document.getElementById('ttsElevenLabsKey');
+      if (elKey) elKey.value = t.elevenLabsKey || '';
+      const elVoice = document.getElementById('ttsElevenLabsVoice');
+      if (elVoice && t.elevenLabsVoice) elVoice.value = t.elevenLabsVoice;
+      const elLang = document.getElementById('ttsElevenLabsLang');
+      if (elLang) elLang.value = t.elevenLabsLang || '';
+      ttsPopulateVoices();
+    }
+
+    function ttsSetToggleUI(on) {
+      const toggle = document.getElementById('ttsToggle');
+      const knob   = document.getElementById('ttsToggleKnob');
+      if (!toggle || !knob) return;
+      toggle.style.background = on ? 'var(--orange)' : 'var(--border)';
+      knob.style.left = on ? '22px' : '2px';
+    }
+
+    function ttsSetGroupsVisible(on) {
+      ['ttsSettingsGroup','ttsEngineGroup','ttsVoiceGroup','ttsFadeGroup','ttsTestGroup','ttsOpenAIGroup'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el && id !== 'ttsOpenAIGroup') el.style.opacity = on ? '1' : '0.35';
+        if (el && id !== 'ttsOpenAIGroup') el.style.pointerEvents = on ? '' : 'none';
+      });
+      if (on) ttsEngineChanged();
+    }
+
+    function ttsToggleEnabled() {
+      const t = appSettings.tts = appSettings.tts || {};
+      t.enabled = !t.enabled;
+      ttsSetToggleUI(t.enabled);
+      ttsSetGroupsVisible(t.enabled);
+    }
+
+    function ttsEngineChanged() {
+      const val = document.getElementById('ttsEngine')?.value;
+      const wsGroup  = document.getElementById('ttsVoiceGroup');
+      const oaiGroup = document.getElementById('ttsOpenAIGroup');
+      const elGroup  = document.getElementById('ttsElevenLabsGroup');
+      if (wsGroup)  wsGroup.style.display  = (val === 'webspeech')   ? '' : 'none';
+      if (oaiGroup) oaiGroup.style.display = (val === 'openai')      ? '' : 'none';
+      if (elGroup)  elGroup.style.display  = (val === 'elevenlabs')  ? '' : 'none';
+      if (val === 'webspeech') ttsPopulateVoices();
+    }
+
+    function ttsPopulateVoices() {
+      const sel = document.getElementById('ttsVoiceSelect');
+      if (!sel || !window.speechSynthesis) return;
+      const fill = () => {
+        const voices = speechSynthesis.getVoices().filter(v => v.lang.startsWith('en'));
+        sel.innerHTML = voices.map(v =>
+          `<option value="${v.name}" ${v.name === (appSettings.tts?.voiceName || '') ? 'selected' : ''}>${v.name} (${v.lang})</option>`
+        ).join('') || '<option value="">Default</option>';
+      };
+      fill();
+      speechSynthesis.onvoiceschanged = fill;
+    }
+
+    const ORDINALS_FR = ['Premier','Deuxième','Troisième','Quatrième','Cinquième','Sixième','Septième','Huitième','Neuvième'];
+    const ORDINALS_EN = ['First','Second','Third','Fourth','Fifth','Sixth','Seventh','Eighth','Ninth'];
+
+    function ttsBuildText(entry) {
+      const player = allPlayers[entry.pid] || {};
+      const t = appSettings.tts || {};
+      return (t.template || 'Now batting, number {jersey}, {name}!')
+        .replace('{name}',     player.name     || '')
+        .replace('{jersey}',   entry.jersey    || '')
+        .replace('{position}', entry.pos       || '')
+        .replace('{team}',     teams[currentTeamId]?.label || '');
+    }
+
+    function ttsBuildIntroText(entry, orderIndex) {
+      const player  = allPlayers[entry.pid] || {};
+      const t       = appSettings.tts || {};
+      const useFr   = (t.lang || 'en') === 'fr';
+
+      const ordinals = useFr ? ORDINALS_FR : ORDINALS_EN;
+      const ordinal  = ordinals[orderIndex] || (orderIndex + 1).toString();
+
+      const posCode  = entry.pos || '';
+      const posLabels_fr = {
+        'P':'Lanceur','C':'Receveur','1B':'Première base','2B':'Deuxième base',
+        '3B':'Troisième base','SS':'Arrêt-court','LF':'Champ gauche','CF':'Champ centre','RF':'Champ droit',
+      };
+      const posLabels_en = {
+        'P':'Pitcher','C':'Catcher','1B':'First Base','2B':'Second Base',
+        '3B':'Third Base','SS':'Shortstop','LF':'Left Field','CF':'Center Field','RF':'Right Field',
+      };
+      const extraPos   = (appSettings.extraPositions || []).find(p => p.code === posCode);
+      const posDisplay = useFr
+        ? (posLabels_fr[posCode] || extraPos?.label || posCode)
+        : (posLabels_en[posCode] || extraPos?.label || posCode);
+
+      const jersey = entry.jersey ? (useFr ? `numéro ${entry.jersey}` : `number ${entry.jersey}`) : '';
+      const name   = player.name || '';
+
+      if (useFr) {
+        return `${ordinal} frappeur, ${posDisplay}${jersey ? ', ' + jersey : ''}, ${name} !`;
+      } else {
+        return `${ordinal} batter, ${posDisplay}${jersey ? ', ' + jersey : ''}, ${name}!`;
+      }
+    }
+
+    async function ttsSpeak(text) {
+      const t = appSettings.tts || {};
+      if (t.engine === 'openai' && t.openAIKey) {
+        return ttsOpenAI(text, t.openAIKey, t.openAIVoice || 'onyx');
+      }
+      if (t.engine === 'elevenlabs' && t.elevenLabsKey) {
+        return ttsElevenLabs(text, t.elevenLabsKey, t.elevenLabsVoice, t.elevenLabsLang);
+      }
+      return ttsWebSpeech(text, t.voiceName);
+    }
+
+    function ttsWebSpeech(text, voiceName) {
+      return new Promise((resolve) => {
+        if (!window.speechSynthesis) return resolve();
+        let resolved = false;
+        const done = () => { if (!resolved) { resolved = true; resolve(); } };
+
+        // Safety timeout — if speech never fires onend, continue after 10s
+        const timeout = setTimeout(done, 10000);
+
+        setTimeout(() => {
+          const utt = new SpeechSynthesisUtterance(text);
+          utt.rate   = 0.92;
+          utt.pitch  = 0.95;
+          utt.volume = 1;
+          if (voiceName) {
+            const v = speechSynthesis.getVoices().find(v => v.name === voiceName);
+            if (v) utt.voice = v;
+          }
+          utt.onend   = () => { clearTimeout(timeout); done(); };
+          utt.onerror = () => { clearTimeout(timeout); done(); };
+          speechSynthesis.speak(utt);
+        }, 150);
+      });
+    }
+
+    async function ttsOpenAI(text, apiKey, voice) {
+      const res = await fetch('https://api.openai.com/v1/audio/speech', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: 'tts-1', input: text, voice, speed: 0.95 }),
+      });
+      if (!res.ok) throw new Error(`OpenAI TTS error: ${res.status}`);
+      const blob = await res.blob();
+      const url  = URL.createObjectURL(blob);
+      return new Promise((resolve, reject) => {
+        const audio = new Audio(url);
+        audio.onended = () => { URL.revokeObjectURL(url); resolve(); };
+        audio.onerror = reject;
+        audio.play().catch(reject);
+      });
+    }
+
+    async function ttsElevenLabs(text, apiKey, voiceId, langCode) {
+      const vid = voiceId || 'onwK4e9ZLuTAKqWW03F9'; // Daniel by default
+      const body = {
+        text,
+        model_id: 'eleven_multilingual_v2',
+        voice_settings: { stability: 0.5, similarity_boost: 0.75, style: 0.3, use_speaker_boost: true },
+      };
+      if (langCode) body.language_code = langCode;
+
+      const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${vid}`, {
+        method: 'POST',
+        headers: {
+          'xi-api-key': apiKey,
+          'Content-Type': 'application/json',
+          'Accept': 'audio/mpeg',
+        },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(`ElevenLabs error ${res.status}: ${err.detail?.message || res.statusText}`);
+      }
+      const blob = await res.blob();
+      const url  = URL.createObjectURL(blob);
+      return new Promise((resolve, reject) => {
+        const audio = new Audio(url);
+        audio.onended = () => { URL.revokeObjectURL(url); resolve(); };
+        audio.onerror = reject;
+        audio.play().catch(reject);
+      });
+    }
+
+    async function ttsLoadElevenLabsVoices() {
+      const key = document.getElementById('ttsElevenLabsKey')?.value?.trim();
+      if (!key) { alert('Please enter your ElevenLabs API key first.'); return; }
+      try {
+        const res = await fetch('https://api.elevenlabs.io/v1/voices', {
+          headers: { 'xi-api-key': key },
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        const sel = document.getElementById('ttsElevenLabsVoice');
+        if (!sel) return;
+        sel.innerHTML = data.voices.map(v =>
+          `<option value="${v.voice_id}">${v.name} (${v.labels?.accent || v.labels?.language || 'custom'})</option>`
+        ).join('');
+        alert(`✓ ${data.voices.length} voices loaded from your ElevenLabs account.`);
+      } catch(e) {
+        alert('Failed to load voices: ' + e.message);
+      }
+    }
+
+    const TTS_TEMPLATES = {
+      'en':       'Now batting, number {jersey}, {name}!',
+      'en-short': '{name}!',
+      'fr':       'Au bâton, numéro {jersey}, {name} !',
+      'fr-short': '{name} !',
+    };
+
+    function ttsSetTemplate(key) {
+      const tmpl = document.getElementById('ttsTemplate');
+      if (tmpl && TTS_TEMPLATES[key]) tmpl.value = TTS_TEMPLATES[key];
+    }
+
+    async function ttsTest() {
+      const fakeEntry = { pid: Object.keys(allPlayers)[0] || 0, jersey: '7', pos: 'CF' };
+      if (!allPlayers[fakeEntry.pid]) {
+        fakeEntry.pid = 0;
+        allPlayers[0] = { name: 'John Smith' };
+      }
+      const text = ttsBuildText(fakeEntry);
+      try { await ttsSpeak(text); } catch(e) { alert('TTS error: ' + e.message); }
+    }
+
+    function ttsSave() {
+      const t = appSettings.tts = appSettings.tts || {};
+      t.template         = document.getElementById('ttsTemplate')?.value         || t.template;
+      t.engine           = document.getElementById('ttsEngine')?.value           || t.engine;
+      t.lang             = document.getElementById('ttsLang')?.value             || 'en';
+      t.voiceName        = document.getElementById('ttsVoiceSelect')?.value      || '';
+      t.openAIKey        = document.getElementById('ttsOpenAIKey')?.value        || '';
+      t.openAIVoice      = document.getElementById('ttsOpenAIVoice')?.value      || 'onyx';
+      t.elevenLabsKey    = document.getElementById('ttsElevenLabsKey')?.value    || '';
+      t.elevenLabsVoice  = document.getElementById('ttsElevenLabsVoice')?.value  || '';
+      t.elevenLabsLang   = document.getElementById('ttsElevenLabsLang')?.value   || '';
+      t.fadeDelay        = parseFloat(document.getElementById('ttsFade')?.value) || 1.5;
+      saveConfig();
+      showCfgSaveIndicator();
+    }
+
     function ifSavePassword() {
       const current  = document.getElementById('ifPwdCurrent').value;
       const newPwd   = document.getElementById('ifPwdNew').value;
@@ -4300,8 +5133,8 @@
         if (type === 'success') setTimeout(() => { msgEl.style.display = 'none'; }, 3000);
       };
 
-      if (current !== appSettings.adminPassword) { show('Mot de passe actuel incorrect.', 'error'); return; }
-      if (!newPwd || newPwd.length < 4) { show('Le nouveau mot de passe doit faire au moins 4 caractères.', 'error'); return; }
+      if (current !== appSettings.adminPassword) { show('Current password is incorrect.', 'error'); return; }
+      if (!newPwd || newPwd.length < 4) { show('New password must be at least 4 characters.', 'error'); return; }
       if (newPwd !== confirm) { show('Les deux mots de passe ne correspondent pas.', 'error'); return; }
 
       appSettings.adminPassword = newPwd;
@@ -4329,7 +5162,7 @@
           document.getElementById('mvpDate').value = new Date().toISOString().split('T')[0];
         // Peupler le select MVP
         const sel = document.getElementById('mvpPlayer');
-        sel.innerHTML = '<option value="">— Choisir le MVP —</option>';
+        sel.innerHTML = '<option value="">— Choose MVP —</option>';
         currentLineup().filter(e => e.present !== false).forEach(entry => {
           const p = allPlayers[entry.pid];
           if (!p) return;
@@ -4356,9 +5189,9 @@
     }
 
     function updateMvpPhoto() {
-      // Réinitialise la photo quand on change de joueur
+      // Réinitialise la photo quand on change de player
       mvpPhotoURL = null;
-      document.getElementById('mvpPhotoText').textContent = '📂 Choisir une photo PNG…';
+      document.getElementById('mvpPhotoText').textContent = '📂 Choose a PNG photo…';
       document.getElementById('mvpPhotoLabel').classList.remove('has-file');
       document.getElementById('mvpPhotoFile').value = '';
     }
@@ -4369,11 +5202,20 @@
       const {r:ar, g:ag, b:ab} = hexToRgb(accent);
       const accentAlpha = (a) => `rgba(${ar},${ag},${ab},${a})`;
       const date     = document.getElementById('scoreDate').value;
-      const opponent = document.getElementById('scoreOpponent').value.trim() || 'Adversaire';
+      const oppInfo  = getOpponentInfo('scoreOpponentSelect', 'scoreOpponent');
+      const opponent = oppInfo.name;
       const home     = document.getElementById('scoreHome').value || '0';
       const away     = document.getElementById('scoreAway').value || '0';
       const result   = document.querySelector('input[name="scoreResult"]:checked')?.value || '';
       const team     = teams[currentTeamId];
+
+      // Load opponent logo if available
+      let oppLogoImg = null;
+      if (oppInfo.logo) {
+        oppLogoImg = new Image();
+        await new Promise(r => { oppLogoImg.onload = r; oppLogoImg.onerror = r; oppLogoImg.src = oppInfo.logo; });
+        if (!oppLogoImg.naturalWidth) oppLogoImg = null;
+      }
 
       const W = 1080, H = 1920;
       const canvas = document.getElementById('scoreCanvas');
@@ -4417,14 +5259,35 @@
       // Date & adversaire
       if (date) {
         const d = new Date(date);
-        const dateStr = d.toLocaleDateString('fr-BE', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+        const dateStr = d.toLocaleDateString('en-US', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
         ctx.fillStyle = 'rgba(255,255,255,0.45)';
         ctx.font = '30px Barlow Condensed, sans-serif';
         ctx.fillText(dateStr.toUpperCase(), W/2, 390);
       }
-      ctx.fillStyle = '#FFFFFF';
-      ctx.font = 'bold 38px Oswald, sans-serif';
-      ctx.fillText('VS ' + opponent.toUpperCase(), W/2, 440);
+
+      // VS row: our logo — VS — opponent logo
+      {
+        const vsY = 440, vsLogoH = 72;
+        // Our logo
+        if (logoImg.naturalWidth > 0) {
+          const lw = (logoImg.width / logoImg.height) * vsLogoH;
+          ctx.drawImage(logoImg, W/2 - 200 - lw, vsY - vsLogoH/2 - 8, lw, vsLogoH);
+        }
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = 'bold 38px Oswald, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('VS', W/2, vsY + 14);
+        // Opponent logo or name
+        if (oppLogoImg) {
+          const lw = (oppLogoImg.width / oppLogoImg.height) * vsLogoH;
+          ctx.drawImage(oppLogoImg, W/2 + 200, vsY - vsLogoH/2 - 8, lw, vsLogoH);
+        } else {
+          ctx.fillStyle = 'rgba(255,255,255,0.7)';
+          ctx.font = 'bold 30px Oswald, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText(opponent.toUpperCase(), W/2 + 240, vsY + 14);
+        }
+      }
 
       // Séparateur
       ctx.strokeStyle = accentAlpha(0.4);
@@ -4433,7 +5296,7 @@
 
       // Grand score central
       const resultColors = { win: '#2ecc40', loss: '#cc2200', tie: accent };
-      const resultLabels = { win: '🏆 VICTOIRE', loss: '❌ DÉFAITE', tie: '🤝 MATCH NUL' };
+      const resultLabels = { win: '🏆 WIN', loss: '❌ LOSS', tie: '🤝 TIE' };
       const accentColor = resultColors[result] || accent;
 
       // Score box
@@ -4460,14 +5323,25 @@
       ctx.fillStyle = 'rgba(255,255,255,0.45)';
       ctx.fillText(away, W-140, boxY + 270);
 
-      // Labels sous les scores
+      // Labels sous les scores + logos miniatures
+      const labelY = boxY + 320;
+      // Our side
       ctx.font = '28px Barlow Condensed, sans-serif';
       ctx.textAlign = 'left';
       ctx.fillStyle = accent;
-      ctx.fillText(document.querySelector('.header-club')?.textContent || 'YOUR TEAM', 140, boxY + 320);
+      ctx.fillText(document.querySelector('.header-club')?.textContent || 'YOUR TEAM', 140, labelY);
+      // Opponent side
       ctx.textAlign = 'right';
       ctx.fillStyle = 'rgba(255,255,255,0.3)';
-      ctx.fillText(opponent.toUpperCase(), W-140, boxY + 320);
+      ctx.fillText(opponent.toUpperCase(), W-140, labelY);
+      // Opponent logo miniature above away score
+      if (oppLogoImg) {
+        const mH = 60;
+        const mW = (oppLogoImg.width / oppLogoImg.height) * mH;
+        ctx.globalAlpha = 0.55;
+        ctx.drawImage(oppLogoImg, W - 140 - mW, boxY - mH - 10, mW, mH);
+        ctx.globalAlpha = 1;
+      }
 
       // Badge résultat
       if (result) {
@@ -4495,10 +5369,10 @@
       const accentAlpha = (a) => `rgba(${ar},${ag},${ab},${a})`;
       const pid      = document.getElementById('mvpPlayer').value;
       const date     = document.getElementById('mvpDate').value;
-      const opponent = document.getElementById('mvpOpponent').value.trim() || 'Adversaire';
+      const opponent = document.getElementById('mvpOpponent').value.trim() || 'Opponent';
       const quote    = document.getElementById('mvpQuote').value.trim();
 
-      if (!pid) { alert('Sélectionne un joueur MVP !'); return; }
+      if (!pid) { alert('Select a player MVP !'); return; }
 
       const player = allPlayers[pid];
       const entry  = currentLineup().find(e => String(e.pid) === String(pid));
@@ -4545,7 +5419,7 @@
       // Date & adversaire
       if (date) {
         const d = new Date(date);
-        const ds = d.toLocaleDateString('fr-BE', { day:'numeric', month:'long', year:'numeric' });
+        const ds = d.toLocaleDateString('en-US', { day:'numeric', month:'long', year:'numeric' });
         ctx.fillStyle = 'rgba(255,255,255,0.4)';
         ctx.font = '28px Barlow Condensed, sans-serif';
         ctx.fillText(ds.toUpperCase() + '  ·  VS ' + opponent.toUpperCase(), 60, 200);
@@ -4561,7 +5435,7 @@
       ctx.fillStyle = accent;
       ctx.fillRect(60, 360, 180, 4);
 
-      // Photo joueur si disponible
+      // Photo player si disponible
       let photoLoaded = false;
       if (mvpPhotoURL || player.photo) {
         const pImg = new Image();
@@ -4585,7 +5459,7 @@
         ctx.fillText('#' + entry.jersey, W - 40, H * 0.72);
       }
 
-      // Nom joueur
+      // Nom player
       ctx.fillStyle = '#FFFFFF';
       ctx.font = 'bold 96px Oswald, sans-serif';
       ctx.textAlign = 'left';
@@ -4674,9 +5548,178 @@
       }
     }
 
+    // ── TEAM INTRO — SEQUENTIAL MODE ──
+    let introState = {
+      entries: [],
+      index: 0,
+      paused: false,
+      timer: null,
+      elapsed: 0,
+    };
+
+    function startTeamIntro() {
+      stopPlayback();
+      const entries = currentLineup().filter(e => e.present !== false);
+      if (entries.length === 0) { alert('No present players in the lineup.'); return; }
+
+      introState = { entries, index: 0, paused: false, timer: null, elapsed: 0 };
+
+      const overlay = document.getElementById('introOverlay');
+      overlay.style.display = 'flex';
+
+      // Prevent scroll behind overlay
+      document.body.style.overflow = 'hidden';
+
+      introBuildDots();
+      introShowPlayer(0);
+    }
+
+    function stopTeamIntro() {
+      clearInterval(introState.timer);
+      if (window.speechSynthesis) speechSynthesis.cancel();
+      introState = { entries: [], index: 0, paused: false, timer: null, elapsed: 0 };
+      document.getElementById('introOverlay').style.display = 'none';
+      document.body.style.overflow = '';
+    }
+
+    function introBuildDots() {
+      const wrap = document.getElementById('introDotsWrap');
+      if (!wrap) return;
+      wrap.innerHTML = introState.entries.map((_, i) =>
+        `<div class="intro-dot" id="idot-${i}" style="width:10px;height:10px;border-radius:50%;background:var(--border);transition:all 0.3s;flex-shrink:0"></div>`
+      ).join('');
+    }
+
+    function introUpdateDots(idx) {
+      introState.entries.forEach((_, i) => {
+        const d = document.getElementById(`idot-${i}`);
+        if (!d) return;
+        d.style.background = i < idx ? 'rgba(255,69,0,0.4)' : i === idx ? 'var(--orange)' : 'var(--border)';
+        d.style.transform = i === idx ? 'scale(1.4)' : 'scale(1)';
+        d.style.boxShadow = i === idx ? '0 0 8px var(--orange)' : 'none';
+      });
+    }
+
+    async function introShowPlayer(idx) {
+      clearInterval(introState.timer);
+
+      if (idx >= introState.entries.length) {
+        stopTeamIntro();
+        return;
+      }
+
+      introState.index = idx;
+      introState.elapsed = 0;
+      introUpdateDots(idx);
+
+      const entry  = introState.entries[idx];
+      const player = allPlayers[entry.pid];
+      if (!player) { setTimeout(() => introNext(), 500); return; }
+
+      // Build position label — same language as TTS
+      const posCode = entry.pos || '';
+      const useFr   = (appSettings.tts?.lang || 'en') === 'fr';
+      const posLabels_fr = {
+        'P':'Lanceur','C':'Receveur','1B':'Première base','2B':'Deuxième base',
+        '3B':'Troisième base','SS':'Arrêt-court','LF':'Champ gauche','CF':'Champ centre','RF':'Champ droit',
+      };
+      const posLabels_en = {
+        'P':'Pitcher','C':'Catcher','1B':'First Base','2B':'Second Base',
+        '3B':'Third Base','SS':'Shortstop','LF':'Left Field','CF':'Center Field','RF':'Right Field',
+      };
+      const extraPos   = (appSettings.extraPositions || []).find(p => p.code === posCode);
+      const posDisplay = useFr
+        ? (posLabels_fr[posCode] || extraPos?.label || posCode)
+        : (posLabels_en[posCode] || extraPos?.label || posCode);
+      const playingLabel = posDisplay
+        ? (useFr ? 'Position : ' + posDisplay : 'Playing ' + posDisplay)
+        : '';
+
+      // ── Update UI immediately ──
+      document.getElementById('introOrderNum').textContent  = idx + 1;
+      document.getElementById('introName').textContent      = player.name.toUpperCase();
+      document.getElementById('introJersey').textContent    = entry.jersey ? '#' + entry.jersey : '';
+      document.getElementById('introPosBadge').textContent  = posCode;
+      document.getElementById('introPosBadge').style.display = posCode ? 'inline-block' : 'none';
+      document.getElementById('introPlayingLabel').textContent = playingLabel;
+      document.getElementById('introCounter').textContent   = `${idx + 1} / ${introState.entries.length}`;
+      document.getElementById('introPauseIcon').innerHTML   = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
+
+      // Avatar
+      const avatarEl = document.getElementById('introAvatar');
+      if (player.photo) {
+        avatarEl.innerHTML = `<img src="${player.photo}" style="width:100%;height:100%;object-fit:cover" />`;
+      } else {
+        avatarEl.innerHTML = `<svg width="60" height="60" viewBox="-16 -44 32 52" fill="none">
+          <ellipse cx="0" cy="-18" rx="12" ry="14" fill="#555"/>
+          <ellipse cx="0" cy="-30" rx="15" ry="7" fill="rgba(255,69,0,0.5)"/>
+          <rect x="-15" y="-34" width="30" height="5" rx="2" fill="rgba(255,69,0,0.5)"/>
+          <path d="M13,-30 L24,-28 L13,-26 Z" fill="rgba(255,69,0,0.5)"/>
+          <rect x="-14" y="-2" width="28" height="20" rx="3" fill="#333"/>
+        </svg>`;
+      }
+
+      // ── 1 second pause before announcement ──
+      await new Promise(r => setTimeout(r, 1000));
+      if (introState.index !== idx) return;
+
+      // ── TTS ──
+      const ttsEnabled = appSettings.tts?.enabled;
+      if (ttsEnabled) {
+        try {
+          await ttsSpeak(ttsBuildIntroText(entry, idx));
+        } catch(e) {
+          console.warn('TTS failed:', e);
+        }
+      } else {
+        // No TTS: show card for 2.5s
+        await new Promise(r => setTimeout(r, 2500));
+      }
+
+      // Abort if player changed (skipped/stopped)
+      if (introState.index !== idx) return;
+
+      // Pause between players then advance
+      await new Promise(r => setTimeout(r, 500));
+      if (introState.index !== idx) return;
+      introNext();
+    }
+
+    function introNext() {
+      introShowPlayer(introState.index + 1);
+    }
+
+    function introPrev() {
+      introShowPlayer(Math.max(0, introState.index - 1));
+    }
+
+    function introTogglePause() {
+      introState.paused = !introState.paused;
+      const icon = document.getElementById('introPauseIcon');
+      if (introState.paused) {
+        if (window.speechSynthesis) speechSynthesis.pause();
+        if (icon) icon.innerHTML = '<path d="M8 5v14l11-7z"/>';
+      } else {
+        if (window.speechSynthesis) speechSynthesis.resume();
+        if (icon) icon.innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
+      }
+    }
+
+    // Close on Escape key
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && document.getElementById('introOverlay')?.style.display !== 'none') {
+        stopTeamIntro();
+      }
+      if (e.key === 'ArrowRight' && document.getElementById('introOverlay')?.style.display !== 'none') introNext();
+      if (e.key === 'ArrowLeft'  && document.getElementById('introOverlay')?.style.display !== 'none') introPrev();
+      if (e.key === ' '          && document.getElementById('introOverlay')?.style.display !== 'none') {
+        e.preventDefault(); introTogglePause();
+      }
+    });
+
     // ── INIT ──
     async function init() {
-      document.getElementById('saveIndicator').textContent = '⏳ Chargement...';
+      document.getElementById('saveIndicator').textContent = '⏳ Loading...';
       document.getElementById('saveIndicator').classList.add('visible');
 
       await loadConfig();
@@ -4688,11 +5731,12 @@
       }
 
       updateTeamSelector();
+      refreshOpponentSelects();
 
       // ✅ Reset mode édition au chargement
       document.body.classList.remove('edit-mode');
       const eb = document.getElementById('editModeBtn');
-      if (eb) { eb.textContent = '✏️'; eb.title = 'Mode modification'; }
+      if (eb) { eb.textContent = '✏️'; eb.title = 'Edit mode'; }
       isEditMode = false;
 
       document.getElementById('saveIndicator').classList.remove('visible');
