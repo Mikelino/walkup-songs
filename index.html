@@ -816,6 +816,408 @@
     /* ── DIVIDER ── */
     .divider { height: 1px; background: var(--border); margin: 20px 0; }
 
+    /* ── LIVE MODE 3-COLUMN LAYOUT ── */
+    #mainPanelLive.active {
+      display: flex !important;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .live-columns {
+      display: flex;
+      flex-direction: row;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .live-col {
+      display: flex;
+      flex-direction: column;
+      min-width: 160px;
+      overflow: hidden;
+    }
+
+    .live-col-header {
+      font-family: 'Oswald', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--orange);
+      padding: 12px 14px 10px;
+      border-bottom: 1px solid var(--border);
+      background: var(--darkgray);
+      flex-shrink: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .live-col-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px 12px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+
+    .live-col-body::-webkit-scrollbar { width: 4px; }
+    .live-col-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .live-col-section-label {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 10px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .live-resizer {
+      width: 5px;
+      flex-shrink: 0;
+      background: var(--border);
+      cursor: col-resize;
+      transition: background 0.15s;
+      position: relative;
+    }
+    .live-resizer:hover,
+    .live-resizer.dragging { background: var(--orange); }
+
+    .live-add-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      padding: 7px 12px;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      color: var(--muted);
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 11px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      transition: all 0.15s;
+    }
+
+    /* Soundboard list */
+    .live-soundboard { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin-bottom: 4px; }
+    #liveColField .live-custom-sounds,
+    #liveColSounds .live-soundboard,
+    #liveColSounds .live-custom-sounds { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+
+    /* Walkup song cards compact in column */
+    #liveColWalkup .live-player-card {
+      padding: 8px 10px;
+      gap: 8px;
+    }
+
+    @media (max-width: 700px) {
+      .live-columns { flex-direction: column; }
+      .live-resizer { width: 100%; height: 5px; cursor: row-resize; }
+      .live-col { min-width: unset; min-height: 120px; }
+    }
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+
+    /* ── SOUND BUTTONS — CONSOLE STYLE ── */
+    .sound-btn {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      background: rgba(255,69,0,0.06);
+      border: 1px solid rgba(255,69,0,0.25);
+      border-top: 3px solid rgba(255,69,0,0.4);
+      border-radius: 5px;
+      color: var(--orange);
+      cursor: not-allowed;
+      padding: 10px 8px 26px;
+      transition: all 0.12s;
+      font-family: 'Barlow Condensed', sans-serif;
+      filter: grayscale(1);
+      opacity: 0.45;
+      user-select: none;
+      box-sizing: border-box;
+      min-height: 88px;
+      overflow: hidden;
+      contain: layout;
+    }
+
+    .sound-btn.has-file,
+    .sound-btn.custom-active {
+      background: rgba(255,69,0,0.08);
+      border-color: rgba(255,69,0,0.35);
+      border-top-color: var(--orange);
+      color: var(--offwhite);
+      cursor: pointer;
+      filter: none;
+      opacity: 1;
+    }
+    .sound-btn.has-file:hover,
+    .sound-btn.custom-active:hover {
+      background: rgba(255,69,0,0.14);
+      border-color: rgba(255,69,0,0.55);
+      border-top-color: var(--orange);
+    }
+    .sound-btn.playing {
+      background: rgba(255,69,0,0.16);
+      border-color: rgba(255,69,0,0.65);
+      border-top-color: var(--orange);
+      box-shadow: 0 0 10px rgba(255,69,0,0.2);
+    }
+    .sound-btn.empty {
+      cursor: pointer;
+      filter: none;
+      opacity: 0.6;
+      color: var(--orange);
+    }
+    .sound-btn.empty:hover {
+      opacity: 0.9;
+      border-color: rgba(255,69,0,0.5);
+      border-top-color: var(--orange);
+      background: rgba(255,69,0,0.1);
+    }
+
+    /* LED indicator */
+    .sound-led {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: rgba(255,69,0,0.15);
+      border: 1px solid rgba(255,69,0,0.3);
+      transition: all 0.2s;
+      flex-shrink: 0;
+      order: -1;
+      align-self: flex-end;
+    }
+    .sound-btn.has-file .sound-led,
+    .sound-btn.custom-active .sound-led { background: rgba(255,69,0,0.3); border-color: rgba(255,69,0,0.5); }
+    .sound-btn.playing .sound-led {
+      background: var(--orange);
+      border-color: #ff6622;
+      box-shadow: 0 0 5px var(--orange);
+      animation: led-blink 0.8s infinite;
+    }
+    @keyframes led-blink { 0%,100%{opacity:1} 50%{opacity:0.25} }
+
+    .sound-btn-icon { font-size: 20px; line-height: 1; flex-shrink: 0; }
+
+    .sound-btn-label {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      text-align: center;
+      line-height: 1.2;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+    .sound-btn.playing .sound-btn-label { color: var(--orange); }
+
+    /* Hover action overlay */
+    .sound-btn-actions {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+    .sound-btn.has-file:hover .sound-btn-actions,
+    .sound-btn.custom-active:hover .sound-btn-actions,
+    .sound-btn.empty:hover .sound-btn-actions,
+    .sound-btn.playing .sound-btn-actions {
+      display: flex;
+    }
+    /* On empty: only show edit */
+    .sound-btn.empty .sound-action.play,
+    .sound-btn.empty .sound-action.stop,
+    .sound-btn.empty .sound-action.del { display: none; }
+
+    .sound-action {
+      width: 26px; height: 26px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 3px;
+      border: 1px solid rgba(255,69,0,0.3);
+      background: rgba(255,69,0,0.08);
+      color: var(--orange);
+      cursor: pointer;
+      font-size: 11px;
+      transition: all 0.1s;
+    }
+    .sound-action:hover { border-color: var(--orange); background: rgba(255,69,0,0.2); }
+    .sound-action.stop { background: rgba(255,69,0,0.15); border-color: rgba(255,69,0,0.5); }
+    .sound-action.stop:hover { background: rgba(255,69,0,0.3); }
+    .sound-action.del { color: #ff6655; border-color: rgba(200,30,0,0.3); }
+    .sound-action.del:hover { border-color: #cc2200; background: rgba(200,30,0,0.2); }
+
+    .sound-btn.has-file:hover .sound-btn-icon,
+    .sound-btn.has-file:hover .sound-btn-label,
+    .sound-btn.custom-active:hover .sound-btn-icon,
+    .sound-btn.custom-active:hover .sound-btn-label,
+    .sound-btn.empty:hover .sound-btn-icon,
+    .sound-btn.empty:hover .sound-btn-label,
+    .sound-btn.playing .sound-btn-icon,
+    .sound-btn.playing .sound-btn-label { display: none; }
+
+    .sound-btn:not(.playing) .sound-action.stop { display: none; }
+    .sound-btn.playing .sound-action.play,
+    .sound-btn.playing .sound-action.edit,
+    .sound-btn.playing .sound-action.del { display: none; }
+
+    .sound-btn.has-file:hover .sound-upload-lbl,
+    .sound-btn.custom-active:hover .sound-upload-lbl,
+    .sound-btn.empty:hover .sound-upload-lbl,
+    .sound-btn.playing .sound-upload-lbl { display: none; }
+
+    .sound-btn.has-file:hover .sound-led,
+    .sound-btn.custom-active:hover .sound-led,
+    .sound-btn.empty:hover .sound-led,
+    .sound-btn.playing .sound-led { display: none; }
+
+    /* Bottom bar — upload / stop */
+    .sound-upload-lbl {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 8px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: rgba(255,69,0,0.5);
+      background: rgba(255,69,0,0.05);
+      border-top: 1px solid rgba(255,69,0,0.2);
+      border-radius: 0 0 4px 4px;
+      cursor: pointer;
+      transition: all 0.12s;
+    }
+    .sound-upload-lbl:hover { color: var(--orange); background: rgba(255,69,0,0.12); border-color: rgba(255,69,0,0.4); }
+    .sound-btn.has-file:hover .sound-upload-lbl,
+    .sound-btn.custom-active:hover .sound-upload-lbl,
+    .sound-btn.playing .sound-upload-lbl { display: none; }
+    .live-custom-sounds {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+
+    /* Live lineup — simplified cards */
+    .live-player-card {
+      background: var(--darkgray);
+      border: 1px solid var(--border);
+      border-left: 3px solid transparent;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      cursor: pointer;
+      transition: all 0.15s;
+      border-radius: 2px;
+      margin-bottom: 2px;
+    }
+
+    .live-player-card:hover {
+      border-color: rgba(255,69,0,0.3);
+      border-left-color: var(--orange);
+      background: var(--gray);
+    }
+
+    .live-player-card.playing {
+      background: #140800;
+      border-left-color: var(--orange);
+      border-color: rgba(255,69,0,0.5);
+    }
+
+    .live-order {
+      font-family: 'Oswald', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--border);
+      width: 24px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .live-player-card:hover .live-order,
+    .live-player-card.playing .live-order { color: var(--orange); }
+
+    .live-player-info { flex: 1; min-width: 0; }
+
+    .live-player-name {
+      font-family: 'Oswald', sans-serif;
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--white);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .live-player-meta {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 11px;
+      letter-spacing: 1px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .live-play-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      background: var(--gray);
+      color: var(--muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.15s;
+    }
+
+    .live-play-btn:hover {
+      border-color: var(--orange);
+      color: var(--orange);
+      background: rgba(255,69,0,0.1);
+    }
+
+    .live-player-card.playing .live-play-btn {
+      border-color: var(--orange);
+      color: var(--orange);
+      background: rgba(255,69,0,0.15);
+    }
+
+    .sound-upload-lbl {
+      position: absolute;
+      bottom: 6px;
+      left: 8px;
+      font-size: 10px;
+      color: var(--muted);
+      cursor: pointer;
+      opacity: 0.4;
+      transition: opacity 0.15s;
+      padding: 2px 4px;
+      border-radius: 2px;
+    }
+    .sound-btn:hover .sound-upload-lbl { opacity: 0.8; color: var(--orange); }
+    .sound-btn.has-file .sound-upload-lbl { color: var(--orange); opacity: 0.7; }
+
     /* ── ADD PLAYER ── */
     .add-card { background: var(--darkgray); border: 1px solid var(--border); }
 
@@ -1957,102 +2359,143 @@
 
     <!-- SIDEBAR PRINCIPALE -->
     <nav class="main-sidebar">
-      <button class="main-nav-btn active" id="mainNavBatting" onclick="mainSwitchTab('batting')">
-        <span class="main-nav-label">Batting Order</span>
+      <button class="main-nav-btn active" id="mainNavLive" onclick="mainSwitchTab('live')">
+        <span class="main-nav-icon">🎙️</span>
+        <span class="main-nav-label">Live Mode</span>
+      </button>
+      <button class="main-nav-btn" id="mainNavBatting" onclick="mainSwitchTab('batting')">
+        <span class="main-nav-icon">⚾</span>
+        <span class="main-nav-label">Lineup Mode</span>
       </button>
       <button class="main-nav-btn" id="mainNavSocial" onclick="mainSwitchTab('social')">
-        <span class="main-nav-label">Social Media</span>
+        <span class="main-nav-icon">📸</span>
+        <span class="main-nav-label">Social Mode</span>
       </button>
     </nav>
 
     <!-- PANELS -->
     <div class="main-panels">
 
-      <!-- PANEL : BATTING ORDER -->
-      <div class="main-panel active" id="mainPanelBatting">
+      <!-- PANEL : LIVE MODE -->
+      <div class="main-panel active" id="mainPanelLive">
+
+        <div class="live-columns" id="liveColumns">
+
+          <!-- ── COLUMN 1: SOUNDS ── -->
+          <div class="live-col" id="liveColSounds">
+            <div class="live-col-header">🔊 Sounds</div>
+            <div class="live-col-body">
+
+              <div class="live-col-section-label">Soundboard</div>
+              <div class="live-soundboard">
+                <div class="sound-btn empty" id="sbtnAnthem" onclick="liveSoundPlay('anthem')">
+                  <div class="sound-led"></div>
+                  <span class="sound-btn-icon">🎺</span>
+                  <span class="sound-btn-label" id="slblAnthem">National Anthem</span>
+                  <div class="sound-btn-actions">
+                    <span class="sound-action play" onclick="event.stopPropagation();liveSoundPlay('anthem')" title="Play">▶</span>
+                    <span class="sound-action stop" onclick="event.stopPropagation();liveSoundStop('anthem')" title="Stop">■</span>
+                    <span class="sound-action edit" onclick="event.stopPropagation();liveSoundEdit('anthem')" title="Edit">✏</span>
+                    <span class="sound-action del" onclick="event.stopPropagation();liveSoundClear('anthem')" title="Remove">✕</span>
+                  </div>
+                  <label class="sound-upload-lbl" id="sulblAnthem" onclick="event.stopPropagation()">📂 upload mp3<input type="file" accept="audio/*" style="display:none" onchange="liveSoundUpload('anthem',this)"/></label>
+                </div>
+                <div class="sound-btn empty" id="sbtnApplause" onclick="liveSoundPlay('applause')">
+                  <div class="sound-led"></div>
+                  <span class="sound-btn-icon">👏</span>
+                  <span class="sound-btn-label" id="slblApplause">Applause</span>
+                  <div class="sound-btn-actions">
+                    <span class="sound-action play" onclick="event.stopPropagation();liveSoundPlay('applause')" title="Play">▶</span>
+                    <span class="sound-action stop" onclick="event.stopPropagation();liveSoundStop('applause')" title="Stop">■</span>
+                    <span class="sound-action edit" onclick="event.stopPropagation();liveSoundEdit('applause')" title="Edit">✏</span>
+                    <span class="sound-action del" onclick="event.stopPropagation();liveSoundClear('applause')" title="Remove">✕</span>
+                  </div>
+                  <label class="sound-upload-lbl" id="sulblApplause" onclick="event.stopPropagation()">📂 upload mp3<input type="file" accept="audio/*" style="display:none" onchange="liveSoundUpload('applause',this)"/></label>
+                </div>
+                <div class="sound-btn empty" id="sbtnLetsgo" onclick="liveSoundPlay('letsgo')">
+                  <div class="sound-led"></div>
+                  <span class="sound-btn-icon">📣</span>
+                  <span class="sound-btn-label" id="slblLetsgo">Let's Go!</span>
+                  <div class="sound-btn-actions">
+                    <span class="sound-action play" onclick="event.stopPropagation();liveSoundPlay('letsgo')" title="Play">▶</span>
+                    <span class="sound-action stop" onclick="event.stopPropagation();liveSoundStop('letsgo')" title="Stop">■</span>
+                    <span class="sound-action edit" onclick="event.stopPropagation();liveSoundEdit('letsgo')" title="Edit">✏</span>
+                    <span class="sound-action del" onclick="event.stopPropagation();liveSoundClear('letsgo')" title="Remove">✕</span>
+                  </div>
+                  <label class="sound-upload-lbl" id="sulblLetsgo" onclick="event.stopPropagation()">📂 upload mp3<input type="file" accept="audio/*" style="display:none" onchange="liveSoundUpload('letsgo',this)"/></label>
+                </div>
+                <div class="sound-btn empty" id="sbtnHomerun" onclick="liveSoundPlay('homerun')">
+                  <div class="sound-led"></div>
+                  <span class="sound-btn-icon">💥</span>
+                  <span class="sound-btn-label" id="slblHomerun">Home Run!</span>
+                  <div class="sound-btn-actions">
+                    <span class="sound-action play" onclick="event.stopPropagation();liveSoundPlay('homerun')" title="Play">▶</span>
+                    <span class="sound-action stop" onclick="event.stopPropagation();liveSoundStop('homerun')" title="Stop">■</span>
+                    <span class="sound-action edit" onclick="event.stopPropagation();liveSoundEdit('homerun')" title="Edit">✏</span>
+                    <span class="sound-action del" onclick="event.stopPropagation();liveSoundClear('homerun')" title="Remove">✕</span>
+                  </div>
+                  <label class="sound-upload-lbl" id="sulblHomerun" onclick="event.stopPropagation()">📂 upload mp3<input type="file" accept="audio/*" style="display:none" onchange="liveSoundUpload('homerun',this)"/></label>
+                </div>
+              </div>
+
+              <div class="live-col-section-label" style="margin-top:16px">Custom</div>
+              <div class="live-custom-sounds" id="liveCustomSoundsGrid"></div>
+              <div style="margin-top:8px">
+                <label class="live-add-btn" onmouseover="this.style.borderColor='var(--orange)';this.style.color='var(--orange)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
+                  ➕ Add sound
+                  <input type="file" accept="audio/*" style="display:none" onchange="liveAddCustomSound(this)" />
+                </label>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- ── RESIZER 1 ── -->
+          <div class="live-resizer" id="liveResizer1" onmousedown="liveResizerStart(event,0)"></div>
+
+          <!-- ── COLUMN 2: CHANGE FIELD SONGS ── -->
+          <div class="live-col" id="liveColField">
+            <div class="live-col-header">⚾ Change Field Songs</div>
+            <div class="live-col-body">
+              <div class="live-col-section-label">Inning change music</div>
+              <div class="live-custom-sounds" id="liveFieldSongsGrid"></div>
+              <div style="margin-top:8px">
+                <label class="live-add-btn" onmouseover="this.style.borderColor='var(--orange)';this.style.color='var(--orange)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
+                  ➕ Add song
+                  <input type="file" accept="audio/*" style="display:none" onchange="liveAddFieldSong(this)" />
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── RESIZER 2 ── -->
+          <div class="live-resizer" id="liveResizer2" onmousedown="liveResizerStart(event,1)"></div>
+
+          <!-- ── COLUMN 3: WALKUP SONGS ── -->
+          <div class="live-col" id="liveColWalkup">
+            <div class="live-col-header" style="display:flex;align-items:center;justify-content:space-between;">
+              <span>🎵 Walk-Up Songs</span>
+              <button onclick="startTeamIntro()" title="Team Introduction" style="display:flex;align-items:center;gap:5px;background:var(--orange);border:none;border-radius:3px;color:#fff;font-family:'Oswald',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:4px 10px;cursor:pointer;flex-shrink:0;transition:background 0.15s" onmouseover="this.style.background='#e64000'" onmouseout="this.style.background='var(--orange)'">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M3 5v14l11-7z"/><path d="M14 5v14l7-4.5V9.5z"/></svg>
+                Team Intro
+              </button>
+            </div>
+            <div class="live-col-body">
+              <div id="liveLineupList"></div>
+            </div>
+          </div>
+
+        </div><!-- /live-columns -->
+      </div>
+
+      <!-- PANEL : LINEUP MODE -->
+      <div class="main-panel" id="mainPanelBatting">
         <main>
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">
             <div class="section-label" id="sectionLabel" style="margin-bottom:0;flex:1">⚾ Batting Order — U12</div>
-            <button id="introBtn" onclick="startTeamIntro()" title="Team Introduction — plays all walk-up songs in sequence"
-              style="display:flex;align-items:center;gap:8px;background:var(--orange);border:none;border-radius:3px;color:#fff;font-family:'Oswald',sans-serif;font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:8px 16px;cursor:pointer;transition:background 0.15s;flex-shrink:0"
-              onmouseover="this.style.background='#e64000'" onmouseout="this.style.background='var(--orange)'">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M3 5v14l11-7z"/><path d="M14 5v14l7-4.5V9.5z"/></svg>
-              Team Intro
-            </button>
           </div>
           <div class="lineup" id="lineup"></div>
 
-          <!-- SEQUENTIAL INTRO OVERLAY -->
-          <div id="introOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:300;flex-direction:column;align-items:center;justify-content:center;gap:0">
-
-            <!-- Header -->
-            <div style="position:absolute;top:0;left:0;right:0;height:5px;background:var(--orange)"></div>
-            <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:5px;color:var(--orange);text-transform:uppercase;margin-bottom:18px">Team Introduction</div>
-
-            <!-- Progress dots -->
-            <div id="introDotsWrap" style="display:flex;gap:6px;margin-bottom:32px;flex-wrap:wrap;justify-content:center;max-width:320px"></div>
-
-            <!-- Player card -->
-            <div style="text-align:center;width:100%;max-width:480px;padding:0 24px">
-
-              <!-- Batting order number -->
-              <div id="introOrderNum" style="font-family:'Oswald',sans-serif;font-size:clamp(72px,18vw,130px);font-weight:700;color:var(--border);line-height:0.9;margin-bottom:8px">1</div>
-
-              <!-- Photo -->
-              <div id="introAvatar" style="width:110px;height:110px;border-radius:50%;border:3px solid var(--orange);margin:0 auto 14px;overflow:hidden;background:var(--gray);display:flex;align-items:center;justify-content:center">
-                <svg width="60" height="60" viewBox="-16 -44 32 52" fill="none">
-                  <ellipse cx="0" cy="-18" rx="12" ry="14" fill="#555"/>
-                  <ellipse cx="0" cy="-30" rx="15" ry="7" fill="rgba(255,69,0,0.5)"/>
-                  <rect x="-15" y="-34" width="30" height="5" rx="2" fill="rgba(255,69,0,0.5)"/>
-                  <rect x="-14" y="-2" width="28" height="20" rx="3" fill="#333"/>
-                </svg>
-              </div>
-
-              <!-- "Playing [position label]" -->
-              <div id="introPlayingLabel" style="font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:4px;color:rgba(255,255,255,0.4);text-transform:uppercase;margin-bottom:2px"></div>
-
-              <!-- Position code badge -->
-              <div id="introPosBadge" style="display:inline-block;font-family:'Oswald',sans-serif;font-size:13px;font-weight:700;letter-spacing:2px;color:var(--orange);background:rgba(255,69,0,0.1);border:1px solid rgba(255,69,0,0.3);border-radius:3px;padding:2px 10px;margin-bottom:10px;text-transform:uppercase"></div>
-
-              <!-- Jersey + Name row -->
-              <div style="display:flex;align-items:baseline;justify-content:center;gap:12px;margin-bottom:4px">
-                <div id="introJersey" style="font-family:'Oswald',sans-serif;font-size:clamp(20px,5vw,30px);font-weight:700;color:var(--orange);letter-spacing:1px"></div>
-                <div id="introName" style="font-family:'Oswald',sans-serif;font-size:clamp(30px,8vw,56px);font-weight:700;color:#fff;letter-spacing:3px;text-transform:uppercase;line-height:1">—</div>
-              </div>
-
-              <!-- Song removed from Team Intro -->
-              <div style="margin-bottom:28px"></div>
-
-              <div style="margin-bottom:28px"></div>
-            </div>
-
-            <!-- Controls -->
-            <div style="display:flex;align-items:center;gap:16px">
-              <button onclick="introPrev()" title="Previous"
-                style="width:44px;height:44px;border-radius:50%;border:1px solid var(--border);background:var(--gray);color:var(--muted);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s"
-                onmouseover="this.style.borderColor='var(--orange)';this.style.color='var(--orange)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg>
-              </button>
-              <button onclick="introTogglePause()" id="introPauseBtn"
-                style="width:64px;height:64px;border-radius:50%;border:2px solid var(--orange);background:var(--orange);color:#fff;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s;box-shadow:0 0 20px rgba(255,69,0,0.4)">
-                <svg id="introPauseIcon" width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
-              </button>
-              <button onclick="introNext()" title="Next"
-                style="width:44px;height:44px;border-radius:50%;border:1px solid var(--border);background:var(--gray);color:var(--muted);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s"
-                onmouseover="this.style.borderColor='var(--orange)';this.style.color='var(--orange)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zm2.5-6 5.5 3.9V8.1L8.5 12zM16 6h2v12h-2z"/></svg>
-              </button>
-              <button onclick="stopTeamIntro()" title="Stop"
-                style="width:44px;height:44px;border-radius:50%;border:1px solid #cc2200;background:transparent;color:#cc2200;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s;margin-left:8px"
-                onmouseover="this.style.background='rgba(204,34,0,0.15)'" onmouseout="this.style.background='transparent'">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h12v12H6z"/></svg>
-              </button>
-            </div>
-
-            <!-- Player count -->
-            <div id="introCounter" style="font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-top:24px">1 / 9</div>
-            <div style="position:absolute;bottom:0;left:0;right:0;height:4px;background:var(--orange);opacity:0.3"></div>
-          </div>
 
           <div class="divider"></div>
 
@@ -2112,9 +2555,9 @@
             </div>
           </div>
         </main>
-      </div>
+      </div><!-- /mainPanelBatting -->
 
-      <!-- PANEL : SOCIAL MEDIA -->
+      <!-- PANEL : SOCIAL MODE -->
       <div class="main-panel" id="mainPanelSocial">
         <main>
 
@@ -2489,7 +2932,7 @@
 
                   <div class="form-group" id="ttsLangGroup">
                     <label class="form-label">Announcement language</label>
-                    <select class="form-input" id="ttsLang">
+                    <select class="form-input" id="ttsLang" onchange="appSettings.tts = appSettings.tts||{}; appSettings.tts.lang = this.value; ttsPopulateVoices()">
                       <option value="en">🇬🇧 English</option>
                       <option value="fr">🇫🇷 Français</option>
                     </select>
@@ -2632,6 +3075,14 @@
             <div class="config-add-form" style="padding:12px 16px">
               <div id="cfgBasePosList" style="display:flex;flex-wrap:wrap;gap:8px;padding:4px 0"></div>
               <p style="font-family:'Barlow',sans-serif;font-size:13px;color:var(--muted);margin-top:10px;line-height:1.5">These positions are fixed and cannot be modified or deleted.</p>
+            </div>
+          </div>
+
+          <div class="config-section">
+            <div class="config-section-label">🔊 TTS Pronunciations</div>
+            <div class="config-add-form" style="padding:12px 16px">
+              <p style="font-family:'Barlow',sans-serif;font-size:13px;color:var(--muted);margin-bottom:12px;line-height:1.5">Override how each position is pronounced by the TTS. Leave blank to use the default label.</p>
+              <div id="cfgPosPronList" style="display:flex;flex-direction:column;gap:6px"></div>
             </div>
           </div>
 
@@ -2796,6 +3247,7 @@
       adminPassword: APP_CONFIG.adminPassword || 'ChangeMe2024!',
       playDuration:  APP_CONFIG.playDuration  || 15,
       extraPositions: [], // [{code, label, multi}]
+      posPronunciations: {}, // {code: pronunciation} — overrides TTS position label
       opponents: [],      // [{id, name, logo}]
       tts: {
         enabled:          false,
@@ -2809,6 +3261,12 @@
         elevenLabsVoice:  'onwK4e9ZLuTAKqWW03F9',
         elevenLabsLang:   '',
         fadeDelay:        1.5,
+      },
+      soundboard: {
+        anthem:   null,
+        applause: null,
+        letsgo:   null,
+        homerun:  null,
       },
     };
 
@@ -3077,6 +3535,34 @@
           wrap.appendChild(addJerseyBtn);
         }
 
+        // Prononciation — double-clic pour modifier (ou clic sur "+ pronunciation")
+        const pronEl = card.querySelector('.player-pronunciation');
+        const addPronEl = card.querySelector('.add-pronunciation');
+        const editPron = (el) => {
+          el.addEventListener('dblclick', (e) => {
+            e.stopPropagation();
+            const current = allPlayers[entry.pid].pronunciation || '';
+            makeEditable(el, val => {
+              allPlayers[entry.pid].pronunciation = val || null;
+              render();
+              saveConfig();
+            }, false, current);
+          });
+          el.addEventListener('click', (e) => e.stopPropagation());
+        };
+        if (pronEl) editPron(pronEl);
+        if (addPronEl) {
+          addPronEl.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const val = prompt('Pronunciation (phonetic):', allPlayers[entry.pid].pronunciation || '');
+            if (val !== null) {
+              allPlayers[entry.pid].pronunciation = val.trim() || null;
+              render();
+              saveConfig();
+            }
+          });
+        }
+
         // Édition titre et artiste au double-clic
         card.querySelector('.song-title').addEventListener('dblclick', (e) => {
           e.stopPropagation();
@@ -3137,8 +3623,9 @@
 
           if (!wasPresent === false && currentPid === entry.pid) stopPlayback();
 
-          // Déplacer absent en fin de liste
+          // Déplacer absent en fin de liste + reset position
           if (currentLineup()[idx].present === false) {
+            currentLineup()[idx].pos = '?';
             const removed = currentLineup().splice(idx, 1)[0];
             currentLineup().push(removed);
           }
@@ -3164,6 +3651,7 @@
       });
 
       if (typeof initSortable === 'function') initSortable();
+      renderLiveLineup();
     }
 
     // ── ÉDITION INLINE ──
@@ -3665,9 +4153,37 @@
       const t = appSettings.tts || {};
       const audioSrc = entry.blobUrl || entry.url;
 
+      // ── Phase 1 : démarrer la walk-up song ──
+      if (audioSrc && currentPid === entry.pid) {
+        currentAudio = new Audio(audioSrc);
+        currentAudio.currentTime = entry.start || 0;
+        currentAudio.volume = 1;
+        currentAudio.play().catch(() => {});
+      }
+
       if (t.enabled) {
-        // ── Phase 1 : annonce TTS ──
+        // ── Phase 2 : attendre 2s puis TTS en simultané avec duck volume ──
+        document.getElementById('nowLabel').textContent = '▶ Batter up!';
+        await new Promise(r => setTimeout(r, 2000));
+        if (currentPid !== entry.pid) return;
+
         document.getElementById('nowLabel').textContent = '🎙️ Announcing…';
+
+        // Duck: baisser le volume progressivement vers 0.15
+        const DUCK_VOLUME = 0.15;
+        const DUCK_STEPS  = 15;
+        const DUCK_MS     = 400;
+        if (currentAudio) {
+          let step = 0;
+          const startVol = currentAudio.volume;
+          const duckInterval = setInterval(() => {
+            step++;
+            if (currentAudio) currentAudio.volume = Math.max(startVol - (startVol - DUCK_VOLUME) * (step / DUCK_STEPS), DUCK_VOLUME);
+            if (step >= DUCK_STEPS) clearInterval(duckInterval);
+          }, DUCK_MS / DUCK_STEPS);
+        }
+
+        // TTS en simultané
         try {
           const text = ttsBuildText(entry);
           await ttsSpeak(text);
@@ -3675,35 +4191,21 @@
           console.warn('TTS failed:', e);
         }
 
-        // ── Phase 2 : délai fade ──
-        const fadeDelay = (t.fadeDelay ?? 1.5) * 1000;
-        if (fadeDelay > 0) await new Promise(r => setTimeout(r, fadeDelay));
-
-        // Vérifier que la lecture n'a pas été stoppée entretemps
         if (currentPid !== entry.pid) return;
         document.getElementById('nowLabel').textContent = '▶ Batter up!';
-      }
 
-      // ── Phase 3 : walk-up song ──
-      if (audioSrc && currentPid === entry.pid) {
-        currentAudio = new Audio(audioSrc);
-        currentAudio.currentTime = entry.start || 0;
-        if (t.enabled && (t.fadeDelay ?? 1.5) > 0) {
-          // Fade-in audio
-          currentAudio.volume = 0;
-          currentAudio.play().catch(() => {});
-          const fadeDuration = Math.min((t.fadeDelay ?? 1.5) * 500, 1000);
-          const steps = 20;
-          const stepTime = fadeDuration / steps;
+        // Unduck: remonter le volume vers 1
+        if (currentAudio) {
           let step = 0;
-          const fadeIn = setInterval(() => {
+          const startVol = currentAudio.volume;
+          const unduckInterval = setInterval(() => {
             step++;
-            if (currentAudio) currentAudio.volume = Math.min(step / steps, 1);
-            if (step >= steps) clearInterval(fadeIn);
-          }, stepTime);
-        } else {
-          currentAudio.play().catch(() => {});
+            if (currentAudio) currentAudio.volume = Math.min(startVol + (1 - startVol) * (step / DUCK_STEPS), 1);
+            if (step >= DUCK_STEPS) clearInterval(unduckInterval);
+          }, DUCK_MS / DUCK_STEPS);
         }
+      } else {
+        document.getElementById('nowLabel').textContent = '▶ Batter up!';
       }
 
       let elapsed = 0;
@@ -4032,8 +4534,9 @@
       document.getElementById('mainNav' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
       document.querySelectorAll('.main-panel').forEach(p => p.classList.remove('active'));
       document.getElementById('mainPanel' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
-      // Fermer le formulaire d'ajout si on quitte Batting
       if (tab !== 'batting') document.getElementById('addForm').classList.remove('open');
+      if (tab === 'live') renderLiveLineup();
+      liveSoundEditClose(); // always close modal on tab switch
     }
 
     // ═══════════════════════════════════════════
@@ -4077,6 +4580,27 @@
             <span style="font-family:'Oswald',sans-serif;font-weight:700;font-size:14px;letter-spacing:1px;color:var(--orange)">${p.code}</span>
             <span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:1px;color:var(--muted);text-transform:uppercase">${p.label}</span>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style="color:#3a3a3a;flex-shrink:0"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+          </div>`
+        ).join('');
+      }
+
+      // TTS Pronunciation list — all positions (base + custom)
+      const pronList = document.getElementById('cfgPosPronList');
+      if (pronList) {
+        const allPos = [
+          ...BASE_POSITIONS,
+          ...(appSettings.extraPositions || [])
+        ];
+        const pron = appSettings.posPronunciations || {};
+        pronList.innerHTML = allPos.map(p => `
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-family:'Oswald',sans-serif;font-weight:700;font-size:13px;letter-spacing:1px;color:var(--orange);min-width:36px;flex-shrink:0">${p.code}</span>
+            <span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1px;color:var(--muted);text-transform:uppercase;min-width:110px;flex-shrink:0">${p.label}</span>
+            <input class="form-input" style="flex:1;padding:5px 10px;font-size:13px"
+              placeholder="${p.label}"
+              value="${pron[p.code] || ''}"
+              oninput="cfgSavePosPron('${p.code}', this.value)"
+              title="TTS pronunciation for ${p.code}" />
           </div>`
         ).join('');
       }
@@ -4138,6 +4662,16 @@
       if (newLabel === null) return;
       appSettings.extraPositions[idx].label = newLabel.trim();
       cfgRenderPositions();
+      saveConfig();
+    }
+
+    function cfgSavePosPron(code, value) {
+      if (!appSettings.posPronunciations) appSettings.posPronunciations = {};
+      if (value.trim()) {
+        appSettings.posPronunciations[code] = value.trim();
+      } else {
+        delete appSettings.posPronunciations[code];
+      }
       saveConfig();
     }
 
@@ -4333,7 +4867,7 @@
 
       const entries = Object.entries(teams);
       if (entries.length === 0) {
-        container.innerHTML = '<div style="color:var(--muted);font-family:Barlow Condensed,sans-serif;font-size:13px;letter-spacing:2px;padding:20px;text-align:center;text-transform:uppercase;">Aucune équipe</div>';
+        container.innerHTML = '<div style="color:var(--muted);font-family:Barlow Condensed,sans-serif;font-size:13px;letter-spacing:2px;padding:20px;text-align:center;text-transform:uppercase;">No team</div>';
         return;
       }
 
@@ -4923,7 +5457,8 @@
       const sel = document.getElementById('ttsVoiceSelect');
       if (!sel || !window.speechSynthesis) return;
       const fill = () => {
-        const voices = speechSynthesis.getVoices().filter(v => v.lang.startsWith('en'));
+        const lang = appSettings.tts?.lang || 'en';
+        const voices = speechSynthesis.getVoices().filter(v => v.lang.startsWith(lang));
         sel.innerHTML = voices.map(v =>
           `<option value="${v.name}" ${v.name === (appSettings.tts?.voiceName || '') ? 'selected' : ''}>${v.name} (${v.lang})</option>`
         ).join('') || '<option value="">Default</option>';
@@ -4938,10 +5473,12 @@
     function ttsBuildText(entry) {
       const player = allPlayers[entry.pid] || {};
       const t = appSettings.tts || {};
+      const pron = appSettings.posPronunciations || {};
+      const posLabel = pron[entry.pos] || entry.pos || '';
       return (t.template || 'Now batting, number {jersey}, {name}!')
-        .replace('{name}',     player.name     || '')
+        .replace('{name}',     player.pronunciation || player.name || '')
         .replace('{jersey}',   entry.jersey    || '')
-        .replace('{position}', entry.pos       || '')
+        .replace('{position}', posLabel)
         .replace('{team}',     teams[currentTeamId]?.label || '');
     }
 
@@ -4949,26 +5486,37 @@
       const player  = allPlayers[entry.pid] || {};
       const t       = appSettings.tts || {};
       const useFr   = (t.lang || 'en') === 'fr';
+      const isBench = orderIndex >= 9;
 
+      const name   = player.pronunciation || player.name || '';
+      const jersey = entry.jersey ? (useFr ? `numéro ${entry.jersey}` : `number ${entry.jersey}`) : '';
+
+      // Bench players (10+): jersey + name only
+      if (isBench) {
+        if (jersey) {
+          return useFr ? `${jersey}, ${name} !` : `${jersey}, ${name}!`;
+        }
+        return useFr ? `${name} !` : `${name}!`;
+      }
+
+      // Lineup players (1–9): full announcement with ordinal + position
       const ordinals = useFr ? ORDINALS_FR : ORDINALS_EN;
       const ordinal  = ordinals[orderIndex] || (orderIndex + 1).toString();
 
       const posCode  = entry.pos || '';
+      const pron     = appSettings.posPronunciations || {};
       const posLabels_fr = {
-        'P':'Lanceur','C':'Receveur','1B':'Première base','2B':'Deuxième base',
-        '3B':'Troisième base','SS':'Arrêt-court','LF':'Champ gauche','CF':'Champ centre','RF':'Champ droit',
+        'P':'Pitcher','C':'Catcher','1B':'Première base','2B':'Deuxième base',
+        '3B':'Troisième base','SS':'Shortstop','LF':'Champ gauche','CF':'Champ centre','RF':'Champ droit',
       };
       const posLabels_en = {
         'P':'Pitcher','C':'Catcher','1B':'First Base','2B':'Second Base',
         '3B':'Third Base','SS':'Shortstop','LF':'Left Field','CF':'Center Field','RF':'Right Field',
       };
       const extraPos   = (appSettings.extraPositions || []).find(p => p.code === posCode);
-      const posDisplay = useFr
+      const posDisplay = pron[posCode] || (useFr
         ? (posLabels_fr[posCode] || extraPos?.label || posCode)
-        : (posLabels_en[posCode] || extraPos?.label || posCode);
-
-      const jersey = entry.jersey ? (useFr ? `numéro ${entry.jersey}` : `number ${entry.jersey}`) : '';
-      const name   = player.name || '';
+        : (posLabels_en[posCode] || extraPos?.label || posCode));
 
       if (useFr) {
         return `${ordinal} frappeur, ${posDisplay}${jersey ? ', ' + jersey : ''}, ${name} !`;
@@ -5616,12 +6164,47 @@
       const player = allPlayers[entry.pid];
       if (!player) { setTimeout(() => introNext(), 500); return; }
 
-      // Build position label — same language as TTS
+      const useFr    = (appSettings.tts?.lang || 'en') === 'fr';
+      const isBench  = idx >= 9;
+
+      // ── Transition announcement before first bench player ──
+      if (idx === 9) {
+        // Show transition card in UI
+        document.getElementById('introOrderNum').textContent  = '';
+        document.getElementById('introName').textContent      = useFr ? 'ET MAINTENANT…' : 'AND NOW…';
+        document.getElementById('introJersey').textContent    = '';
+        document.getElementById('introPosBadge').style.display = 'none';
+        document.getElementById('introPlayingLabel').textContent = useFr ? 'Le reste de l\'équipe !' : 'The rest of the team!';
+        document.getElementById('introCounter').textContent   = `${idx + 1} / ${introState.entries.length}`;
+        document.getElementById('introAvatar').innerHTML = `<svg width="60" height="60" viewBox="0 0 60 60" fill="none">
+          <text x="30" y="42" text-anchor="middle" font-size="40" fill="rgba(255,69,0,0.8)">🎉</text>
+        </svg>`;
+
+        await new Promise(r => setTimeout(r, 600));
+        if (introState.index !== idx) return;
+
+        const ttsEnabled = appSettings.tts?.enabled;
+        if (ttsEnabled) {
+          try {
+            const transitionText = useFr
+              ? 'Et maintenant… le reste de l\'équipe !'
+              : 'And now… the rest of the team!';
+            await ttsSpeak(transitionText);
+          } catch(e) { console.warn('TTS failed:', e); }
+        } else {
+          await new Promise(r => setTimeout(r, 2000));
+        }
+
+        if (introState.index !== idx) return;
+        await new Promise(r => setTimeout(r, 400));
+        if (introState.index !== idx) return;
+      }
+
+      // Build position label (only for lineup players)
       const posCode = entry.pos || '';
-      const useFr   = (appSettings.tts?.lang || 'en') === 'fr';
       const posLabels_fr = {
-        'P':'Lanceur','C':'Receveur','1B':'Première base','2B':'Deuxième base',
-        '3B':'Troisième base','SS':'Arrêt-court','LF':'Champ gauche','CF':'Champ centre','RF':'Champ droit',
+        'P':'Pitcher','C':'Catcher','1B':'Première base','2B':'Deuxième base',
+        '3B':'Troisième base','SS':'Shortstop','LF':'Champ gauche','CF':'Champ centre','RF':'Champ droit',
       };
       const posLabels_en = {
         'P':'Pitcher','C':'Catcher','1B':'First Base','2B':'Second Base',
@@ -5631,16 +6214,16 @@
       const posDisplay = useFr
         ? (posLabels_fr[posCode] || extraPos?.label || posCode)
         : (posLabels_en[posCode] || extraPos?.label || posCode);
-      const playingLabel = posDisplay
+      const playingLabel = !isBench && posDisplay
         ? (useFr ? 'Position : ' + posDisplay : 'Playing ' + posDisplay)
         : '';
 
-      // ── Update UI immediately ──
-      document.getElementById('introOrderNum').textContent  = idx + 1;
+      // ── Update UI ──
+      document.getElementById('introOrderNum').textContent  = isBench ? '' : idx + 1;
       document.getElementById('introName').textContent      = player.name.toUpperCase();
       document.getElementById('introJersey').textContent    = entry.jersey ? '#' + entry.jersey : '';
       document.getElementById('introPosBadge').textContent  = posCode;
-      document.getElementById('introPosBadge').style.display = posCode ? 'inline-block' : 'none';
+      document.getElementById('introPosBadge').style.display = (!isBench && posCode) ? 'inline-block' : 'none';
       document.getElementById('introPlayingLabel').textContent = playingLabel;
       document.getElementById('introCounter').textContent   = `${idx + 1} / ${introState.entries.length}`;
       document.getElementById('introPauseIcon').innerHTML   = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
@@ -5666,21 +6249,12 @@
       // ── TTS ──
       const ttsEnabled = appSettings.tts?.enabled;
       if (ttsEnabled) {
-        try {
-          await ttsSpeak(ttsBuildIntroText(entry, idx));
-        } catch(e) {
-          console.warn('TTS failed:', e);
-        }
-      } else {
-        // No TTS: show card for 2.5s
-        await new Promise(r => setTimeout(r, 2500));
+        try { await ttsSpeak(ttsBuildIntroText(entry, idx)); } catch(e) { console.warn('TTS failed:', e); }
       }
-
-      // Abort if player changed (skipped/stopped)
       if (introState.index !== idx) return;
 
-      // Pause between players then advance
-      await new Promise(r => setTimeout(r, 500));
+      // ── 10 seconds after TTS ends before next player ──
+      await new Promise(r => setTimeout(r, 10000));
       if (introState.index !== idx) return;
       introNext();
     }
@@ -5717,6 +6291,568 @@
       }
     });
 
+    async function liveSoundUpload(key, input) {
+      const file = input.files[0];
+      if (!file) return;
+      input.value = '';
+      const cap = key.charAt(0).toUpperCase() + key.slice(1);
+      const sulbl = document.getElementById('sulbl' + cap);
+      if (sulbl) { const txt = sulbl.childNodes[0]; if (txt) txt.textContent = '⏳ Uploading…\n'; }
+      try {
+        await liveSoundUploadFile(key, file);
+        saveConfig();
+      } catch(err) {
+        if (sulbl) { const txt = sulbl.childNodes[0]; if (txt) txt.textContent = '❌ Error\n'; }
+        setTimeout(() => { if (sulbl) { const txt = sulbl.childNodes[0]; if (txt) txt.textContent = '📂 Upload MP3\n'; } }, 3000);
+        alert('Upload error: ' + err.message);
+      }
+    }
+
+    // Custom sound: edit name
+    let customEditId = null;
+    function liveCustomSoundEdit(id) {
+      customEditId = id;
+      const s = liveCustomSounds.find(s => s.id === id);
+      if (!s) return;
+      soundEditPendingFile = null;
+      document.getElementById('soundEditName').value = s.label;
+      document.getElementById('soundEditFileName').textContent = s.url ? '✅ File loaded — choose to replace' : 'Choose MP3…';
+      document.getElementById('soundEditFileInput').value = '';
+      // Repurpose modal for custom sound
+      soundEditKey = '__custom__';
+      document.getElementById('soundEditModal').style.display = 'flex';
+      document.getElementById('soundEditName').focus();
+    }
+
+    // Override save to handle custom sound
+    const _origLiveSoundEditSave = liveSoundEditSave;
+    async function liveSoundEditSave() {
+      if (soundEditKey === '__field__') {
+        const id = customEditId;
+        const s = liveFieldSongs.find(s => s.id === id);
+        if (!s) { liveSoundEditClose(); return; }
+        const newName = document.getElementById('soundEditName').value.trim();
+        if (newName) s.label = newName;
+        if (soundEditPendingFile) {
+          const saveBtn = document.getElementById('soundEditSaveBtn');
+          saveBtn.textContent = '⏳ Uploading…'; saveBtn.disabled = true;
+          try { await liveFieldSongUpload(id, { files: [soundEditPendingFile], value: '' }); }
+          catch(e) { saveBtn.textContent = 'Save'; saveBtn.disabled = false; alert('Upload error: ' + e.message); return; }
+          saveBtn.textContent = 'Save'; saveBtn.disabled = false;
+        }
+        localStorage.setItem('liveFieldSongs', JSON.stringify(liveFieldSongs));
+        renderFieldSongs();
+        liveSoundEditClose();
+        return;
+      }
+
+      if (soundEditKey === '__custom__') {
+        const id = customEditId;
+        const s = liveCustomSounds.find(s => s.id === id);
+        if (!s) { liveSoundEditClose(); return; }
+        const newName = document.getElementById('soundEditName').value.trim();
+        if (newName) s.label = newName;
+        if (soundEditPendingFile) {
+          const saveBtn = document.getElementById('soundEditSaveBtn');
+          saveBtn.textContent = '⏳ Uploading…'; saveBtn.disabled = true;
+          try {
+            const file = soundEditPendingFile;
+            const ext = file.name.split('.').pop().toLowerCase();
+            const path = `soundboard/custom_${id}.${ext}`;
+            let res = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${path}`, {
+              method: 'POST',
+              headers: { 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': file.type, 'x-upsert': 'true' },
+              body: file,
+            });
+            if (!res.ok && res.status === 409) {
+              res = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${path}`, {
+                method: 'PUT', headers: { 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': file.type, 'x-upsert': 'true' }, body: file,
+              });
+            }
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            s.url = `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${path}`;
+          } catch(e) {
+            saveBtn.textContent = 'Save'; saveBtn.disabled = false;
+            alert('Upload error: ' + e.message); return;
+          }
+          saveBtn.textContent = 'Save'; saveBtn.disabled = false;
+        }
+        localStorage.setItem('liveCustomSounds', JSON.stringify(liveCustomSounds));
+        renderCustomSounds();
+        liveSoundEditClose();
+        return;
+      }
+      // Built-in sound
+      const key = soundEditKey;
+      if (!key) return;
+      const cap = key.charAt(0).toUpperCase() + key.slice(1);
+      const saveBtn = document.getElementById('soundEditSaveBtn');
+      const newName = document.getElementById('soundEditName').value.trim();
+      if (newName) {
+        LIVE_SOUNDS[key].label = newName;
+        const lbl = document.getElementById('slbl' + cap);
+        if (lbl) lbl.textContent = newName;
+        if (!appSettings.soundboard) appSettings.soundboard = {};
+        appSettings.soundboard[key + '_label'] = newName;
+      }
+      if (soundEditPendingFile) {
+        saveBtn.textContent = '⏳ Uploading…'; saveBtn.disabled = true;
+        try { await liveSoundUploadFile(key, soundEditPendingFile); }
+        catch(e) { saveBtn.textContent = 'Save'; saveBtn.disabled = false; alert('Upload error: ' + e.message); return; }
+        saveBtn.textContent = 'Save'; saveBtn.disabled = false;
+      }
+      saveConfig();
+      liveSoundEditClose();
+    }
+
+    async function liveCustomSoundUpload(id, input) {
+      const file = input.files[0];
+      if (!file) return;
+      input.value = '';
+      const s = liveCustomSounds.find(s => s.id === id);
+      if (!s) return;
+      const btn = document.getElementById('lcsBtn_' + id);
+      try {
+        const ext = file.name.split('.').pop().toLowerCase();
+        const path = `soundboard/custom_${id}.${ext}`;
+        let res = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${path}`, {
+          method: 'POST', headers: { 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': file.type, 'x-upsert': 'true' }, body: file,
+        });
+        if (!res.ok && res.status === 409) {
+          res = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${path}`, {
+            method: 'PUT', headers: { 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': file.type, 'x-upsert': 'true' }, body: file,
+          });
+        }
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        s.url = `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${path}`;
+        localStorage.setItem('liveCustomSounds', JSON.stringify(liveCustomSounds));
+        renderCustomSounds();
+      } catch(err) {
+        alert('Upload error: ' + err.message);
+      }
+    }
+
+    // ── LIVE MODE — SOUNDBOARD ──
+
+    const LIVE_SOUNDS = {
+      anthem:   { label: 'National Anthem', icon: '🎺', url: null },
+      applause: { label: 'Applause', icon: '👏', url: null },
+      letsgo:   { label: "Let's Go!", icon: '📣', url: null },
+      homerun:  { label: 'Home Run!', icon: '💥', url: null },
+    };
+
+    const liveSoundAudios = {}; // key → Audio instance
+    let liveCustomSounds = JSON.parse(localStorage.getItem('liveCustomSounds') || '[]');
+    // [{id, label, url}]
+
+    function liveSoundPlay(key) {
+      const def = LIVE_SOUNDS[key];
+      if (!def?.url) return; // greyed out — no file uploaded
+
+      // Toggle stop if already playing
+      if (liveSoundAudios[key]) {
+        liveSoundAudios[key].pause();
+        liveSoundAudios[key] = null;
+        document.getElementById('sbtn' + key.charAt(0).toUpperCase() + key.slice(1))?.classList.remove('playing');
+        return;
+      }
+      const audio = new Audio(def.url);
+      liveSoundAudios[key] = audio;
+      const btn = document.getElementById('sbtn' + key.charAt(0).toUpperCase() + key.slice(1));
+      btn?.classList.add('playing');
+      audio.play().catch(() => {});
+      audio.onended = () => {
+        liveSoundAudios[key] = null;
+        btn?.classList.remove('playing');
+      };
+    }
+
+    function liveSoundStop(key) {
+      if (liveSoundAudios[key]) {
+        liveSoundAudios[key].pause();
+        liveSoundAudios[key] = null;
+      }
+      const btn = document.getElementById('sbtn' + key.charAt(0).toUpperCase() + key.slice(1));
+      btn?.classList.remove('playing');
+    }
+
+
+    function liveCustomSoundPlay(id) {
+      const s = liveCustomSounds.find(s => s.id === id);
+      if (!s) return;
+      const btnId = 'lcsBtn_' + id;
+      if (liveSoundAudios['custom_' + id]) {
+        liveSoundAudios['custom_' + id].pause();
+        liveSoundAudios['custom_' + id] = null;
+        document.getElementById(btnId)?.classList.remove('playing');
+        return;
+      }
+      const audio = new Audio(s.url);
+      liveSoundAudios['custom_' + id] = audio;
+      document.getElementById(btnId)?.classList.add('playing');
+      audio.play().catch(() => {});
+      audio.onended = () => {
+        liveSoundAudios['custom_' + id] = null;
+        document.getElementById(btnId)?.classList.remove('playing');
+      };
+    }
+
+    function liveCustomSoundStop(id) {
+      if (liveSoundAudios['custom_' + id]) {
+        liveSoundAudios['custom_' + id].pause();
+        liveSoundAudios['custom_' + id] = null;
+      }
+      document.getElementById('lcsBtn_' + id)?.classList.remove('playing');
+    }
+
+    function liveCustomSoundDelete(id) {
+      liveCustomSounds = liveCustomSounds.filter(s => s.id !== id);
+      localStorage.setItem('liveCustomSounds', JSON.stringify(liveCustomSounds));
+      renderCustomSounds();
+    }
+
+    async function liveAddCustomSound(input) {
+      const file = input.files[0];
+      if (!file) return;
+      input.value = '';
+      const label = file.name.replace(/\.[^.]+$/, '');
+      const id = 'cs_' + Date.now();
+      const s = { id, label, url: null };
+      liveCustomSounds.push(s);
+      renderCustomSounds();
+      try {
+        const ext = file.name.split('.').pop().toLowerCase();
+        const path = `soundboard/custom_${id}.${ext}`;
+        let res = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${path}`, {
+          method: 'POST', headers: { 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': file.type, 'x-upsert': 'true' }, body: file,
+        });
+        if (!res.ok && res.status === 409) {
+          res = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${path}`, {
+            method: 'PUT', headers: { 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': file.type, 'x-upsert': 'true' }, body: file,
+          });
+        }
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        s.url = `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${path}`;
+        localStorage.setItem('liveCustomSounds', JSON.stringify(liveCustomSounds));
+        renderCustomSounds();
+      } catch(err) {
+        alert('Upload error: ' + err.message);
+        liveCustomSounds = liveCustomSounds.filter(x => x.id !== id);
+        renderCustomSounds();
+      }
+    }
+
+    function liveSoundClear(key) {
+      if (!confirm('Remove audio file from this button?')) return;
+      LIVE_SOUNDS[key].url = null;
+      if (appSettings.soundboard) appSettings.soundboard[key] = null;
+      const cap = key.charAt(0).toUpperCase() + key.slice(1);
+      const btn = document.getElementById('sbtn' + cap);
+      btn?.classList.remove('has-file');
+      btn?.classList.add('empty');
+      const sulbl = document.getElementById('sulbl' + cap);
+      if (sulbl) { const txt = sulbl.childNodes[0]; if (txt) txt.textContent = '📂 Upload MP3\n'; }
+      saveConfig();
+    }
+
+    function liveFieldSongDelete(id) {
+      if (!confirm('Delete this song?')) return;
+      liveFieldSongStop(id);
+      liveFieldSongs = liveFieldSongs.filter(s => s.id !== id);
+      localStorage.setItem('liveFieldSongs', JSON.stringify(liveFieldSongs));
+      renderFieldSongs();
+    }
+
+    // ── LIVE MODE — RESIZABLE COLUMNS ──
+    let liveFieldSongs = JSON.parse(localStorage.getItem('liveFieldSongs') || '[]');
+
+    (function initLiveColumns() {
+      const saved = JSON.parse(localStorage.getItem('liveColWidths') || 'null');
+      const cols = ['liveColSounds','liveColField','liveColWalkup'];
+      if (saved && saved.length === 3) {
+        cols.forEach((id, i) => { const el = document.getElementById(id); if (el) el.style.flex = `0 0 ${saved[i]}px`; });
+      } else {
+        cols.forEach(id => { const el = document.getElementById(id); if (el) el.style.flex = '1 1 0'; });
+      }
+    })();
+
+    function liveResizerStart(e, resizerIndex) {
+      e.preventDefault();
+      const resizer = e.currentTarget;
+      resizer.classList.add('dragging');
+      const cols = ['liveColSounds','liveColField','liveColWalkup'];
+      const leftCol  = document.getElementById(cols[resizerIndex]);
+      const rightCol = document.getElementById(cols[resizerIndex + 1]);
+      const startX   = e.clientX;
+      const startLeft  = leftCol.getBoundingClientRect().width;
+      const startRight = rightCol.getBoundingClientRect().width;
+      function onMove(ev) {
+        const dx = ev.clientX - startX;
+        leftCol.style.flex  = `0 0 ${Math.max(140, startLeft + dx)}px`;
+        rightCol.style.flex = `0 0 ${Math.max(140, startRight - dx)}px`;
+      }
+      function onUp() {
+        resizer.classList.remove('dragging');
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+        const widths = cols.map(id => document.getElementById(id).getBoundingClientRect().width);
+        localStorage.setItem('liveColWidths', JSON.stringify(widths));
+      }
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    }
+
+    // ── CHANGE FIELD SONGS ──
+    const liveFieldAudios = {};
+
+    function renderFieldSongs() {
+      const grid = document.getElementById('liveFieldSongsGrid');
+      if (!grid) return;
+      if (liveFieldSongs.length === 0) {
+        grid.innerHTML = '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:11px;letter-spacing:1px;color:var(--muted);padding:4px 0">No songs yet.</div>';
+        return;
+      }
+      grid.innerHTML = liveFieldSongs.map(s => {
+        const hasFile = !!s.url;
+        const cls = hasFile ? 'has-file custom-active' : 'empty';
+        return `
+          <div class="sound-btn ${cls}" id="lfsBtn_${s.id}" onclick="${hasFile ? `liveFieldSongPlay('${s.id}')` : ''}">
+            <div class="sound-led"></div>
+            <span class="sound-btn-icon">${hasFile ? '🎸' : '➕'}</span>
+            <span class="sound-btn-label">${s.label}</span>
+            <div class="sound-btn-actions">
+              <span class="sound-action play" onclick="event.stopPropagation();liveFieldSongPlay('${s.id}')" title="Play">▶</span>
+              <span class="sound-action stop" onclick="event.stopPropagation();liveFieldSongStop('${s.id}')" title="Stop">■</span>
+              <span class="sound-action edit" onclick="event.stopPropagation();liveFieldSongEdit('${s.id}')" title="Edit">✏</span>
+              <span class="sound-action del" onclick="event.stopPropagation();liveFieldSongDelete('${s.id}')" title="Delete">✕</span>
+            </div>
+            <label class="sound-upload-lbl" onclick="event.stopPropagation()">${hasFile ? '📂 replace' : '📂 upload mp3'}<input type="file" accept="audio/*" style="display:none" onchange="liveFieldSongUpload('${s.id}',this)"/></label>
+          </div>`;
+      }).join('');
+    }
+
+    function liveFieldSongPlay(id) {
+      const s = liveFieldSongs.find(s => s.id === id);
+      if (!s?.url) return;
+      if (liveFieldAudios[id]) { liveFieldAudios[id].pause(); liveFieldAudios[id] = null; document.getElementById('lfsBtn_' + id)?.classList.remove('playing'); return; }
+      const audio = new Audio(s.url);
+      liveFieldAudios[id] = audio;
+      document.getElementById('lfsBtn_' + id)?.classList.add('playing');
+      audio.play().catch(() => {});
+      audio.onended = () => { liveFieldAudios[id] = null; document.getElementById('lfsBtn_' + id)?.classList.remove('playing'); };
+    }
+
+    function liveFieldSongStop(id) {
+      if (liveFieldAudios[id]) { liveFieldAudios[id].pause(); liveFieldAudios[id] = null; }
+      document.getElementById('lfsBtn_' + id)?.classList.remove('playing');
+    }
+
+    async function liveAddFieldSong(input) {
+      const file = input.files[0]; if (!file) return; input.value = '';
+      const label = file.name.replace(/\.[^.]+$/, '');
+      const id = 'fs_' + Date.now();
+      const s = { id, label, url: null };
+      liveFieldSongs.push(s);
+      renderFieldSongs();
+      try {
+        const ext = file.name.split('.').pop().toLowerCase();
+        const path = `soundboard/field_${id}.${ext}`;
+        let res = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${path}`, { method: 'POST', headers: { 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': file.type, 'x-upsert': 'true' }, body: file });
+        if (!res.ok && res.status === 409) res = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${path}`, { method: 'PUT', headers: { 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': file.type, 'x-upsert': 'true' }, body: file });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        s.url = `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${path}`;
+        localStorage.setItem('liveFieldSongs', JSON.stringify(liveFieldSongs));
+        renderFieldSongs();
+      } catch(err) { alert('Upload error: ' + err.message); }
+    }
+
+    async function liveFieldSongUpload(id, input) {
+      const file = input.files[0]; if (!file) return; input.value = '';
+      const s = liveFieldSongs.find(s => s.id === id); if (!s) return;
+      try {
+        const ext = file.name.split('.').pop().toLowerCase();
+        const path = `soundboard/field_${id}.${ext}`;
+        let res = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${path}`, { method: 'POST', headers: { 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': file.type, 'x-upsert': 'true' }, body: file });
+        if (!res.ok && res.status === 409) res = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${path}`, { method: 'PUT', headers: { 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': file.type, 'x-upsert': 'true' }, body: file });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        s.url = `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${path}`;
+        localStorage.setItem('liveFieldSongs', JSON.stringify(liveFieldSongs));
+        renderFieldSongs();
+      } catch(err) { alert('Upload error: ' + err.message); }
+    }
+
+    function liveFieldSongEdit(id) {
+      const s = liveFieldSongs.find(s => s.id === id); if (!s) return;
+      soundEditKey = '__field__'; customEditId = id; soundEditPendingFile = null;
+      document.getElementById('soundEditName').value = s.label;
+      document.getElementById('soundEditFileName').textContent = s.url ? '✅ File loaded' : 'Choose MP3…';
+      document.getElementById('soundEditFileInput').value = '';
+      document.getElementById('soundEditModal').style.display = 'flex';
+      document.getElementById('soundEditName').focus();
+    }
+
+    // ── LIVE MODE — SOUND EDIT MODAL ──
+    let soundEditKey = null;
+    let soundEditPendingFile = null;
+
+    function liveSoundEdit(key) {
+      soundEditKey = key;
+      soundEditPendingFile = null;
+      const cap = key.charAt(0).toUpperCase() + key.slice(1);
+      document.getElementById('soundEditName').value = document.getElementById('slbl' + cap)?.textContent || LIVE_SOUNDS[key]?.label || '';
+      document.getElementById('soundEditFileName').textContent = LIVE_SOUNDS[key]?.url ? '✅ File loaded — choose to replace' : 'Choose MP3…';
+      document.getElementById('soundEditFileInput').value = '';
+      document.getElementById('soundEditModal').style.display = 'flex';
+      document.getElementById('soundEditName').focus();
+    }
+
+    function liveSoundEditClose() {
+      soundEditKey = null;
+      soundEditPendingFile = null;
+      document.getElementById('soundEditModal').style.display = 'none';
+    }
+
+    function liveSoundEditFileChosen(input) {
+      const file = input.files[0];
+      if (!file) return;
+      soundEditPendingFile = file;
+      document.getElementById('soundEditFileName').textContent = '📎 ' + file.name;
+    }
+
+    async function liveSoundEditSave() {
+      const key = soundEditKey;
+      if (!key) return;
+      const cap = key.charAt(0).toUpperCase() + key.slice(1);
+      const saveBtn = document.getElementById('soundEditSaveBtn');
+      const newName = document.getElementById('soundEditName').value.trim();
+
+      // Update label
+      if (newName) {
+        LIVE_SOUNDS[key].label = newName;
+        const lbl = document.getElementById('slbl' + cap);
+        if (lbl) lbl.textContent = newName;
+        if (!appSettings.soundboard) appSettings.soundboard = {};
+        appSettings.soundboard[key + '_label'] = newName;
+      }
+
+      // Upload file if chosen
+      if (soundEditPendingFile) {
+        saveBtn.textContent = '⏳ Uploading…';
+        saveBtn.disabled = true;
+        try {
+          await liveSoundUploadFile(key, soundEditPendingFile);
+        } catch(e) {
+          saveBtn.textContent = 'Save';
+          saveBtn.disabled = false;
+          alert('Upload error: ' + e.message);
+          return;
+        }
+        saveBtn.textContent = 'Save';
+        saveBtn.disabled = false;
+      }
+
+      saveConfig();
+      liveSoundEditClose();
+    }
+
+    // Shared upload logic (used by inline label and modal)
+    async function liveSoundUploadFile(key, file) {
+      const cap = key.charAt(0).toUpperCase() + key.slice(1);
+      const ext = file.name.split('.').pop().toLowerCase();
+      const path = `soundboard/${key}.${ext}`;
+      let res = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${path}`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': file.type, 'x-upsert': 'true' },
+        body: file,
+      });
+      if (!res.ok && res.status === 409) {
+        res = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${path}`, {
+          method: 'PUT',
+          headers: { 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': file.type, 'x-upsert': 'true' },
+          body: file,
+        });
+      }
+      if (!res.ok) { const e = await res.json().catch(()=>({})); throw new Error(e.message || `HTTP ${res.status}`); }
+      const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${path}`;
+      LIVE_SOUNDS[key].url = publicUrl;
+      if (!appSettings.soundboard) appSettings.soundboard = {};
+      appSettings.soundboard[key] = publicUrl;
+      const btn = document.getElementById('sbtn' + cap);
+      btn?.classList.add('has-file');
+      btn?.classList.remove('empty');
+      const sulbl = document.getElementById('sulbl' + cap);
+      if (sulbl) { const txt = sulbl.childNodes[0]; if (txt) txt.textContent = '📂 Replace MP3\n'; }
+    }
+
+    function renderCustomSounds() {
+      const grid = document.getElementById('liveCustomSoundsGrid');
+      if (!grid) return;
+      if (liveCustomSounds.length === 0) { grid.innerHTML = ''; return; }
+      grid.innerHTML = liveCustomSounds.map(s => {
+        const hasFile = !!s.url;
+        const cls = hasFile ? 'has-file custom-active' : 'empty';
+        return `
+          <div class="sound-btn ${cls}" id="lcsBtn_${s.id}" onclick="${hasFile ? `liveCustomSoundPlay('${s.id}')` : ''}">
+            <div class="sound-led"></div>
+            <span class="sound-btn-icon">${hasFile ? '🎵' : '➕'}</span>
+            <span class="sound-btn-label">${s.label}</span>
+            <div class="sound-btn-actions">
+              <span class="sound-action play" onclick="event.stopPropagation();liveCustomSoundPlay('${s.id}')" title="Play">▶</span>
+              <span class="sound-action stop" onclick="event.stopPropagation();liveCustomSoundStop('${s.id}')" title="Stop">■</span>
+              <span class="sound-action edit" onclick="event.stopPropagation();liveCustomSoundEdit('${s.id}')" title="Edit">✏</span>
+              <span class="sound-action del" onclick="event.stopPropagation();liveCustomSoundDelete('${s.id}')" title="Delete">✕</span>
+            </div>
+            <label class="sound-upload-lbl" onclick="event.stopPropagation()">${hasFile ? '📂 replace' : '📂 upload mp3'}<input type="file" accept="audio/*" style="display:none" onchange="liveCustomSoundUpload('${s.id}',this)"/></label>
+          </div>`;
+      }).join('');
+    }
+
+    // ── LIVE MODE — LINEUP ──
+
+    function renderLiveLineup() {
+      const container = document.getElementById('liveLineupList');
+      if (!container) return;
+      const entries = currentLineup().filter(e => e.present !== false);
+      if (entries.length === 0) {
+        container.innerHTML = '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:12px;letter-spacing:1px;color:var(--muted);padding:8px 0">No players available in the lineup.</div>';
+        return;
+      }
+      container.innerHTML = entries.map((entry, i) => {
+        const player = allPlayers[entry.pid];
+        if (!player) return '';
+        const isPlaying = currentPid === entry.pid;
+        const pos = entry.pos || '?';
+        const jersey = entry.jersey ? '#' + entry.jersey : '';
+        const song = entry.song ? `${entry.song}${entry.artist ? ' — ' + entry.artist : ''}` : 'No song';
+        return `
+          <div class="live-player-card${isPlaying ? ' playing' : ''}" onclick="liveTogglePlay(${i})">
+            <div class="live-order">${i + 1}</div>
+            <div class="live-player-info">
+              <div class="live-player-name">${jersey ? jersey + ' · ' : ''}${player.name.toUpperCase()}</div>
+              <div class="live-player-meta">${pos} · ${song}</div>
+            </div>
+            <button class="live-play-btn" onclick="event.stopPropagation();liveTogglePlay(${i})">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                ${isPlaying
+                  ? '<rect x="6" y="5" width="4" height="14"/><rect x="14" y="5" width="4" height="14"/>'
+                  : '<path d="M8 5v14l11-7z"/>'}
+              </svg>
+            </button>
+          </div>`;
+      }).join('');
+    }
+
+    function liveTogglePlay(liveIndex) {
+      const entries = currentLineup().filter(e => e.present !== false);
+      const entry = entries[liveIndex];
+      if (!entry) return;
+      // Find real index in full lineup
+      const realIndex = currentLineup().indexOf(entry);
+      togglePlay(realIndex, { stopPropagation: () => {} });
+      // Refresh live view after short delay
+      setTimeout(renderLiveLineup, 100);
+    }
+
     // ── INIT ──
     async function init() {
       document.getElementById('saveIndicator').textContent = '⏳ Loading...';
@@ -5741,6 +6877,29 @@
 
       document.getElementById('saveIndicator').classList.remove('visible');
       render();
+      renderCustomSounds();
+      renderLiveLineup();
+      renderFieldSongs();
+
+      const sb = appSettings.soundboard || {};
+      Object.keys(LIVE_SOUNDS).forEach(key => {
+        const url = sb[key];
+        const label = sb[key + '_label'];
+        const cap = key.charAt(0).toUpperCase() + key.slice(1);
+        if (label) {
+          LIVE_SOUNDS[key].label = label;
+          const lbl = document.getElementById('slbl' + cap);
+          if (lbl) lbl.textContent = label;
+        }
+        const btn = document.getElementById('sbtn' + cap);
+        const sulbl = document.getElementById('sulbl' + cap);
+        if (url) {
+          LIVE_SOUNDS[key].url = url;
+          btn?.classList.add('has-file');
+          btn?.classList.remove('empty');
+          if (sulbl) sulbl.childNodes[0].textContent = '📂 replace';
+        }
+      });
     }
 
     init();
@@ -5761,5 +6920,102 @@
       });
     }
   </script>
+  <!-- SOUND EDIT MODAL — body level so it's never clipped by panel display:none -->
+  <div id="soundEditModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:1000;align-items:center;justify-content:center" onclick="liveSoundEditClose()">
+    <div style="background:var(--darkgray);border:1px solid var(--border);border-top:3px solid var(--orange);border-radius:6px;padding:28px 24px;width:340px;max-width:90vw;display:flex;flex-direction:column;gap:16px" onclick="event.stopPropagation()">
+      <div style="font-family:'Oswald',sans-serif;font-size:18px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--white)">Edit Sound Button</div>
+      <div class="form-group">
+        <label class="form-label">Button name</label>
+        <input class="form-input" id="soundEditName" type="text" placeholder="e.g. Home Run!" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Audio file (MP3)</label>
+        <label id="soundEditFileLabel" style="cursor:pointer;display:flex;align-items:center;gap:8px;padding:10px 14px;border:1px solid var(--border);border-radius:3px;color:var(--muted);font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:1px;text-transform:uppercase" onmouseover="this.style.borderColor='var(--orange)';this.style.color='var(--orange)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
+          📂 <span id="soundEditFileName">Choose MP3…</span>
+          <input type="file" id="soundEditFileInput" accept="audio/mp3,audio/mpeg,audio/*" style="display:none" onchange="liveSoundEditFileChosen(this)"/>
+        </label>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:4px">
+        <button onclick="liveSoundEditClose()" style="padding:8px 16px;background:transparent;border:1px solid var(--border);border-radius:3px;color:var(--muted);font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:1px;text-transform:uppercase;cursor:pointer">Cancel</button>
+        <button id="soundEditSaveBtn" onclick="liveSoundEditSave()" style="padding:8px 20px;background:var(--orange);border:none;border-radius:3px;color:#fff;font-family:'Oswald',sans-serif;font-size:14px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer">Save</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- TEAM INTRO OVERLAY — body level -->
+  <!-- SEQUENTIAL INTRO OVERLAY -->
+  <!-- SOUND EDIT MODAL -->
+  <div id="introOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:300;flex-direction:column;align-items:center;justify-content:center;gap:0">
+
+    <!-- Header -->
+    <div style="position:absolute;top:0;left:0;right:0;height:5px;background:var(--orange)"></div>
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:5px;color:var(--orange);text-transform:uppercase;margin-bottom:18px">Team Introduction</div>
+
+    <!-- Progress dots -->
+    <div id="introDotsWrap" style="display:flex;gap:6px;margin-bottom:32px;flex-wrap:wrap;justify-content:center;max-width:320px"></div>
+
+    <!-- Player card -->
+    <div style="text-align:center;width:100%;max-width:480px;padding:0 24px">
+
+      <!-- Batting order number -->
+      <div id="introOrderNum" style="font-family:'Oswald',sans-serif;font-size:clamp(72px,18vw,130px);font-weight:700;color:var(--border);line-height:0.9;margin-bottom:8px">1</div>
+
+      <!-- Photo -->
+      <div id="introAvatar" style="width:110px;height:110px;border-radius:50%;border:3px solid var(--orange);margin:0 auto 14px;overflow:hidden;background:var(--gray);display:flex;align-items:center;justify-content:center">
+        <svg width="60" height="60" viewBox="-16 -44 32 52" fill="none">
+          <ellipse cx="0" cy="-18" rx="12" ry="14" fill="#555"/>
+          <ellipse cx="0" cy="-30" rx="15" ry="7" fill="rgba(255,69,0,0.5)"/>
+          <rect x="-15" y="-34" width="30" height="5" rx="2" fill="rgba(255,69,0,0.5)"/>
+          <rect x="-14" y="-2" width="28" height="20" rx="3" fill="#333"/>
+        </svg>
+      </div>
+
+      <!-- "Playing [position label]" -->
+      <div id="introPlayingLabel" style="font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:4px;color:rgba(255,255,255,0.4);text-transform:uppercase;margin-bottom:2px"></div>
+
+      <!-- Position code badge -->
+      <div id="introPosBadge" style="display:inline-block;font-family:'Oswald',sans-serif;font-size:13px;font-weight:700;letter-spacing:2px;color:var(--orange);background:rgba(255,69,0,0.1);border:1px solid rgba(255,69,0,0.3);border-radius:3px;padding:2px 10px;margin-bottom:10px;text-transform:uppercase"></div>
+
+      <!-- Jersey + Name row -->
+      <div style="display:flex;align-items:baseline;justify-content:center;gap:12px;margin-bottom:4px">
+        <div id="introJersey" style="font-family:'Oswald',sans-serif;font-size:clamp(20px,5vw,30px);font-weight:700;color:var(--orange);letter-spacing:1px"></div>
+        <div id="introName" style="font-family:'Oswald',sans-serif;font-size:clamp(30px,8vw,56px);font-weight:700;color:#fff;letter-spacing:3px;text-transform:uppercase;line-height:1">—</div>
+      </div>
+
+      <!-- Song removed from Team Intro -->
+      <div style="margin-bottom:28px"></div>
+
+      <div style="margin-bottom:28px"></div>
+    </div>
+
+    <!-- Controls -->
+    <div style="display:flex;align-items:center;gap:16px">
+      <button onclick="introPrev()" title="Previous"
+        style="width:44px;height:44px;border-radius:50%;border:1px solid var(--border);background:var(--gray);color:var(--muted);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s"
+        onmouseover="this.style.borderColor='var(--orange)';this.style.color='var(--orange)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg>
+      </button>
+      <button onclick="introTogglePause()" id="introPauseBtn"
+        style="width:64px;height:64px;border-radius:50%;border:2px solid var(--orange);background:var(--orange);color:#fff;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s;box-shadow:0 0 20px rgba(255,69,0,0.4)">
+        <svg id="introPauseIcon" width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+      </button>
+      <button onclick="introNext()" title="Next"
+        style="width:44px;height:44px;border-radius:50%;border:1px solid var(--border);background:var(--gray);color:var(--muted);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s"
+        onmouseover="this.style.borderColor='var(--orange)';this.style.color='var(--orange)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zm2.5-6 5.5 3.9V8.1L8.5 12zM16 6h2v12h-2z"/></svg>
+      </button>
+      <button onclick="stopTeamIntro()" title="Stop"
+        style="width:44px;height:44px;border-radius:50%;border:1px solid #cc2200;background:transparent;color:#cc2200;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s;margin-left:8px"
+        onmouseover="this.style.background='rgba(204,34,0,0.15)'" onmouseout="this.style.background='transparent'">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h12v12H6z"/></svg>
+      </button>
+    </div>
+
+    <!-- Player count -->
+    <div id="introCounter" style="font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-top:24px">1 / 9</div>
+    <div style="position:absolute;bottom:0;left:0;right:0;height:4px;background:var(--orange);opacity:0.3"></div>
+  </div>
+
 </body>
 </html>
