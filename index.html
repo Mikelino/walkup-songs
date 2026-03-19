@@ -1950,11 +1950,6 @@
                   <option value="CF">CF — Champ centre</option>
                   <option value="LF">LF — Champ gauche</option>
                   <option value="RF">RF — Champ droit</option>
-                  <option value="DC">DC — Dugout Captain</option>
-                  <option value="PC">PC — Pitch Counter</option>
-                  <option value="SP">SP — Sparring Partner</option>
-                  <option value="BC">BC — BullPen Catcher</option>
-                  <option value="B">B — Bench</option>
                 </select>
               </div>
               <div class="form-group">
@@ -2099,6 +2094,45 @@
           <canvas id="scoreCanvas" style="display:none"></canvas>
           <canvas id="mvpCanvas" style="display:none"></canvas>
 
+          <!-- MODAL PARTAGE INSTAGRAM -->
+          <div id="shareModal" class="cfg-modal-overlay" style="display:none" onclick="closeShareModal(event)">
+            <div class="cfg-modal" style="max-width:460px">
+              <div class="cfg-modal-title">📲 Partager la story</div>
+
+              <!-- Aperçu miniature -->
+              <div style="display:flex;justify-content:center;margin-bottom:20px">
+                <img id="sharePreviewImg" src="" alt="Aperçu" style="height:160px;width:auto;border-radius:6px;border:1px solid var(--border);box-shadow:0 4px 20px rgba(0,0,0,0.5)" />
+              </div>
+
+              <!-- Bouton Instagram deep link (mobile uniquement) -->
+              <div id="shareBtnInstagram" style="display:none;margin-bottom:10px">
+                <button onclick="shareToInstagramDeeplink()" style="width:100%;background:linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);border:none;border-radius:6px;color:#fff;font-family:'Oswald',sans-serif;font-size:15px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:14px 20px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg>
+                  Ouvrir dans Instagram Stories
+                </button>
+                <p style="font-family:'Barlow',sans-serif;font-size:11px;color:var(--muted);text-align:center;margin-top:6px;letter-spacing:0.5px">L'image sera copiée — colle-la dans la story Instagram</p>
+              </div>
+
+              <!-- Bouton Web Share API (mobile) -->
+              <div id="shareBtnNative" style="display:none;margin-bottom:10px">
+                <button onclick="shareNative()" style="width:100%;background:var(--orange);border:none;border-radius:6px;color:#fff;font-family:'Oswald',sans-serif;font-size:15px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:14px 20px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg>
+                  Partager via…
+                </button>
+              </div>
+
+              <!-- Bouton téléchargement (toujours visible) -->
+              <button onclick="shareDownload()" style="width:100%;background:var(--gray);border:1px solid var(--border);border-radius:6px;color:var(--offwhite);font-family:'Oswald',sans-serif;font-size:14px;font-weight:600;letter-spacing:2px;text-transform:uppercase;padding:12px 20px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:all 0.15s" onmouseover="this.style.borderColor='var(--orange)'" onmouseout="this.style.borderColor='var(--border)'">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+                Télécharger l'image
+              </button>
+
+              <div class="cfg-modal-actions" style="margin-top:16px">
+                <button class="cfg-modal-cancel" onclick="closeShareModal()">Fermer</button>
+              </div>
+            </div>
+          </div>
+
         </main>
       </div>
 
@@ -2143,6 +2177,12 @@
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V6h16v12zM6 10h2v2H6zm0 4h8v2H6zm10 0h2v2h-2zm-6-4h8v2h-8z"/></svg>
           </span>
           <span class="cfg-nav-label">Interface</span>
+        </button>
+        <button class="cfg-nav-btn" id="cfgNavPositions" onclick="cfgSwitchTab('positions')">
+          <span class="cfg-nav-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
+          </span>
+          <span class="cfg-nav-label">Positions</span>
         </button>
         <button class="cfg-nav-btn" id="cfgNavSecurite" onclick="cfgSwitchTab('securite')">
           <span class="cfg-nav-icon">
@@ -2250,6 +2290,25 @@
             </div>
           </div>
 
+          <!-- Polices -->
+          <div class="config-section">
+            <div class="config-section-label">🔤 Polices d'écriture</div>
+            <div class="config-add-form">
+              <p style="font-family:'Barlow',sans-serif;font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.5">Choisissez une combinaison de polices pour les titres et le texte courant.</p>
+              <div id="ifFontGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:16px"></div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+                <button class="add-btn" style="margin-top:0;padding:9px 24px" onclick="ifSaveFonts()">Appliquer</button>
+                <button class="cfg-modal-cancel" style="margin-top:0" onclick="ifResetFonts()">Réinitialiser</button>
+              </div>
+              <!-- Aperçu -->
+              <div id="ifFontPreview" style="margin-top:16px;background:#0a0a0a;border:1px solid var(--border);border-radius:3px;padding:16px 18px">
+                <div id="ifFontPreviewTitle" style="font-size:22px;font-weight:700;letter-spacing:3px;color:#fff;text-transform:uppercase;line-height:1.1">YOUR TEAM</div>
+                <div id="ifFontPreviewSub" style="font-size:11px;letter-spacing:4px;color:var(--orange);text-transform:uppercase;margin-top:4px">Walk-Up Songs</div>
+                <div id="ifFontPreviewBody" style="font-size:13px;color:rgba(255,255,255,0.5);margin-top:10px">John Smith · #7 · Eye of the Tiger</div>
+              </div>
+            </div>
+          </div>
+
           <!-- Lecture -->
           <div class="config-section">
             <div class="config-section-label">▶ Lecture</div>
@@ -2324,6 +2383,50 @@
 
             </div>
           </div>
+
+        </div><!-- close cfgPanelInterface -->
+
+        <!-- PANEL : POSITIONS -->
+        <div class="config-panel" id="cfgPanelPositions">
+
+          <div class="config-section">
+            <div class="config-section-label">🔒 Positions de base (obligatoires)</div>
+            <div class="config-add-form" style="padding:12px 16px">
+              <div id="cfgBasePosList" style="display:flex;flex-wrap:wrap;gap:8px;padding:4px 0"></div>
+              <p style="font-family:'Barlow',sans-serif;font-size:13px;color:var(--muted);margin-top:10px;line-height:1.5">Ces positions sont fixes et ne peuvent pas être modifiées ou supprimées.</p>
+            </div>
+          </div>
+
+          <div class="config-section">
+            <div class="config-section-label">⚙️ Positions personnalisées</div>
+            <div class="config-add-form">
+              <div class="config-form-row" style="align-items:flex-end;gap:10px;flex-wrap:wrap">
+                <div class="form-group" style="flex:0 0 auto;min-width:110px;max-width:140px">
+                  <label class="form-label">Code (ex: DH)</label>
+                  <input class="form-input" id="cfgNewPosCode" placeholder="DH" maxlength="4" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()" />
+                </div>
+                <div class="form-group" style="flex:1;min-width:160px">
+                  <label class="form-label">Libellé (ex: Designated Hitter)</label>
+                  <input class="form-input" id="cfgNewPosLabel" placeholder="Designated Hitter" />
+                </div>
+                <div class="form-group" style="flex:0 0 auto">
+                  <label class="form-label">Multiple joueurs</label>
+                  <label style="display:flex;align-items:center;gap:8px;height:37px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:1px;color:var(--offwhite)">
+                    <input type="checkbox" id="cfgNewPosMulti" style="width:16px;height:16px;accent-color:var(--orange)" />
+                    Autorisé
+                  </label>
+                </div>
+                <button class="add-btn" style="margin-top:auto;padding:9px 24px;flex-shrink:0" onclick="cfgAddCustomPos()">Ajouter</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="config-section">
+            <div class="config-section-label">📋 Liste des positions personnalisées</div>
+            <div id="cfgCustomPosList" class="cfg-team-list"></div>
+          </div>
+
+        </div>
 
         <!-- PANEL : SÉCURITÉ -->
         <div class="config-panel" id="cfgPanelSecurite">
@@ -2421,6 +2524,7 @@
     let appSettings = {
       adminPassword: APP_CONFIG.adminPassword || 'ChangeMe2024!',
       playDuration:  APP_CONFIG.playDuration  || 15,
+      extraPositions: [], // [{code, label, multi}]
     };
 
     // Identité du club — persistée dans Supabase
@@ -2512,10 +2616,12 @@
 
         
       // ── POSITIONS ──
-      const ALL_POS = ['P','C','1B','2B','3B','SS','CF','LF','RF','DC','PC','SP','BC','B'];
+      const BASE_POS = ['P','C','1B','2B','3B','SS','CF','LF','RF'];
+      const extra = appSettings.extraPositions || [];
+      const ALL_POS = [...BASE_POS, ...extra.map(p => p.code)];
 
       // Positions autorisées plusieurs fois
-      const MULTI_POS = ['BC','DC','PC','SP','B'];
+      const MULTI_POS = extra.filter(p => p.multi).map(p => p.code);
 
       // Positions prises par d'autres joueurs : uniquement les positions UNIQUES
       const takenPos = entries
@@ -2868,7 +2974,22 @@
       };
     }
 
+    // ── COULEUR DYNAMIQUE POUR LES EXPORTS CANVAS ──
+    function getAccentColor() {
+      return getComputedStyle(document.documentElement).getPropertyValue('--orange').trim() || '#FF4500';
+    }
+    function hexToRgb(hex) {
+      const h = hex.replace('#','');
+      const r = parseInt(h.substring(0,2),16);
+      const g = parseInt(h.substring(2,4),16);
+      const b = parseInt(h.substring(4,6),16);
+      return {r,g,b};
+    }
+
     async function exportStory() {
+      const accent = getAccentColor();
+      const {r:ar, g:ag, b:ab} = hexToRgb(accent);
+      const accentAlpha = (a) => `rgba(${ar},${ag},${ab},${a})`;
       const date = document.getElementById('storyDate').value;
       const opponent = document.getElementById('storyOpponent').value.trim();
       const featuredPid = document.getElementById('storyFeatured').value;
@@ -2889,14 +3010,14 @@
       if (!hasBgLineup) {
         // Dégradé orange par défaut
         const grad = ctx.createRadialGradient(W/2, 0, 0, W/2, 0, H * 0.55);
-        grad.addColorStop(0, 'rgba(255,69,0,0.18)');
-        grad.addColorStop(1, 'rgba(255,69,0,0)');
+        grad.addColorStop(0, accentAlpha(0.18));
+        grad.addColorStop(1, accentAlpha(0));
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, W, H);
       }
 
       // Ligne orange en haut
-      ctx.fillStyle = '#FF4500';
+      ctx.fillStyle = accent;
       ctx.fillRect(0, 0, W, 6);
 
       // ── LOGO ──
@@ -2914,17 +3035,17 @@
       ctx.textAlign = 'center';
       ctx.fillText(document.querySelector('.header-club')?.textContent || 'YOUR TEAM', W/2, 280);
 
-      ctx.fillStyle = '#FF4500';
+      ctx.fillStyle = accent;
       ctx.font = '36px Oswald, sans-serif';
       ctx.fillText((clubSettings.website || '').toUpperCase(), W/2, 330);
 
       // ── ÉQUIPE ──
-      ctx.fillStyle = '#FF4500';
+      ctx.fillStyle = accent;
       ctx.font = 'bold 52px Oswald, sans-serif';
       ctx.fillText(team.label.toUpperCase(), W/2, 420);
 
       // ── SÉPARATEUR ──
-      ctx.strokeStyle = '#FF4500';
+      ctx.strokeStyle = accent;
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.moveTo(80, 450); ctx.lineTo(W - 80, 450);
@@ -2951,7 +3072,7 @@
       ctx.fillText('BATTING ORDER', W/2, 630);
 
       // ── SÉPARATEUR ──
-      ctx.strokeStyle = 'rgba(255,69,0,0.4)';
+      ctx.strokeStyle = accentAlpha(0.4);
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(80, 650); ctx.lineTo(W - 80, 650);
@@ -2975,7 +3096,7 @@
         }
 
         // Numéro d'ordre
-        ctx.fillStyle = 'rgba(255,69,0,0.5)';
+        ctx.fillStyle = accentAlpha(0.5);
         ctx.font = `bold ${Math.round(rowH * 0.45)}px Oswald, sans-serif`;
         ctx.textAlign = 'left';
         ctx.fillText(String(idx + 1), 80, mid + rowH * 0.16);
@@ -3013,7 +3134,7 @@
         ctx.restore();
 
         // Cercle border
-        ctx.strokeStyle = '#FF4500';
+        ctx.strokeStyle = accent;
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.arc(photoX + photoSize/2, mid, photoSize/2, 0, Math.PI*2);
@@ -3021,7 +3142,7 @@
 
         // Position
         if (entry.pos) {
-          ctx.fillStyle = '#FF4500';
+          ctx.fillStyle = accent;
           ctx.font = `bold ${Math.round(rowH * 0.32)}px Oswald, sans-serif`;
           ctx.textAlign = 'left';
           ctx.fillText(entry.pos, photoX + photoSize + 20, mid + rowH * 0.12);
@@ -3031,14 +3152,14 @@
         const nameFontSize = isFeatured ? Math.round(rowH * 0.58) : Math.round(rowH * 0.42);
 
         if (isFeatured) {
-          ctx.fillStyle = 'rgba(255,69,0,0.08)';
+          ctx.fillStyle = accentAlpha(0.08);
           ctx.fillRect(60, y + 2, W - 120, rowH - 4);
-          ctx.fillStyle = '#FF4500';
+          ctx.fillStyle = accent;
           ctx.fillRect(60, y + 2, 4, rowH - 4);
         }
 
         // Nom
-        ctx.fillStyle = isFeatured ? '#FF4500' : '#FFFFFF';
+        ctx.fillStyle = isFeatured ? accent : '#FFFFFF';
         ctx.font = `bold ${nameFontSize}px Oswald, sans-serif`;
         ctx.textAlign = 'left';
         const nameX = photoX + photoSize + (entry.pos ? 100 : 20);
@@ -3046,7 +3167,7 @@
 
         // Numéro maillot
         if (entry.jersey) {
-          ctx.fillStyle = '#FF4500';
+          ctx.fillStyle = accent;
           ctx.font = `bold ${Math.round(rowH * 0.38)}px Oswald, sans-serif`;
           ctx.textAlign = 'right';
           ctx.fillText('#' + entry.jersey, W - 80, mid + rowH * 0.14);
@@ -3077,7 +3198,7 @@
       }
 
       // ── LIGNE ORANGE EN BAS ──
-      ctx.fillStyle = '#FF4500';
+      ctx.fillStyle = accent;
       ctx.fillRect(0, H - 6, W, 6);
 
       // ── FOOTER ──
@@ -3086,11 +3207,9 @@
       ctx.textAlign = 'center';
       ctx.fillText(clubSettings.website || 'yourclub.com', W/2, H - 24);
 
-      // ── TÉLÉCHARGEMENT ──
-      const link = document.createElement('a');
-      link.download = `walkup-lineup-${currentTeamId}-${date || 'match'}.png`;
-      link.href = canvas.toDataURL('image/png');
-      link.click();
+      // ── PARTAGE ──
+      const filename = `walkup-lineup-${currentTeamId}-${date || 'match'}.png`;
+      shareStory(canvas, filename);
     }
 
     // ── GESTION ÉQUIPES (CONFIG PAGE) ──
@@ -3428,6 +3547,13 @@
           if (v.appSettings) {
             appSettings   = { ...appSettings, ...v.appSettings };
             PLAY_DURATION = appSettings.playDuration;
+            refreshNewPosSelect();
+
+            // Restaurer la police
+            if (appSettings.fontPairId) {
+              const pair = FONT_PAIRS.find(p => p.id === appSettings.fontPairId);
+              if (pair) ifLoadFontPair(pair).then(() => ifApplyFontPair(pair));
+            }
 
             // Réappliquer les couleurs sauvegardées
             if (appSettings.colorAccent) {
@@ -3532,13 +3658,125 @@
     let cfgDeleteTargetKey = null;
 
     function cfgSwitchTab(tab) {
-      const tabs = { teams: 'Équipes', interface: 'Interface', securite: 'Sécurité' };
+      const tabs = { teams: 'Équipes', interface: 'Interface', positions: 'Positions', securite: 'Sécurité' };
       document.querySelectorAll('.cfg-nav-btn').forEach(b => b.classList.remove('active'));
       document.getElementById('cfgNav' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
       document.querySelectorAll('.config-panel').forEach(p => p.classList.remove('active'));
       document.getElementById('cfgPanel' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
       document.getElementById('cfgSubtitle').textContent = tabs[tab] || '';
       if (tab === 'interface') ifInitPanel();
+      if (tab === 'positions') cfgRenderPositions();
+    }
+
+    // ── POSITIONS MANAGEMENT ──
+    const BASE_POSITIONS = [
+      { code: 'P',  label: 'Lanceur' },
+      { code: 'C',  label: 'Receveur' },
+      { code: '1B', label: '1ère base' },
+      { code: '2B', label: '2e base' },
+      { code: '3B', label: '3e base' },
+      { code: 'SS', label: 'Arrêt-court' },
+      { code: 'LF', label: 'Champ gauche' },
+      { code: 'CF', label: 'Champ centre' },
+      { code: 'RF', label: 'Champ droit' },
+    ];
+
+    function cfgRenderPositions() {
+      // Base positions badges
+      const baseList = document.getElementById('cfgBasePosList');
+      if (baseList) {
+        baseList.innerHTML = BASE_POSITIONS.map(p =>
+          `<div style="display:inline-flex;align-items:center;gap:6px;background:var(--gray);border:1px solid var(--border);border-radius:3px;padding:6px 12px;">
+            <span style="font-family:'Oswald',sans-serif;font-weight:700;font-size:14px;letter-spacing:1px;color:var(--orange)">${p.code}</span>
+            <span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:1px;color:var(--muted);text-transform:uppercase">${p.label}</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style="color:#3a3a3a;flex-shrink:0"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+          </div>`
+        ).join('');
+      }
+
+      // Custom positions list
+      const customList = document.getElementById('cfgCustomPosList');
+      if (!customList) return;
+      customList.innerHTML = '';
+      const extra = appSettings.extraPositions || [];
+      if (extra.length === 0) {
+        customList.innerHTML = `<div style="color:var(--muted);font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:2px;padding:20px;text-align:center;text-transform:uppercase;background:var(--darkgray);border:1px dashed var(--border)">Aucune position personnalisée</div>`;
+        return;
+      }
+      extra.forEach((pos, idx) => {
+        const row = document.createElement('div');
+        row.className = 'cfg-team-row';
+        row.innerHTML = `
+          <div class="cfg-team-info">
+            <div style="display:flex;align-items:center;gap:10px">
+              <span style="font-family:'Oswald',sans-serif;font-weight:700;font-size:18px;letter-spacing:2px;color:var(--orange);min-width:36px">${pos.code}</span>
+              <span id="cfgPosLabelDisplay_${idx}" style="font-family:'Barlow',sans-serif;font-size:14px;color:var(--offwhite)">${pos.label || '—'}</span>
+            </div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:2px;color:var(--muted);margin-top:3px;text-transform:uppercase">${pos.multi ? 'Plusieurs joueurs autorisés' : 'Position unique'}</div>
+          </div>
+          <div></div>
+          <button class="cfg-team-action" title="Modifier" onclick="cfgEditCustomPos(${idx})">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+          </button>
+          <button class="cfg-team-action delete-action" title="Supprimer" onclick="cfgDeleteCustomPos(${idx})">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+          </button>
+        `;
+        customList.appendChild(row);
+      });
+    }
+
+    function cfgAddCustomPos() {
+      const code = document.getElementById('cfgNewPosCode').value.trim().toUpperCase();
+      const label = document.getElementById('cfgNewPosLabel').value.trim();
+      const multi = document.getElementById('cfgNewPosMulti').checked;
+      if (!code) { alert('Le code de position est requis !'); return; }
+      if (code.length > 4) { alert('Le code doit faire 4 caractères maximum.'); return; }
+      const allCodes = [...BASE_POSITIONS.map(p => p.code), ...(appSettings.extraPositions || []).map(p => p.code)];
+      if (allCodes.includes(code)) { alert(`La position "${code}" existe déjà.`); return; }
+      if (!appSettings.extraPositions) appSettings.extraPositions = [];
+      appSettings.extraPositions.push({ code, label, multi });
+      document.getElementById('cfgNewPosCode').value = '';
+      document.getElementById('cfgNewPosLabel').value = '';
+      document.getElementById('cfgNewPosMulti').checked = false;
+      cfgRenderPositions();
+      refreshNewPosSelect();
+      saveConfig();
+    }
+
+    function cfgEditCustomPos(idx) {
+      const pos = (appSettings.extraPositions || [])[idx];
+      if (!pos) return;
+      const newLabel = prompt('Nouveau libellé pour ' + pos.code + ' :', pos.label || '');
+      if (newLabel === null) return;
+      appSettings.extraPositions[idx].label = newLabel.trim();
+      cfgRenderPositions();
+      saveConfig();
+    }
+
+    function cfgDeleteCustomPos(idx) {
+      const pos = (appSettings.extraPositions || [])[idx];
+      if (!pos) return;
+      if (!confirm(`Supprimer la position "${pos.code} — ${pos.label}" ?`)) return;
+      appSettings.extraPositions.splice(idx, 1);
+      cfgRenderPositions();
+      refreshNewPosSelect();
+      render();
+      saveConfig();
+    }
+
+    function refreshNewPosSelect() {
+      const sel = document.getElementById('newPos');
+      if (!sel) return;
+      // Keep base options, remove any previously added extras, re-add current extras
+      while (sel.options.length > 10) sel.remove(10); // 1 empty + 9 base
+      const extra = appSettings.extraPositions || [];
+      extra.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.code;
+        opt.textContent = `${p.code}${p.label ? ' — ' + p.label : ''}`;
+        sel.appendChild(opt);
+      });
     }
 
     function openConfig() {
@@ -3712,6 +3950,160 @@
     let ifLogoDataURL = null;
 
     // Appelé à l'ouverture de l'onglet Interface pour pré-remplir les champs
+    // ── FONTS ──
+    const FONT_PAIRS = [
+      {
+        id: 'default',
+        name: 'Sport Classic',
+        desc: 'Oswald + Barlow',
+        fontTitle: 'Oswald',
+        fontBody: 'Barlow',
+        googleUrl: null, // déjà chargées
+      },
+      {
+        id: 'bebas',
+        name: 'Impact Modern',
+        desc: 'Bebas Neue + Inter',
+        fontTitle: 'Bebas Neue',
+        fontBody: 'Inter',
+        googleUrl: 'https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600&display=swap',
+      },
+      {
+        id: 'rajdhani',
+        name: 'Tech Arena',
+        desc: 'Rajdhani + Roboto',
+        fontTitle: 'Rajdhani',
+        fontBody: 'Roboto',
+        googleUrl: 'https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Roboto:wght@400;500&display=swap',
+      },
+      {
+        id: 'blackops',
+        name: 'Military Draft',
+        desc: 'Black Ops One + Source Sans Pro',
+        fontTitle: 'Black Ops One',
+        fontBody: 'Source Sans Pro',
+        googleUrl: 'https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Source+Sans+Pro:wght@400;600&display=swap',
+      },
+      {
+        id: 'anton',
+        name: 'Press Box',
+        desc: 'Anton + Lato',
+        fontTitle: 'Anton',
+        fontBody: 'Lato',
+        googleUrl: 'https://fonts.googleapis.com/css2?family=Anton&family=Lato:wght@400;700&display=swap',
+      },
+      {
+        id: 'teko',
+        name: 'Stadium',
+        desc: 'Teko + Open Sans',
+        fontTitle: 'Teko',
+        fontBody: 'Open Sans',
+        googleUrl: 'https://fonts.googleapis.com/css2?family=Teko:wght@600;700&family=Open+Sans:wght@400;600&display=swap',
+      },
+      {
+        id: 'graduate',
+        name: 'College',
+        desc: 'Graduate + Nunito',
+        fontTitle: 'Graduate',
+        fontBody: 'Nunito',
+        googleUrl: 'https://fonts.googleapis.com/css2?family=Graduate&family=Nunito:wght@400;600&display=swap',
+      },
+      {
+        id: 'exo',
+        name: 'Cyber League',
+        desc: 'Exo 2 + DM Sans',
+        fontTitle: 'Exo 2',
+        fontBody: 'DM Sans',
+        googleUrl: 'https://fonts.googleapis.com/css2?family=Exo+2:wght@600;700;800&family=DM+Sans:wght@400;500&display=swap',
+      },
+    ];
+
+    let selectedFontId = 'default';
+
+    function ifLoadFontPair(pair) {
+      if (!pair.googleUrl) return Promise.resolve();
+      if (document.querySelector(`link[data-font-id="${pair.id}"]`)) return Promise.resolve();
+      return new Promise(resolve => {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = pair.googleUrl;
+        link.dataset.fontId = pair.id;
+        link.onload = resolve;
+        link.onerror = resolve;
+        document.head.appendChild(link);
+      });
+    }
+
+    async function ifRenderFontGrid() {
+      const grid = document.getElementById('ifFontGrid');
+      if (!grid) return;
+      grid.innerHTML = '';
+
+      for (const pair of FONT_PAIRS) {
+        await ifLoadFontPair(pair);
+        const card = document.createElement('div');
+        const isSelected = selectedFontId === pair.id;
+        card.style.cssText = `
+          background:var(--gray);border:2px solid ${isSelected ? 'var(--orange)' : 'var(--border)'};
+          border-radius:4px;padding:14px 16px;cursor:pointer;transition:all 0.15s;
+          ${isSelected ? 'background:accentAlpha(0.08)' : ''}
+        `;
+        card.innerHTML = `
+          <div style="font-family:'${pair.fontTitle}',sans-serif;font-size:18px;font-weight:700;letter-spacing:2px;color:${isSelected ? 'var(--orange)' : '#fff'};text-transform:uppercase;line-height:1.1">${pair.name}</div>
+          <div style="font-family:'${pair.fontBody}',sans-serif;font-size:11px;color:rgba(255,255,255,0.4);margin-top:4px;letter-spacing:1px">${pair.desc}</div>
+          <div style="font-family:'${pair.fontBody}',sans-serif;font-size:12px;color:rgba(255,255,255,0.55);margin-top:8px">John Smith · #7</div>
+        `;
+        card.addEventListener('click', async () => {
+          selectedFontId = pair.id;
+          ifUpdateFontPreview(pair);
+          await ifRenderFontGrid();
+        });
+        grid.appendChild(card);
+      }
+    }
+
+    function ifUpdateFontPreview(pair) {
+      const title = document.getElementById('ifFontPreviewTitle');
+      const sub   = document.getElementById('ifFontPreviewSub');
+      const body  = document.getElementById('ifFontPreviewBody');
+      if (title) title.style.fontFamily = `'${pair.fontTitle}', sans-serif`;
+      if (sub)   sub.style.fontFamily   = `'${pair.fontTitle}', sans-serif`;
+      if (body)  body.style.fontFamily  = `'${pair.fontBody}', sans-serif`;
+    }
+
+    function ifApplyFontPair(pair) {
+      document.documentElement.style.setProperty('--font-title', `'${pair.fontTitle}', sans-serif`);
+      document.documentElement.style.setProperty('--font-body',  `'${pair.fontBody}', sans-serif`);
+      // Appliquer directement aux éléments ciblés
+      document.querySelectorAll('.header-club,.order-num,.player-name,.jersey-num,.now-name,.song-title,.cfg-team-name,.config-title-main,.main-nav-label,.cfg-nav-label,.player-avatar,.pos-select').forEach(el => {
+        el.style.fontFamily = `'${pair.fontTitle}', sans-serif`;
+      });
+      document.querySelectorAll('.header-sub,.now-label,.now-song,.song-artist,.form-label,.section-label,.player-pos,.barlow,.cfg-team-key,.cfg-team-count,.config-title-sub').forEach(el => {
+        el.style.fontFamily = `'${pair.fontBody}', sans-serif`;
+      });
+    }
+
+    async function ifSaveFonts() {
+      const pair = FONT_PAIRS.find(p => p.id === selectedFontId);
+      if (!pair) return;
+      await ifLoadFontPair(pair);
+      ifApplyFontPair(pair);
+      appSettings.fontPairId = pair.id;
+      saveConfig();
+      showCfgSaveIndicator();
+    }
+
+    function ifResetFonts() {
+      selectedFontId = 'default';
+      const pair = FONT_PAIRS[0];
+      ifApplyFontPair(pair);
+      ifUpdateFontPreview(pair);
+      ifRenderFontGrid();
+      delete appSettings.fontPairId;
+      saveConfig();
+      showCfgSaveIndicator();
+    }
+
     function ifInitPanel() {
       // Identité — depuis clubSettings (source de vérité)
       document.getElementById('ifClubName').value    = clubSettings.name    || '';
@@ -3727,7 +4119,7 @@
 
       // Couleurs
       const style = getComputedStyle(document.documentElement);
-      const accent = rgbToHex(style.getPropertyValue('--orange').trim()) || '#FF4500';
+      const accent = rgbToHex(style.getPropertyValue('--orange').trim()) || accent;
       const bg     = rgbToHex(style.getPropertyValue('--black').trim())  || '#0a0a0a';
       document.getElementById('ifColorAccent').value = accent;
       document.getElementById('ifColorBg').value = bg;
@@ -3738,6 +4130,12 @@
       // Durée
       document.getElementById('ifDuration').value = PLAY_DURATION;
       document.getElementById('ifDurationVal').textContent = PLAY_DURATION;
+
+      // Polices
+      selectedFontId = appSettings.fontPairId || 'default';
+      const activePair = FONT_PAIRS.find(p => p.id === selectedFontId) || FONT_PAIRS[0];
+      ifUpdateFontPreview(activePair);
+      ifRenderFontGrid();
     }
 
     // Convertit "rgb(r,g,b)" ou "#hex" en "#rrggbb"
@@ -3907,7 +4305,7 @@
       document.documentElement.style.removeProperty('--orange-avatar');
       document.documentElement.style.removeProperty('--black');
       document.documentElement.style.removeProperty('--darkgray');
-      document.getElementById('ifColorAccent').value = '#FF4500';
+      document.getElementById('ifColorAccent').value = accent;
       document.getElementById('ifColorBg').value = '#0a0a0a';
       ifPreviewColor();
 
@@ -4006,6 +4404,9 @@
 
     // ── EXPORT STORY SCORE ──
     async function exportScoreStory() {
+      const accent = getAccentColor();
+      const {r:ar, g:ag, b:ab} = hexToRgb(accent);
+      const accentAlpha = (a) => `rgba(${ar},${ag},${ab},${a})`;
       const date     = document.getElementById('scoreDate').value;
       const opponent = document.getElementById('scoreOpponent').value.trim() || 'Adversaire';
       const home     = document.getElementById('scoreHome').value || '0';
@@ -4025,14 +4426,14 @@
       const hasBgScore = await drawStoryBg(ctx, W, H, clubSettings.bgScore, 0.6);
       if (!hasBgScore) {
         const grad = ctx.createRadialGradient(W/2, H*0.4, 0, W/2, H*0.4, H*0.7);
-        grad.addColorStop(0, 'rgba(255,69,0,0.2)');
-        grad.addColorStop(1, 'rgba(255,69,0,0)');
+        grad.addColorStop(0, accentAlpha(0.2));
+        grad.addColorStop(1, accentAlpha(0));
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, W, H);
       }
 
       // Bande orange haut
-      ctx.fillStyle = '#FF4500';
+      ctx.fillStyle = accent;
       ctx.fillRect(0, 0, W, 6);
 
       // Logo
@@ -4048,7 +4449,7 @@
       ctx.textAlign = 'center';
       ctx.fillText(document.querySelector('.header-club')?.textContent || 'YOUR TEAM', W/2, 272);
 
-      ctx.fillStyle = '#FF4500';
+      ctx.fillStyle = accent;
       ctx.font = '34px Oswald, sans-serif';
       ctx.fillText((team.label || currentTeamId).toUpperCase(), W/2, 320);
 
@@ -4065,14 +4466,14 @@
       ctx.fillText('VS ' + opponent.toUpperCase(), W/2, 440);
 
       // Séparateur
-      ctx.strokeStyle = 'rgba(255,69,0,0.4)';
+      ctx.strokeStyle = accentAlpha(0.4);
       ctx.lineWidth = 1;
       ctx.beginPath(); ctx.moveTo(100, 470); ctx.lineTo(W-100, 470); ctx.stroke();
 
       // Grand score central
-      const resultColors = { win: '#2ecc40', loss: '#cc2200', tie: '#FF4500' };
+      const resultColors = { win: '#2ecc40', loss: '#cc2200', tie: accent };
       const resultLabels = { win: '🏆 VICTOIRE', loss: '❌ DÉFAITE', tie: '🤝 MATCH NUL' };
-      const accentColor = resultColors[result] || '#FF4500';
+      const accentColor = resultColors[result] || accent;
 
       // Score box
       const boxY = 520, boxH = 340;
@@ -4101,7 +4502,7 @@
       // Labels sous les scores
       ctx.font = '28px Barlow Condensed, sans-serif';
       ctx.textAlign = 'left';
-      ctx.fillStyle = '#FF4500';
+      ctx.fillStyle = accent;
       ctx.fillText(document.querySelector('.header-club')?.textContent || 'YOUR TEAM', 140, boxY + 320);
       ctx.textAlign = 'right';
       ctx.fillStyle = 'rgba(255,255,255,0.3)';
@@ -4117,21 +4518,20 @@
       }
 
       // Footer
-      ctx.fillStyle = '#FF4500';
+      ctx.fillStyle = accent;
       ctx.fillRect(0, H-6, W, 6);
       ctx.fillStyle = 'rgba(255,255,255,0.2)';
       ctx.font = '28px Barlow Condensed, sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText(clubSettings.website || 'yourclub.com', W/2, H-24);
 
-      const link = document.createElement('a');
-      link.download = `walkup-score-${currentTeamId}-${date || 'match'}.png`;
-      link.href = canvas.toDataURL('image/png');
-      link.click();
+      const filename = `walkup-score-${currentTeamId}-${date || 'match'}.png`;
+      shareStory(canvas, filename);
     }
-
-    // ── EXPORT STORY MVP ──
     async function exportMvpStory() {
+      const accent = getAccentColor();
+      const {r:ar, g:ag, b:ab} = hexToRgb(accent);
+      const accentAlpha = (a) => `rgba(${ar},${ag},${ab},${a})`;
       const pid      = document.getElementById('mvpPlayer').value;
       const date     = document.getElementById('mvpDate').value;
       const opponent = document.getElementById('mvpOpponent').value.trim() || 'Adversaire';
@@ -4155,15 +4555,15 @@
       const hasBgMvp = await drawStoryBg(ctx, W, H, clubSettings.bgMvp, 0.6);
       if (!hasBgMvp) {
         const sideGrad = ctx.createLinearGradient(0, 0, W*0.6, H);
-        sideGrad.addColorStop(0, 'rgba(255,69,0,0.18)');
-        sideGrad.addColorStop(0.5, 'rgba(255,69,0,0.05)');
-        sideGrad.addColorStop(1, 'rgba(255,69,0,0)');
+        sideGrad.addColorStop(0, accentAlpha(0.18));
+        sideGrad.addColorStop(0.5, accentAlpha(0.05));
+        sideGrad.addColorStop(1, accentAlpha(0));
         ctx.fillStyle = sideGrad;
         ctx.fillRect(0, 0, W, H);
       }
 
       // Bande gauche orange
-      ctx.fillStyle = '#FF4500';
+      ctx.fillStyle = accent;
       ctx.fillRect(0, 0, 8, H);
 
       // Logo + nom club (haut gauche)
@@ -4177,7 +4577,7 @@
       ctx.font = 'bold 44px Oswald, sans-serif';
       ctx.textAlign = 'left';
       ctx.fillText(document.querySelector('.header-club')?.textContent || 'YOUR TEAM', 60 + lW + 20, 100);
-      ctx.fillStyle = '#FF4500';
+      ctx.fillStyle = accent;
       ctx.font = '26px Barlow Condensed, sans-serif';
       ctx.fillText((teams[currentTeamId]?.label || currentTeamId).toUpperCase(), 60 + lW + 20, 132);
 
@@ -4191,13 +4591,13 @@
       }
 
       // Grand titre MVP
-      ctx.fillStyle = '#FF4500';
+      ctx.fillStyle = accent;
       ctx.font = 'bold 110px Oswald, sans-serif';
       ctx.textAlign = 'left';
       ctx.fillText('MVP', 60, 340);
 
       // Ligne déco
-      ctx.fillStyle = '#FF4500';
+      ctx.fillStyle = accent;
       ctx.fillRect(60, 360, 180, 4);
 
       // Photo joueur si disponible
@@ -4219,7 +4619,7 @@
       // Numéro de maillot géant en fond
       if (entry?.jersey) {
         ctx.font = 'bold 500px Oswald, sans-serif';
-        ctx.fillStyle = 'rgba(255,69,0,0.06)';
+        ctx.fillStyle = accentAlpha(0.06);
         ctx.textAlign = 'right';
         ctx.fillText('#' + entry.jersey, W - 40, H * 0.72);
       }
@@ -4243,7 +4643,7 @@
       // Stats (position + maillot)
       let statsY = 610;
       if (entry?.jersey) {
-        ctx.fillStyle = '#FF4500';
+        ctx.fillStyle = accent;
         ctx.font = 'bold 36px Oswald, sans-serif';
         ctx.fillText('#' + entry.jersey, 60, statsY);
         statsY += 50;
@@ -4275,16 +4675,89 @@
       }
 
       // Footer
-      ctx.fillStyle = '#FF4500';
+      ctx.fillStyle = accent;
       ctx.fillRect(0, H-6, W, 6);
       ctx.fillStyle = 'rgba(255,255,255,0.2)';
       ctx.font = '28px Barlow Condensed, sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText(clubSettings.website || 'yourclub.com', W/2, H-24);
 
+      const filename = `walkup-mvp-${player.name.toLowerCase().replace(/\s+/g,'-')}-${date || 'match'}.png`;
+      shareStory(canvas, filename);
+    }
+
+    // ── PARTAGE INSTAGRAM ──
+    let _shareDataURL = null;
+    let _shareFilename = null;
+
+    function shareStory(canvas, filename) {
+      _shareDataURL = canvas.toDataURL('image/png');
+      _shareFilename = filename;
+
+      // Aperçu miniature
+      document.getElementById('sharePreviewImg').src = _shareDataURL;
+
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+      // Bouton Instagram deep link — mobile seulement
+      document.getElementById('shareBtnInstagram').style.display = isMobile ? 'block' : 'none';
+
+      // Bouton Web Share API — si supporté
+      document.getElementById('shareBtnNative').style.display =
+        (isMobile && navigator.share) ? 'block' : 'none';
+
+      document.getElementById('shareModal').style.display = 'flex';
+    }
+
+    function closeShareModal(e) {
+      if (e && e.target !== document.getElementById('shareModal')) return;
+      document.getElementById('shareModal').style.display = 'none';
+    }
+
+    async function shareNative() {
+      if (!navigator.share || !_shareDataURL) return;
+      try {
+        const blob = await (await fetch(_shareDataURL)).blob();
+        const file = new File([blob], _shareFilename, { type: 'image/png' });
+        await navigator.share({
+          files: [file],
+          title: clubSettings.name || 'Walk-Up Songs',
+        });
+      } catch (err) {
+        if (err.name !== 'AbortError') alert('Erreur partage : ' + err.message);
+      }
+    }
+
+    async function shareToInstagramDeeplink() {
+      if (!_shareDataURL) return;
+      try {
+        // Copier l'image dans le presse-papiers
+        const blob = await (await fetch(_shareDataURL)).blob();
+        await navigator.clipboard.write([
+          new ClipboardItem({ 'image/png': blob })
+        ]);
+        // Ouvrir Instagram Stories via deep link
+        window.location.href = 'instagram://story-camera';
+        setTimeout(() => {
+          // Fallback si Instagram non installé
+          const hadFocus = document.hasFocus();
+          setTimeout(() => {
+            if (document.hasFocus() === hadFocus) {
+              alert('Instagram ne semble pas installé sur cet appareil.\nL\'image a été copiée dans le presse-papiers.');
+            }
+          }, 1500);
+        }, 500);
+      } catch (err) {
+        // Si clipboard write non supporté, juste ouvrir Instagram
+        window.location.href = 'instagram://story-camera';
+      }
+    }
+
+    function shareDownload() {
+      if (!_shareDataURL || !_shareFilename) return;
       const link = document.createElement('a');
-      link.download = `walkup-mvp-${player.name.toLowerCase().replace(/\s+/g,'-')}-${date || 'match'}.png`;
-      link.href = canvas.toDataURL('image/png');
+      link.download = _shareFilename;
+      link.href = _shareDataURL;
       link.click();
     }
 
