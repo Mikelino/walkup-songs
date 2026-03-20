@@ -1991,20 +1991,12 @@
       .song-info { display: none !important; }
     }
 
-    /* ── BATTING PANEL — 10.5 inch responsive ── */
+    /* ── BATTING PANEL — TABS + RESPONSIVE ── */
+    .batting-tabs { display: none; }
+
     @media (max-width: 1200px) {
       .main-sidebar { width: 150px; }
-
-      .player-card {
-        grid-template-columns: 20px 32px 20px 40px 40px 1fr auto 24px 44px 28px;
-        gap: 6px;
-        padding: 8px 10px;
-      }
-
-      #mainPanelBatting main > div {
-        min-width: 0;
-        flex: 1 1 0;
-      }
+      #mainPanelBatting main > div { min-width: 0; flex: 1 1 0; }
     }
 
     @media (max-width: 1024px) {
@@ -2012,32 +2004,45 @@
       .main-nav-label { display: none; }
       .main-nav-btn { padding: 10px 4px; }
       .main-nav-icon { font-size: 20px; }
-
-      #mainPanelBatting main {
-        gap: 12px;
-        padding: 14px 8px 40px;
-      }
-
-      #mainPanelBatting main > div {
-        min-width: 0;
-        flex: 1 1 0;
-      }
-
-      /* Masquer drag handle et photo pour gagner de la place */
-      .player-card .drag-handle { display: none; }
-      .player-card .photo-btn { display: none; }
-
-      /* Grid sans drag handle et photo */
-      .player-card {
-        grid-template-columns: 28px 18px 36px 36px 1fr auto 22px 40px 26px;
-        gap: 5px;
-        padding: 7px 8px;
-      }
     }
 
-    @media (max-width: 860px) {
-      #mainPanelBatting main { flex-direction: column; }
-      #mainPanelBatting main > div { width: 100%; }
+    @media (max-width: 1280px) {
+      .batting-tabs {
+        display: flex;
+        border-bottom: 1px solid var(--border);
+        background: var(--darkgray);
+        flex-shrink: 0;
+      }
+      .batting-tab {
+        flex: 1;
+        padding: 12px 16px;
+        background: none;
+        border: none;
+        border-bottom: 3px solid transparent;
+        color: var(--muted);
+        font-family: "Oswald", sans-serif;
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: all 0.15s;
+      }
+      .batting-tab.active { color: var(--orange); border-bottom-color: var(--orange); }
+      .batting-tab:hover:not(.active) { color: var(--offwhite); }
+      #mainPanelBatting main {
+        flex-direction: column;
+        gap: 0;
+        padding: 16px 12px 60px;
+      }
+      .batting-col-home,
+      .batting-col-visitors {
+        min-width: 0 !important;
+        flex: none !important;
+        width: 100%;
+      }
+      .batting-col-home.tab-hidden,
+      .batting-col-visitors.tab-hidden { display: none; }
     }
     .if-color-row {
       display: flex;
@@ -2529,10 +2534,17 @@
 
       <!-- PANEL : LINEUP MODE -->
       <div class="main-panel" id="mainPanelBatting">
+
+        <!-- Tab switcher — visible only on small screens -->
+        <div class="batting-tabs" id="battingTabs">
+          <button class="batting-tab active" id="battingTabHome" onclick="switchBattingTab('home')">⚾ Home Team</button>
+          <button class="batting-tab" id="battingTabVisitors" onclick="switchBattingTab('visitors')">🏃 Visitors</button>
+        </div>
+
         <main style="display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap;max-width:100%;padding:24px 14px 60px">
 
           <!-- HOME LINEUP -->
-          <div style="flex:1;min-width:360px">
+          <div class="batting-col-home" style="flex:1;min-width:360px">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">
             <div class="section-label" id="sectionLabel" style="margin-bottom:0;flex:1">⚾ Batting Order — U12</div>
           </div>
@@ -2598,7 +2610,7 @@
           </div><!-- /home lineup -->
 
           <!-- VISITORS LINEUP -->
-          <div style="flex:1;min-width:360px">
+          <div class="batting-col-visitors" style="flex:1;min-width:360px">
             <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">
               <div class="section-label" style="margin-bottom:0;flex:1">🏃 Visitors Batting Order</div>
               <button onclick="visitorsClear()" style="font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1px;text-transform:uppercase;padding:4px 10px;border-radius:3px;border:1px solid rgba(200,30,0,0.3);background:none;color:#ff6655;cursor:pointer;transition:all 0.15s"
@@ -7063,6 +7075,25 @@
     function visitorOpponentChanged(val) {
       currentOpponentId = val;
       saveCurrentOpponent();
+    }
+
+    function switchBattingTab(tab) {
+      const home = document.querySelector('.batting-col-home');
+      const visitors = document.querySelector('.batting-col-visitors');
+      const tabHome = document.getElementById('battingTabHome');
+      const tabVisitors = document.getElementById('battingTabVisitors');
+      if (!home || !visitors) return;
+      if (tab === 'home') {
+        home.classList.remove('tab-hidden');
+        visitors.classList.add('tab-hidden');
+        tabHome?.classList.add('active');
+        tabVisitors?.classList.remove('active');
+      } else {
+        visitors.classList.remove('tab-hidden');
+        home.classList.add('tab-hidden');
+        tabVisitors?.classList.add('active');
+        tabHome?.classList.remove('active');
+      }
     }
 
     function populateVisitorOpponentSelect() {
