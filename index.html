@@ -6181,6 +6181,18 @@
     // ── iOS Web Speech unlock ──
     // iOS requires speechSynthesis.speak() to be called synchronously from a user gesture.
     // We unlock once on first user interaction so subsequent async calls work.
+    // ── Pre-load TTS voices at startup to avoid delay on first use ──
+    let _cachedVoices = [];
+    function ttsPreloadVoices() {
+      if (!window.speechSynthesis) return;
+      const v = speechSynthesis.getVoices();
+      if (v.length > 0) { _cachedVoices = v; return; }
+      speechSynthesis.onvoiceschanged = () => {
+        _cachedVoices = speechSynthesis.getVoices();
+      };
+    }
+    ttsPreloadVoices();
+
     let _ttsUnlocked = false;
     function ttsUnlock() {
       if (_ttsUnlocked || !window.speechSynthesis) return;
@@ -6230,15 +6242,14 @@
           utt.rate   = 0.92;
           utt.pitch  = 0.95;
           utt.volume = 1;
-          // Try to assign a voice if available
-          const voices = speechSynthesis.getVoices();
+          // Use cached voices to avoid async delay
+          const voices = _cachedVoices.length > 0 ? _cachedVoices : speechSynthesis.getVoices();
           if (voices.length > 0) {
             if (voiceName) {
               const v = voices.find(v => v.name === voiceName);
               if (v) utt.voice = v;
             }
-            // Chrome iOS fallback: pick first available voice if none matched
-            if (!utt.voice && voices.length > 0) utt.voice = voices[0];
+            if (!utt.voice) utt.voice = voices[0];
           }
           utt.onend   = () => { clearTimeout(timeout); done(); };
           utt.onerror = (e) => { console.warn('TTS error:', e); clearTimeout(timeout); done(); };
@@ -6246,21 +6257,17 @@
           setTimeout(() => speechSynthesis.speak(utt), 200);
         }
 
-        // Wait for voices to be loaded (Chrome iOS loads them async)
-        const voices = speechSynthesis.getVoices();
-        if (voices.length > 0) {
+        // Use cached voices if available, otherwise wait
+        if (_cachedVoices.length > 0) {
           doSpeak();
         } else {
-          // Voices not ready yet — wait for onvoiceschanged
           const onVoices = () => {
             speechSynthesis.onvoiceschanged = null;
+            _cachedVoices = speechSynthesis.getVoices();
             doSpeak();
           };
           speechSynthesis.onvoiceschanged = onVoices;
-          // Fallback if onvoiceschanged never fires
-          setTimeout(() => {
-            if (!resolved) { speechSynthesis.onvoiceschanged = null; doSpeak(); }
-          }, 500);
+          setTimeout(() => { if (!resolved) { speechSynthesis.onvoiceschanged = null; doSpeak(); } }, 500);
         }
       });
     }
