@@ -5943,12 +5943,24 @@
       const isBe   = lang === 'fr-be';
       const isCh   = lang === 'fr-ch';
 
-      const name   = player.pronunciation || player.name || '';
+      const name   = entry._visitor
+        ? (entry._pronunciation || entry._name || '')
+        : (player.pronunciation || player.name || '');
 
-      // Visitor entry: just jersey + name, no ordinal/position
+      // Visitor entry: ordinal for 1-9, jersey + name for bench (10+)
       if (entry._visitor) {
         const jersey = entry.jersey ? (useFr ? `numéro ${spellJersey(entry.jersey, lang)}` : `number ${entry.jersey}`) : '';
-        return useFr ? `${jersey ? jersey + ', ' : ''}${name} !` : `${jersey ? jersey + ', ' : ''}${name}!`;
+        const isBench = orderIndex >= 9;
+        if (isBench) {
+          return useFr ? `${jersey ? jersey + ', ' : ''}${name} !` : `${jersey ? jersey + ', ' : ''}${name}!`;
+        }
+        const ordinals = useFr ? ORDINALS_FR : ORDINALS_EN;
+        const ordinal  = ordinals[orderIndex] || (orderIndex + 1).toString();
+        if (useFr) {
+          return `${ordinal} batteur${jersey ? ', ' + jersey : ''}, ${name} !`;
+        } else {
+          return `${ordinal} batter${jersey ? ', ' + jersey : ''}, ${name}!`;
+        }
       }
 
       const isBench = orderIndex >= 9;
@@ -5982,7 +5994,7 @@
         : (posLabels_en[posCode] || extraPos?.label || posCode));
 
       if (useFr) {
-        return `${ordinal} frappeur, ${posDisplay}${jersey ? ', ' + jersey : ''}, ${name} !`;
+        return `${ordinal} batteur, ${posDisplay}${jersey ? ', ' + jersey : ''}, ${name} !`;
       } else {
         return `${ordinal} batter, ${posDisplay}${jersey ? ', ' + jersey : ''}, ${name}!`;
       }
@@ -6661,7 +6673,7 @@
     }
 
     function stopTeamIntro() {
-      clearInterval(introState.timer);
+      clearTimeout(introState.timer);
       if (window.speechSynthesis) speechSynthesis.cancel();
       if (introState._bgAudio)   { introState._bgAudio.pause(); introState._bgAudio = null; }
       if (introState._audioOsc)  { try { introState._audioOsc.stop(); } catch(e) {} }
@@ -6691,7 +6703,8 @@
     }
 
     async function introShowPlayer(idx) {
-      clearInterval(introState.timer);
+      clearTimeout(introState.timer);
+      introState.timer = null;
 
       if (idx >= introState.entries.length) {
         stopTeamIntro();
@@ -6705,7 +6718,7 @@
       const entry  = introState.entries[idx];
       // For visitor entries, build player object directly from entry
       const player = entry._visitor
-        ? { name: entry._name, pronunciation: entry._name }
+        ? { name: entry._name, pronunciation: entry._pronunciation }
         : allPlayers[entry.pid];
       if (!player) { setTimeout(() => introNext(), 500); return; }
 
@@ -6787,8 +6800,8 @@
         </svg>`;
       }
 
-      // ── Short pause before announcement ──
-      await new Promise(r => setTimeout(r, 300));
+      // ── Pause before announcement — let UI render first ──
+      await new Promise(r => setTimeout(r, 800));
       if (introState.index !== idx) return;
 
       // ── TTS ──
@@ -6799,7 +6812,7 @@
       if (introState.index !== idx) return;
 
       // ── 10 seconds after TTS ends before next player ──
-      await new Promise(r => setTimeout(r, 10000));
+      await new Promise(r => { introState.timer = setTimeout(r, 10000); });
       if (introState.index !== idx) return;
       introNext();
     }
@@ -7132,7 +7145,8 @@
         _visitor: true,
         pid: `visitor_${i}`,
         jersey: v.jersey,
-        _name: v.pronunciation || v.name,
+        _name: v.name,
+        _pronunciation: v.pronunciation || v.name,
         pos: '',
       }));
       introState = { entries, index: 0, paused: false, timer: null, elapsed: 0 };
