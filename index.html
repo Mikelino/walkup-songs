@@ -1991,35 +1991,48 @@
       .song-info { display: none !important; }
     }
 
-    /* ── BATTING PANEL — 10.5 inch responsive (≤1024px) ── */
-    @media (max-width: 1024px) {
-      /* Sidebar plus étroite */
-      .main-sidebar {
-        width: 140px;
-        padding: 12px 6px;
-      }
-      .main-nav-label {
-        font-size: 10px;
-        letter-spacing: 1px;
-      }
-      /* Colonnes batting en vertical si pas assez de place */
-      #mainPanelBatting main {
-        flex-direction: column;
-      }
-      #mainPanelBatting main > div {
-        min-width: 0 !important;
-        width: 100%;
+    /* ── BATTING PANEL — 10.5 inch responsive (≤1200px) ── */
+    @media (max-width: 1200px) {
+      .main-sidebar { width: 150px; }
+
+      .player-card {
+        grid-template-columns: 20px 32px 20px 40px 40px 1fr auto 24px 44px 28px;
+        gap: 6px;
+        padding: 8px 10px;
       }
     }
 
-    @media (max-width: 900px) {
-      .main-sidebar {
-        width: 52px;
-        padding: 12px 4px;
-      }
+    @media (max-width: 1024px) {
+      .main-sidebar { width: 52px; padding: 12px 4px; }
       .main-nav-label { display: none; }
       .main-nav-btn { padding: 10px 4px; }
       .main-nav-icon { font-size: 20px; }
+
+      /* Batting panel : colonnes côte à côte mais compactes */
+      #mainPanelBatting main {
+        gap: 14px;
+        padding: 16px 10px 40px;
+      }
+
+      .player-card {
+        grid-template-columns: 18px 28px 18px 36px 36px 1fr auto 22px 40px 26px;
+        gap: 5px;
+        padding: 7px 8px;
+      }
+
+      /* Masquer drag handle et photo sur petit écran pour gagner de la place */
+      .player-card .drag-handle { display: none; }
+      .player-card .photo-btn { display: none; }
+
+      .player-card {
+        grid-template-columns: 28px 18px 36px 36px 1fr auto 22px 40px 26px;
+      }
+    }
+
+    @media (max-width: 860px) {
+      /* Passer en colonne verticale */
+      #mainPanelBatting main { flex-direction: column; }
+      #mainPanelBatting main > div { min-width: 0 !important; width: 100%; }
     }
     .if-color-row {
       display: flex;
