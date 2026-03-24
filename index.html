@@ -2639,6 +2639,15 @@
       .if-sub-btn { font-size: 11px; padding: 8px 10px 10px; letter-spacing: 1px; }
     }
 
+    @media (max-width: 640px) {
+      .intro-mixer-panel {
+        right: 50% !important;
+        transform: translateX(50%);
+        min-width: 280px;
+        width: calc(100vw - 32px);
+        max-width: 360px;
+      }
+    }
   </style>
 </head>
 
@@ -8733,7 +8742,7 @@
 
 
   <!-- TEAM INTRO MIXER -->
-  <div id="introMixer" style="display:none;position:fixed;bottom:24px;right:24px;z-index:400;background:var(--darkgray);border:1px solid var(--border);border-top:3px solid var(--orange);border-radius:6px;padding:16px 20px;min-width:260px;box-shadow:0 8px 32px rgba(0,0,0,0.6)">
+  <div id="introMixer" class="intro-mixer-panel" style="display:none;position:fixed;bottom:24px;right:24px;z-index:400;background:var(--darkgray);border:1px solid var(--border);border-top:3px solid var(--orange);border-radius:6px;padding:16px 20px;min-width:260px;box-shadow:0 8px 32px rgba(0,0,0,0.6)">
     <div style="font-family:'Oswald',sans-serif;font-size:11px;font-weight:700;letter-spacing:3px;color:var(--orange);text-transform:uppercase;margin-bottom:14px">🎚️ Mixer</div>
     <div style="display:flex;flex-direction:column;gap:12px">
       <div style="display:flex;align-items:center;gap:10px">
