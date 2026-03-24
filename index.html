@@ -7389,13 +7389,19 @@
       const overlay = document.getElementById('introOverlay');
       if (!overlay) return;
       overlay.addEventListener('touchstart', e => {
+        const mixer = document.getElementById('introMixer');
+        if (mixer && mixer.contains(e.target)) return;
         touchStartX = e.touches[0].clientX;
         touchStartY = e.touches[0].clientY;
       }, { passive: true });
       overlay.addEventListener('touchend', e => {
         if (overlay.style.display === 'none') return;
+        const mixer = document.getElementById('introMixer');
+        if (mixer && mixer.contains(e.target)) return;
+        if (touchStartX === 0 && touchStartY === 0) return;
         const dx = e.changedTouches[0].clientX - touchStartX;
         const dy = e.changedTouches[0].clientY - touchStartY;
+        touchStartX = 0; touchStartY = 0;
         // Only horizontal swipe (dx > dy to avoid scroll conflicts)
         if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy)) return;
         if (dx < 0) introNext();
@@ -8730,7 +8736,7 @@
 
 
   <!-- TEAM INTRO MIXER -->
-  <div id="introMixer" style="display:none;position:fixed;bottom:24px;right:24px;z-index:400;background:var(--darkgray);border:1px solid var(--border);border-top:3px solid var(--orange);border-radius:6px;padding:16px 20px;min-width:260px;box-shadow:0 8px 32px rgba(0,0,0,0.6)">
+  <div id="introMixer" style="display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:400;background:var(--darkgray);border:1px solid var(--border);border-top:3px solid var(--orange);border-radius:6px;padding:16px 20px;min-width:260px;width:max-content;max-width:calc(100vw - 32px);box-shadow:0 8px 32px rgba(0,0,0,0.6)">
     <div style="font-family:'Oswald',sans-serif;font-size:11px;font-weight:700;letter-spacing:3px;color:var(--orange);text-transform:uppercase;margin-bottom:14px">🎚️ Mixer</div>
     <div style="display:flex;flex-direction:column;gap:12px">
       <div style="display:flex;align-items:center;gap:10px">
