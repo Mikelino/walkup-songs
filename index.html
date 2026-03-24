@@ -2730,6 +2730,10 @@
         <span class="main-nav-icon">📸</span>
         <span class="main-nav-label">Social Mode</span>
       </button>
+      <button class="main-nav-btn" id="mainNavMatch" onclick="mainSwitchTab('match')" style="display:none">
+        <span class="main-nav-icon">📺</span>
+        <span class="main-nav-label">Match Overlay</span>
+      </button>
     </nav>
 
     <!-- PANELS -->
@@ -3192,6 +3196,100 @@
 
         </main>
       </div>
+
+      <!-- PANEL : MATCH OVERLAY (licence requise) -->
+      <div class="main-panel" id="mainPanelMatch" style="display:none">
+        <main>
+          <div class="section-label">Match Overlay</div>
+          <div style="background:var(--darkgray);border:1px solid var(--border);border-top:3px solid var(--orange);border-radius:6px;padding:24px;display:flex;flex-direction:column;gap:20px;max-width:600px">
+
+            <!-- Score -->
+            <div>
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:3px;color:var(--orange);text-transform:uppercase;margin-bottom:10px">Score</div>
+              <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+                <div style="display:flex;flex-direction:column;gap:4px;align-items:center">
+                  <span style="font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:2px;color:var(--muted);text-transform:uppercase">Home</span>
+                  <div style="display:flex;align-items:center;gap:6px">
+                    <button onclick="matchScoreAdj('home',-1)" style="width:28px;height:28px;border-radius:3px;border:1px solid var(--border);background:var(--gray);color:var(--muted);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center">−</button>
+                    <span id="matchScoreHome" style="font-family:'Oswald',sans-serif;font-size:28px;font-weight:700;color:var(--white);min-width:32px;text-align:center">0</span>
+                    <button onclick="matchScoreAdj('home',1)" style="width:28px;height:28px;border-radius:3px;border:1px solid var(--border);background:var(--gray);color:var(--muted);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center">+</button>
+                  </div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:4px;align-items:center">
+                  <span style="font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:2px;color:var(--muted);text-transform:uppercase">Away</span>
+                  <div style="display:flex;align-items:center;gap:6px">
+                    <button onclick="matchScoreAdj('away',-1)" style="width:28px;height:28px;border-radius:3px;border:1px solid var(--border);background:var(--gray);color:var(--muted);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center">−</button>
+                    <span id="matchScoreAway" style="font-family:'Oswald',sans-serif;font-size:28px;font-weight:700;color:var(--white);min-width:32px;text-align:center">0</span>
+                    <button onclick="matchScoreAdj('away',1)" style="width:28px;height:28px;border-radius:3px;border:1px solid var(--border);background:var(--gray);color:var(--muted);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center">+</button>
+                  </div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:4px;align-items:center">
+                  <span style="font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:2px;color:var(--muted);text-transform:uppercase">Inning</span>
+                  <div style="display:flex;align-items:center;gap:6px">
+                    <button onclick="matchInningAdj(-1)" style="width:28px;height:28px;border-radius:3px;border:1px solid var(--border);background:var(--gray);color:var(--muted);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center">−</button>
+                    <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+                      <button onclick="matchInningToggle()" id="matchInningArrow" style="background:transparent;border:none;color:var(--orange);font-size:14px;cursor:pointer;line-height:1">▲</button>
+                      <span id="matchInningNum" style="font-family:'Oswald',sans-serif;font-size:28px;font-weight:700;color:var(--white);min-width:32px;text-align:center;line-height:1">1</span>
+                    </div>
+                    <button onclick="matchInningAdj(1)" style="width:28px;height:28px;border-radius:3px;border:1px solid var(--border);background:var(--gray);color:var(--muted);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center">+</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Count B/S/O -->
+            <div>
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:3px;color:var(--orange);text-transform:uppercase;margin-bottom:10px">Comptage</div>
+              <div style="display:flex;gap:16px;flex-wrap:wrap">
+                <div style="display:flex;flex-direction:column;gap:6px">
+                  <span style="font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:2px;color:var(--muted);text-transform:uppercase">Balls</span>
+                  <div style="display:flex;gap:6px" id="matchBalls">
+                    <div class="match-dot" onclick="matchSetCount('balls',0)" style="width:20px;height:20px;border-radius:50%;border:1px solid var(--border);background:transparent;cursor:pointer"></div>
+                    <div class="match-dot" onclick="matchSetCount('balls',1)" style="width:20px;height:20px;border-radius:50%;border:1px solid var(--border);background:transparent;cursor:pointer"></div>
+                    <div class="match-dot" onclick="matchSetCount('balls',2)" style="width:20px;height:20px;border-radius:50%;border:1px solid var(--border);background:transparent;cursor:pointer"></div>
+                  </div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:6px">
+                  <span style="font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:2px;color:var(--muted);text-transform:uppercase">Strikes</span>
+                  <div style="display:flex;gap:6px" id="matchStrikes">
+                    <div class="match-dot" onclick="matchSetCount('strikes',0)" style="width:20px;height:20px;border-radius:50%;border:1px solid var(--border);background:transparent;cursor:pointer"></div>
+                    <div class="match-dot" onclick="matchSetCount('strikes',1)" style="width:20px;height:20px;border-radius:50%;border:1px solid var(--border);background:transparent;cursor:pointer"></div>
+                  </div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:6px">
+                  <span style="font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:2px;color:var(--muted);text-transform:uppercase">Outs</span>
+                  <div style="display:flex;gap:6px" id="matchOuts">
+                    <div class="match-dot" onclick="matchSetCount('outs',0)" style="width:20px;height:20px;border-radius:3px;transform:rotate(45deg);border:1px solid var(--border);background:transparent;cursor:pointer"></div>
+                    <div class="match-dot" onclick="matchSetCount('outs',1)" style="width:20px;height:20px;border-radius:3px;transform:rotate(45deg);border:1px solid var(--border);background:transparent;cursor:pointer"></div>
+                  </div>
+                </div>
+                <button onclick="matchResetCount()" style="align-self:flex-end;padding:6px 12px;background:transparent;border:1px solid var(--border);border-radius:3px;color:var(--muted);font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1px;text-transform:uppercase;cursor:pointer">Reset</button>
+              </div>
+            </div>
+
+            <!-- Batteur actif -->
+            <div>
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:3px;color:var(--orange);text-transform:uppercase;margin-bottom:10px">Batteur actif</div>
+              <div style="display:flex;align-items:center;gap:10px">
+                <button onclick="matchBatterAdj(-1)" style="width:32px;height:32px;border-radius:3px;border:1px solid var(--border);background:var(--gray);color:var(--muted);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center">◀</button>
+                <div id="matchBatterDisplay" style="flex:1;background:var(--gray);border:1px solid var(--border);border-radius:3px;padding:8px 12px;font-family:'Oswald',sans-serif;font-size:15px;font-weight:600;color:var(--white);letter-spacing:1px;min-height:36px">—</div>
+                <button onclick="matchBatterAdj(1)" style="width:32px;height:32px;border-radius:3px;border:1px solid var(--border);background:var(--gray);color:var(--muted);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center">▶</button>
+              </div>
+            </div>
+
+            <!-- Lien overlay -->
+            <div style="border-top:1px solid var(--border);padding-top:16px">
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:3px;color:var(--orange);text-transform:uppercase;margin-bottom:8px">OBS Browser Source</div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <code id="matchOverlayUrl" style="flex:1;background:var(--gray);border:1px solid var(--border);border-radius:3px;padding:8px 12px;font-size:12px;color:var(--muted);word-break:break-all"></code>
+                <button onclick="matchCopyOverlayUrl()" style="padding:8px 14px;background:var(--orange);border:none;border-radius:3px;color:#fff;font-family:'Oswald',sans-serif;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;white-space:nowrap">Copy</button>
+              </div>
+              <div style="font-family:'Barlow',sans-serif;font-size:11px;color:var(--muted);margin-top:6px">Dans OBS : Sources → + → Browser Source → coller l'URL → fond transparent activé.</div>
+            </div>
+
+          </div>
+        </main>
+      </div><!-- /mainPanelMatch -->
 
     </div><!-- /main-panels -->
   </div><!-- /main-body -->
@@ -5253,6 +5351,7 @@
       if (tab !== 'batting') document.getElementById('addForm').classList.remove('open');
       if (tab === 'live') { renderLiveLineup(); renderLiveVisitors(); initLiveMobileTabs(); }
       if (tab === 'batting') renderVisitorsLineup();
+      if (tab === 'match') matchRenderPanel();
       liveSoundEditClose(); // always close modal on tab switch
     }
 
@@ -8398,11 +8497,159 @@
     }
 
     // ── INIT ──
+    // ═══════════════════════════════════════════
+    // LICENCE & FEATURES
+    // SQL requis dans Supabase :
+    //   create table if not exists licenses (
+    //     key        uuid primary key default gen_random_uuid(),
+    //     club_name  text not null,
+    //     features   jsonb not null default '{}',
+    //     active     boolean not null default true
+    //   );
+    //   alter table licenses enable row level security;
+    //   create policy "Public read" on licenses for select using (true);
+    // ═══════════════════════════════════════════
+    let FEATURES = { overlay: false };
+
+    async function loadLicense() {
+      try {
+        // 1. Lire la clé de licence depuis app_settings
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/config?key=eq.app&select=value`, {
+          headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+        });
+        const data = await res.json();
+        const licenseKey = data?.[0]?.value?.appSettings?.licenseKey;
+        if (!licenseKey) return;
+
+        // 2. Vérifier la clé dans la table licenses
+        const res2 = await fetch(
+          `${SUPABASE_URL}/rest/v1/licenses?key=eq.${licenseKey}&active=eq.true&select=features`,
+          { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }
+        );
+        const rows = await res2.json();
+        if (rows?.[0]?.features) {
+          FEATURES = { ...FEATURES, ...rows[0].features };
+        }
+      } catch (err) {
+        console.warn('License check failed:', err);
+      } finally {
+        applyFeatures();
+      }
+    }
+
+    function applyFeatures() {
+      const btnMatch   = document.getElementById('mainNavMatch');
+      const panelMatch = document.getElementById('mainPanelMatch');
+      if (btnMatch)   btnMatch.style.display   = FEATURES.overlay ? '' : 'none';
+      if (panelMatch) panelMatch.style.display  = FEATURES.overlay ? '' : 'none';
+    }
+
+    // ═══════════════════════════════════════════
+    // MATCH OVERLAY — état & fonctions opérateur
+    // ═══════════════════════════════════════════
+    let matchState = {
+      scoreHome: 0, scoreAway: 0,
+      inning: 1, inningTop: true,
+      balls: 0, strikes: 0, outs: 0,
+      batterIdx: 0
+    };
+
+    async function matchSave() {
+      try {
+        // Lire la valeur actuelle pour ne pas écraser les autres clés
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/config?key=eq.app&select=value`, {
+          headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+        });
+        const rows = await res.json();
+        const current = rows?.[0]?.value || {};
+        await fetch(`${SUPABASE_URL}/rest/v1/config?key=eq.app`, {
+          method: 'PATCH',
+          headers: {
+            'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`,
+            'Content-Type': 'application/json', 'Prefer': 'return=minimal'
+          },
+          body: JSON.stringify({ value: { ...current, matchState } })
+        });
+      } catch(e) { console.warn('matchSave failed', e); }
+    }
+
+    function matchRenderPanel() {
+      document.getElementById('matchScoreHome').textContent = matchState.scoreHome;
+      document.getElementById('matchScoreAway').textContent = matchState.scoreAway;
+      document.getElementById('matchInningNum').textContent = matchState.inning;
+      document.getElementById('matchInningArrow').textContent = matchState.inningTop ? '▲' : '▼';
+
+      ['balls','strikes','outs'].forEach(type => {
+        const max = type === 'balls' ? 3 : 2;
+        const val = matchState[type];
+        const colors = { balls: '#4CAF50', strikes: '#FF9800', outs: '#f44336' };
+        document.getElementById('match' + type.charAt(0).toUpperCase() + type.slice(1))
+          .querySelectorAll('.match-dot').forEach((dot, i) => {
+            dot.style.background = i < val ? colors[type] : 'transparent';
+            dot.style.borderColor = i < val ? colors[type] : 'var(--border)';
+          });
+      });
+
+      const team = teams[currentTeamId];
+      const players = team
+        ? (team.order || []).map(id => allPlayers[id]).filter(Boolean).filter(p => !p.absent)
+        : [];
+      const batter = players[matchState.batterIdx % Math.max(players.length, 1)];
+      document.getElementById('matchBatterDisplay').textContent = batter
+        ? `#${batter.jersey || '—'} ${batter.name} (${batter.position || '—'})`
+        : '—';
+
+      const overlayUrl = window.location.origin + window.location.pathname.replace('index.html','') + 'overlay.html';
+      document.getElementById('matchOverlayUrl').textContent = overlayUrl;
+    }
+
+    function matchScoreAdj(side, delta) {
+      const key = side === 'home' ? 'scoreHome' : 'scoreAway';
+      matchState[key] = Math.max(0, matchState[key] + delta);
+      matchRenderPanel(); matchSave();
+    }
+
+    function matchInningAdj(delta) {
+      matchState.inning = Math.max(1, matchState.inning + delta);
+      matchRenderPanel(); matchSave();
+    }
+
+    function matchInningToggle() {
+      matchState.inningTop = !matchState.inningTop;
+      matchRenderPanel(); matchSave();
+    }
+
+    function matchSetCount(type, idx) {
+      matchState[type] = idx + 1 === matchState[type] ? idx : idx + 1;
+      matchRenderPanel(); matchSave();
+    }
+
+    function matchResetCount() {
+      matchState.balls = 0; matchState.strikes = 0; matchState.outs = 0;
+      matchRenderPanel(); matchSave();
+    }
+
+    function matchBatterAdj(delta) {
+      const team = teams[currentTeamId];
+      const players = team
+        ? (team.order || []).map(id => allPlayers[id]).filter(Boolean).filter(p => !p.absent)
+        : [];
+      if (!players.length) return;
+      matchState.batterIdx = (matchState.batterIdx + delta + players.length) % players.length;
+      matchRenderPanel(); matchSave();
+    }
+
+    function matchCopyOverlayUrl() {
+      const url = document.getElementById('matchOverlayUrl').textContent;
+      navigator.clipboard.writeText(url).then(() => showSaveIndicator());
+    }
+
     async function init() {
       document.getElementById('saveIndicator').textContent = '⏳ Loading...';
       document.getElementById('saveIndicator').classList.add('visible');
 
       await loadConfig();
+      await loadLicense();
 
       // Restaurer la dernière équipe sélectionnée
       const lastTeamId = localStorage.getItem('lastTeamId');
@@ -8845,7 +9092,12 @@
 
       let _lastPinchDist = 0;
 
-      document.addEventListener('DOMContentLoaded', init);
+      // DOM already parsed at this point — call init directly
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+      } else {
+        init();
+      }
     })();
   </script>
   <!-- SOUND EDIT MODAL — body level so it's never clipped by panel display:none -->
