@@ -1010,7 +1010,11 @@ async function init() {
   });
 }
 
-init();
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
 
 // Service worker désactivé temporairement
 // if ('serviceWorker' in navigator) {
@@ -1027,4 +1031,3 @@ if ('serviceWorker' in navigator) {
     regs.forEach(reg => reg.unregister());
   });
 }
- 

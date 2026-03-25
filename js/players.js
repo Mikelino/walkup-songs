@@ -86,7 +86,7 @@ function closePhotoMenu() {
   if (_photoCtxMenu) { _photoCtxMenu.remove(); _photoCtxMenu = null; }
 }
 
-function openPhotoMenu(photoDiv, pid) {
+async function openPhotoMenu(photoDiv, pid) {
   closePhotoMenu();
   const menu = document.createElement('div');
   menu.id = 'photoCtxMenu';
@@ -151,7 +151,7 @@ async function doPhotoUpload(pid, blob) {
 }
 
 // ── RENDER ──
-function render() {
+async function render() {
   const lineup = document.getElementById('lineup');
   lineup.innerHTML = '';
   const entries = currentLineup();
@@ -442,7 +442,6 @@ function render() {
       window.open(`${base}#player-${pid}`, '_blank');
     });
 
-
     // ✅ Clic carte : bloqué en mode édition (AJOUT)
     card.addEventListener('click', (e) => {
       if (isEditMode) return;
@@ -454,9 +453,9 @@ function render() {
   });
 
   if (typeof initSortable === 'function') initSortable();
-  renderLiveLineup();
-  renderVisitorsLineup();
-  renderLiveVisitors();
+  if (typeof renderLiveLineup     === 'function') renderLiveLineup();
+  if (typeof renderVisitorsLineup === 'function') renderVisitorsLineup();
+  if (typeof renderLiveVisitors   === 'function') renderLiveVisitors();
 }
 
 // ── ÉDITION INLINE ──
@@ -607,4 +606,3 @@ async function addPlayer() {
   render();
   saveConfig();
 }
-

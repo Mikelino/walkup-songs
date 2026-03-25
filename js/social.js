@@ -1230,23 +1230,4 @@ async function liveCustomSoundUpload(id, input) {
 
 // ── LIVE MODE — SOUNDBOARD ──
 
-const LIVE_SOUNDS = {
-  // Baseball
-  anthem:      { label: 'National Anthem', icon: '🎺', url: null, cat: 'baseball' },
-  homerun:     { label: 'Home Run!',        icon: '💥', url: null, cat: 'baseball' },
-  strikeout:   { label: 'Strike Out',       icon: '⚡', url: null, cat: 'baseball' },
-  walkoff:     { label: 'Walk Off',         icon: '🏆', url: null, cat: 'baseball' },
-  // Ambiance
-  applause:    { label: 'Applause',         icon: '👏', url: null, cat: 'ambiance' },
-  letsgo:      { label: "Let's Go!",        icon: '📣', url: null, cat: 'ambiance' },
-  charge:      { label: 'Charge!',          icon: '🥁', url: null, cat: 'ambiance' },
-  drumroll:    { label: 'Drumroll',         icon: '🪘', url: null, cat: 'ambiance' },
-  airhorn:     { label: 'Air Horn',         icon: '📯', url: null, cat: 'ambiance' },
-  sadtrombone: { label: 'Sad Trombone',     icon: '😢', url: null, cat: 'ambiance' },
-};
-
-const liveSoundAudios = {}; // key → Audio instance
-let liveCustomSounds = []; // sera chargé depuis appSettings.soundboard.customSounds après loadConfig()
 // [{id, label, url}]
-
-

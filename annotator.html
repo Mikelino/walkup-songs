@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Diamond Pulse — Annotator</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --orange:#FF4500; --orange-dim:rgba(255,69,0,.15); --orange-glow:rgba(255,69,0,.4);
+  --dark:#0a0a0a; --darkgray:#141414; --gray:#1e1e1e; --midgray:#2a2a2a;
+  --lightgray:#555; --text:#e8e8e8; --text-dim:#888; --radius:6px;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{background:var(--dark);color:var(--text);font-family:'Barlow',sans-serif;min-height:100vh;display:flex;flex-direction:column;overflow-x:hidden}
+
+/* HEADER */
+header{background:var(--darkgray);border-bottom:2px solid var(--orange);padding:10px 16px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100}
+.logo{font-family:'Oswald',sans-serif;font-size:18px;font-weight:700;color:var(--orange);letter-spacing:1px;text-transform:uppercase;white-space:nowrap}
+.logo span{color:var(--text);font-weight:300}
+#player-chip{margin-left:auto;display:flex;align-items:center;gap:8px;background:var(--orange-dim);border:1px solid var(--orange);border-radius:var(--radius);padding:6px 12px;cursor:pointer;transition:background .2s;max-width:220px}
+#player-chip:hover{background:var(--orange-glow)}
+#player-chip .avatar{width:28px;height:28px;border-radius:50%;background:var(--midgray);border:1px solid var(--orange);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--orange);font-family:'Oswald',sans-serif;font-weight:700;overflow:hidden}
+#player-chip .chip-name{font-family:'Oswald',sans-serif;font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#player-chip .chip-pos{font-size:11px;color:var(--orange)}
+#btn-open-dp{background:none;border:1px solid var(--lightgray);border-radius:var(--radius);color:var(--text-dim);cursor:pointer;font-size:16px;padding:6px 10px;transition:all .2s;flex-shrink:0}
+#btn-open-dp:hover{color:var(--orange);border-color:var(--orange)}
+#btn-open-dp:disabled{opacity:.3;pointer-events:none}
+
+/* LINEUP NAV */
+#lineup-nav{background:var(--darkgray);border-bottom:1px solid var(--midgray);padding:8px 16px;display:flex;align-items:center;gap:12px}
+#lineup-nav button{background:var(--midgray);border:1px solid var(--lightgray);color:var(--text);border-radius:var(--radius);padding:6px 14px;cursor:pointer;font-size:14px;transition:all .15s;flex-shrink:0}
+#lineup-nav button:hover{border-color:var(--orange);color:var(--orange)}
+#lineup-nav button:disabled{opacity:.3;pointer-events:none}
+#lineup-nav-info{flex:1;text-align:center;font-family:'Oswald',sans-serif}
+#lineup-pos-label{font-size:11px;color:var(--orange);text-transform:uppercase;letter-spacing:1px;margin-right:8px}
+#lineup-player-label{font-size:15px;font-weight:600;color:var(--text)}
+
+/* MAIN */
+main{flex:1;display:flex;flex-direction:column;padding:12px;gap:12px;max-width:900px;margin:0 auto;width:100%}
+
+/* CONFIG BANNER */
+#config-banner{background:var(--darkgray);border:1px solid #553300;border-radius:var(--radius);padding:12px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+#config-banner p{font-size:13px;color:var(--text-dim);flex:1;min-width:200px}
+#config-banner p strong{color:var(--orange)}
+.inp-cfg{background:var(--gray);border:1px solid var(--lightgray);border-radius:var(--radius);color:var(--text);padding:8px 10px;font-family:'Barlow',sans-serif;font-size:13px;outline:none;transition:border-color .15s;flex:1;min-width:160px}
+.inp-cfg:focus{border-color:var(--orange)}
+#config-banner.hidden{display:none}
+
+/* BOUTONS */
+.btn-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.btn{font-family:'Oswald',sans-serif;font-size:14px;font-weight:500;text-transform:uppercase;letter-spacing:.5px;padding:10px 20px;border-radius:var(--radius);border:none;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:6px}
+.btn-primary{background:var(--orange);color:white}
+.btn-primary:hover{background:#ff6030;box-shadow:0 0 12px var(--orange-glow)}
+.btn-secondary{background:var(--midgray);color:var(--text);border:1px solid var(--lightgray)}
+.btn-secondary:hover{border-color:var(--orange);color:var(--orange)}
+.btn-ghost{background:none;color:var(--text-dim);border:1px solid var(--midgray)}
+.btn-ghost:hover{color:var(--text);border-color:var(--lightgray)}
+.btn-danger{background:none;color:#e05555;border:1px solid #552222}
+.btn-danger:hover{background:rgba(220,80,80,.15)}
+#file-input,#camera-input{display:none}
+
+/* DROP ZONE */
+#drop-zone{border:2px dashed var(--lightgray);border-radius:var(--radius);padding:40px 20px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s}
+#drop-zone.hidden{display:none}
+#drop-zone:hover,#drop-zone.drag-over{border-color:var(--orange);background:var(--orange-dim)}
+#drop-zone .drop-icon{font-size:48px;margin-bottom:12px}
+#drop-zone h2{font-family:'Oswald',sans-serif;font-size:20px;font-weight:600;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+#drop-zone p{color:var(--text-dim);font-size:14px;margin-bottom:16px}
+
+/* WORKSPACE */
+#workspace{display:none;flex-direction:column;gap:12px}
+#workspace.visible{display:flex}
+
+/* VIDEO */
+#video-container{position:relative;background:#000;border-radius:var(--radius);overflow:hidden;width:100%;cursor:crosshair;box-shadow:0 0 0 1px var(--midgray)}
+#video-container video{display:block;width:100%;height:auto;max-height:60vh;pointer-events:none}
+#draw-canvas{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}
+#draw-canvas.active{pointer-events:all}
+#frame-info{position:absolute;top:8px;left:8px;background:rgba(0,0,0,.7);border:1px solid var(--orange);border-radius:4px;padding:2px 8px;font-family:'Oswald',sans-serif;font-size:12px;color:var(--orange);letter-spacing:1px}
+#speed-badge{position:absolute;top:8px;right:8px;background:rgba(255,69,0,.85);border-radius:4px;padding:2px 8px;font-family:'Oswald',sans-serif;font-size:12px;color:white;font-weight:700}
+
+/* EXPORT PROGRESS */
+#export-progress{display:none;position:absolute;inset:0;background:rgba(0,0,0,.8);align-items:center;justify-content:center;flex-direction:column;gap:12px;z-index:10}
+#export-progress.visible{display:flex}
+#export-bar-wrap{width:200px;height:6px;background:var(--midgray);border-radius:3px;overflow:hidden}
+#export-bar{height:100%;background:var(--orange);border-radius:3px;width:0%;transition:width .1s}
+#export-label{font-family:'Oswald',sans-serif;font-size:13px;color:var(--text)}
+
+/* PLAYBACK */
+#playback-controls{background:var(--darkgray);border-radius:var(--radius);padding:10px 12px;display:flex;flex-direction:column;gap:10px}
+#timeline-row{display:flex;align-items:center;gap:8px}
+#timeline{flex:1;-webkit-appearance:none;height:4px;background:var(--midgray);border-radius:2px;outline:none;cursor:pointer}
+#timeline::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--orange);cursor:pointer;box-shadow:0 0 6px var(--orange-glow)}
+#time-display{font-family:'Oswald',sans-serif;font-size:13px;color:var(--text-dim);white-space:nowrap;min-width:80px;text-align:right}
+#playback-btns{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.ctrl-btn{background:var(--midgray);border:1px solid var(--lightgray);color:var(--text);border-radius:var(--radius);padding:8px 12px;cursor:pointer;font-family:'Oswald',sans-serif;font-size:13px;font-weight:500;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:4px}
+.ctrl-btn:hover{border-color:var(--orange);color:var(--orange)}
+#btn-play{min-width:44px;font-size:18px}
+.speed-btns{display:flex;gap:4px;margin-left:auto}
+.speed-btn{background:var(--midgray);border:1px solid var(--lightgray);color:var(--text-dim);border-radius:4px;padding:6px 10px;cursor:pointer;font-family:'Oswald',sans-serif;font-size:12px;font-weight:600;transition:all .15s}
+.speed-btn:hover{border-color:var(--orange);color:var(--orange)}
+.speed-btn.active{background:var(--orange);border-color:var(--orange);color:white}
+
+/* TOOLS */
+#tool-panel{background:var(--darkgray);border-radius:var(--radius);padding:10px 12px;display:flex;flex-direction:column;gap:10px}
+.tool-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.tool-label{font-family:'Oswald',sans-serif;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);min-width:60px}
+.tool-btn{background:var(--midgray);border:1px solid var(--lightgray);color:var(--text);border-radius:var(--radius);padding:8px 14px;cursor:pointer;font-size:15px;transition:all .15s;display:flex;align-items:center;gap:6px}
+.tool-btn span{font-family:'Oswald',sans-serif;font-size:12px;font-weight:500;text-transform:uppercase}
+.tool-btn:hover{border-color:var(--orange);color:var(--orange)}
+.tool-btn.active{background:var(--orange);border-color:var(--orange);color:white}
+.color-options{display:flex;gap:6px;align-items:center}
+.color-dot{width:22px;height:22px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:transform .15s,border-color .15s;flex-shrink:0}
+.color-dot:hover{transform:scale(1.2)}
+.color-dot.active{border-color:white;transform:scale(1.15)}
+#size-slider{width:80px;-webkit-appearance:none;height:3px;background:var(--midgray);border-radius:2px;outline:none;cursor:pointer}
+#size-slider::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--orange);cursor:pointer}
+
+/* ANNOTATIONS */
+#annotations-panel{background:var(--darkgray);border-radius:var(--radius);overflow:hidden}
+#annotations-header{display:flex;align-items:center;padding:10px 12px;border-bottom:1px solid var(--midgray);gap:8px}
+#annotations-header h3{font-family:'Oswald',sans-serif;font-size:14px;font-weight:500;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);flex:1}
+#annotation-count{background:var(--orange);color:white;border-radius:10px;padding:1px 7px;font-size:11px;font-family:'Oswald',sans-serif;font-weight:700}
+#ann-save-status{font-size:11px;color:var(--text-dim);font-style:italic}
+#annotations-list{max-height:180px;overflow-y:auto;padding:4px 0}
+#annotations-list:empty::after{content:'Aucune annotation';display:block;padding:12px 16px;color:var(--text-dim);font-size:13px;font-style:italic}
+.annotation-item{display:flex;align-items:center;padding:7px 12px;gap:10px;border-bottom:1px solid var(--gray);cursor:pointer;transition:background .15s}
+.annotation-item:hover{background:var(--gray)}
+.ann-icon{font-size:16px}
+.ann-info{flex:1}
+.ann-label{font-family:'Oswald',sans-serif;font-size:13px;font-weight:500}
+.ann-time{font-size:11px;color:var(--text-dim)}
+.ann-delete{background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:14px;padding:2px 4px;transition:color .15s}
+.ann-delete:hover{color:#e05555}
+
+/* EXPORT ROW */
+#export-row{display:flex;gap:8px;flex-wrap:wrap}
+
+/* PLAYER MODAL */
+#player-modal{display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.85);align-items:center;justify-content:center;padding:16px}
+#player-modal.visible{display:flex}
+#modal-box{background:var(--darkgray);border:1px solid var(--orange);border-radius:8px;width:100%;max-width:420px;padding:20px;box-shadow:0 0 30px var(--orange-glow);display:flex;flex-direction:column;gap:12px}
+#modal-box h2{font-family:'Oswald',sans-serif;font-size:20px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--orange)}
+#player-search-wrap{position:relative}
+#player-search{width:100%;background:var(--gray);border:1px solid var(--lightgray);border-radius:var(--radius);color:var(--text);padding:10px 36px 10px 12px;font-family:'Barlow',sans-serif;font-size:14px;outline:none;transition:border-color .15s}
+#player-search:focus{border-color:var(--orange)}
+#search-icon{position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--text-dim);pointer-events:none;font-size:14px}
+#search-spinner{position:absolute;right:10px;top:50%;transform:translateY(-50%);display:none;font-size:14px;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:translateY(-50%) rotate(360deg)}}
+#player-list{max-height:240px;overflow-y:auto;border:1px solid var(--midgray);border-radius:var(--radius)}
+.player-row{display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid var(--gray);cursor:pointer;transition:background .15s}
+.player-row:last-child{border-bottom:none}
+.player-row:hover{background:var(--gray)}
+.player-row.selected{background:var(--orange-dim);border-left:3px solid var(--orange)}
+.pr-avatar{width:34px;height:34px;border-radius:50%;background:var(--midgray);border:1px solid var(--lightgray);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:'Oswald',sans-serif;font-size:12px;font-weight:700;color:var(--orange);overflow:hidden}
+.pr-info{flex:1;overflow:hidden}
+.pr-name{font-family:'Oswald',sans-serif;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pr-meta{font-size:11px;color:var(--text-dim)}
+.pr-num{font-family:'Oswald',sans-serif;font-size:18px;font-weight:700;color:var(--orange);opacity:.5;flex-shrink:0;width:30px;text-align:right}
+.pl-msg{padding:12px;color:var(--text-dim);font-size:13px;text-align:center;font-style:italic}
+#modal-status{font-size:12px;color:var(--text-dim);text-align:center;min-height:16px}
+#modal-status.err{color:#e05555}
+.modal-actions{display:flex;gap:8px}
+.modal-actions .btn{flex:1;justify-content:center}
+
+/* SNAPSHOT */
+#snapshot-preview{display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.92);align-items:center;justify-content:center;flex-direction:column;gap:16px;padding:20px}
+#snapshot-preview.visible{display:flex}
+#snapshot-preview img{max-width:100%;max-height:60vh;border-radius:var(--radius);border:2px solid var(--orange)}
+#snapshot-preview p{color:var(--text-dim);font-size:13px}
+
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:var(--dark)}
+::-webkit-scrollbar-thumb{background:var(--midgray);border-radius:2px}
+@media(max-width:480px){.speed-btns{margin-left:0}#playback-btns{justify-content:center}}
+</style>
+
+  <script src="js/config.js"></script>
+  <script src="js/data.js"></script>
+</head>
+<body>
+
+<header>
+  <div class="logo">Diamond Pulse <span>/ Annotator</span></div>
+  <div id="player-chip" title="Choisir un joueur">
+    <div class="avatar" id="chip-avatar">?</div>
+    <div>
+      <div class="chip-name" id="chip-name">Sélectionner joueur</div>
+      <div class="chip-pos"  id="chip-pos">—</div>
+    </div>
+  </div>
+  <button id="btn-open-dp" disabled title="Ouvrir dans Diamond Pulse">↗</button>
+</header>
+
+<!-- BARRE NAVIGATION LINEUP -->
+<div id="lineup-nav" style="display:none">
+  <button id="btn-prev-player" title="Joueur précédent">◀</button>
+  <div id="lineup-nav-info">
+    <span id="lineup-pos-label"></span>
+    <span id="lineup-player-label"></span>
+  </div>
+  <button id="btn-next-player" title="Joueur suivant">▶</button>
+</div>
+
+<main>
+
+  <div id="config-banner">
+    <p>🔧 Même <strong>Supabase</strong> que Diamond Pulse :</p>
+    <input class="inp-cfg" id="inp-url" placeholder="https://xxx.supabase.co" autocomplete="off">
+    <input class="inp-cfg" id="inp-key" placeholder="anon key" autocomplete="off">
+    <button class="btn btn-primary" id="btn-connect">Connecter</button>
+  </div>
+
+  <div id="drop-zone">
+    <div class="drop-icon">🎬</div>
+    <h2>Charger une vidéo</h2>
+    <p>Glisse une vidéo ici ou utilise les boutons</p>
+    <div class="btn-row">
+      <button class="btn btn-primary"   onclick="document.getElementById('file-input').click()">📁 Fichier</button>
+      <button class="btn btn-secondary" onclick="document.getElementById('camera-input').click()">📷 Caméra</button>
+    </div>
+    <input type="file" id="file-input"   accept="video/*">
+    <input type="file" id="camera-input" accept="video/*" capture="environment">
+  </div>
+
+  <div id="workspace">
+
+    <div id="video-container">
+      <video id="video" playsinline></video>
+      <canvas id="draw-canvas"></canvas>
+      <div id="frame-info">F: <span id="frame-num">0</span></div>
+      <div id="speed-badge">1×</div>
+      <div id="export-progress">
+        <div id="export-label">Export en cours…</div>
+        <div id="export-bar-wrap"><div id="export-bar"></div></div>
+      </div>
+    </div>
+
+    <div id="playback-controls">
+      <div id="timeline-row">
+        <input type="range" id="timeline" min="0" max="100" value="0" step="0.01">
+        <div id="time-display">0:00 / 0:00</div>
+      </div>
+      <div id="playback-btns">
+        <button class="ctrl-btn" id="btn-prev">⏮</button>
+        <button class="ctrl-btn" id="btn-play">▶</button>
+        <button class="ctrl-btn" id="btn-next">⏭</button>
+        <button class="ctrl-btn" id="btn-newvid" style="margin-left:4px">📂</button>
+        <div class="speed-btns">
+          <button class="speed-btn" data-speed="0.1">0.1×</button>
+          <button class="speed-btn" data-speed="0.25">¼×</button>
+          <button class="speed-btn" data-speed="0.5">½×</button>
+          <button class="speed-btn active" data-speed="1">1×</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="tool-panel">
+      <div class="tool-row">
+        <span class="tool-label">Outil</span>
+        <button class="tool-btn active" data-tool="arrow">➡ <span>Flèche</span></button>
+        <button class="tool-btn" data-tool="circle">⭕ <span>Cercle</span></button>
+        <button class="tool-btn" data-tool="line">╱ <span>Ligne</span></button>
+        <button class="tool-btn" data-tool="free">✏️ <span>Libre</span></button>
+        <button class="tool-btn" data-tool="text">T <span>Texte</span></button>
+      </div>
+      <div class="tool-row">
+        <span class="tool-label">Couleur</span>
+        <div class="color-options">
+          <div class="color-dot active" data-color="#FF4500" style="background:#FF4500"></div>
+          <div class="color-dot" data-color="#ffffff" style="background:#ffffff"></div>
+          <div class="color-dot" data-color="#00d4ff" style="background:#00d4ff"></div>
+          <div class="color-dot" data-color="#00e676" style="background:#00e676"></div>
+          <div class="color-dot" data-color="#ffeb3b" style="background:#ffeb3b"></div>
+          <div class="color-dot" data-color="#f44336" style="background:#f44336"></div>
+        </div>
+        <span class="tool-label" style="margin-left:8px">Taille</span>
+        <input type="range" id="size-slider" min="1" max="10" value="3">
+        <button class="ctrl-btn" id="btn-undo" style="margin-left:auto" title="Annuler (Ctrl+Z)">↩</button>
+        <button class="ctrl-btn btn-danger" id="btn-clear" title="Effacer tout">🗑</button>
+      </div>
+      <div class="tool-row" style="gap:6px">
+        <button class="btn btn-secondary" id="btn-save-ann" style="flex:1">➕ Sauvegarder annotation</button>
+        <button class="btn btn-ghost" id="btn-snapshot">📸 PNG</button>
+      </div>
+    </div>
+
+    <div id="annotations-panel">
+      <div id="annotations-header">
+        <h3>Annotations</h3>
+        <span id="annotation-count">0</span>
+        <span id="ann-save-status"></span>
+        <button class="btn btn-ghost" id="btn-load-anns" style="font-size:12px;padding:4px 10px">↓ Charger</button>
+        <button class="btn btn-ghost" id="btn-export-json" style="font-size:12px;padding:4px 10px">JSON</button>
+      </div>
+      <div id="annotations-list"></div>
+    </div>
+
+    <div id="export-row">
+      <button class="btn btn-secondary" id="btn-export-mp4" style="flex:1">🎬 Exporter MP4 annoté</button>
+      <button class="btn btn-ghost" id="btn-newvid2">🔄 Nouvelle vidéo</button>
+    </div>
+
+  </div>
+</main>
+
+<!-- PLAYER MODAL -->
+<div id="player-modal">
+  <div id="modal-box">
+    <h2>🧢 Choisir un joueur</h2>
+    <div id="player-search-wrap">
+      <input type="text" id="player-search" placeholder="Rechercher par nom ou numéro…" autocomplete="off">
+      <span id="search-icon">🔍</span>
+      <span id="search-spinner">⟳</span>
+    </div>
+    <div id="player-list"><div class="pl-msg">Charge les joueurs…</div></div>
+    <div id="modal-status"></div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" id="btn-confirm">✓ Confirmer</button>
+      <button class="btn btn-ghost"   id="btn-cancel">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<!-- SNAPSHOT PREVIEW -->
+<div id="snapshot-preview">
+  <img id="snapshot-img" src="" alt="">
+  <p>Appuie longuement sur l'image pour l'enregistrer</p>
+  <div class="btn-row">
+    <a id="snap-dl" class="btn btn-primary" download="annotation.png">⬇ Télécharger</a>
+    <button class="btn btn-ghost" id="btn-close-snap">Fermer</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  CONFIG — même Supabase que Diamond Pulse
+// ═══════════════════════════════════════════════════════
+const CFG_KEY = 'dp_annotator_cfg';
+let SB_URL = '', SB_KEY = '';
+
+(function initCfg(){
+  console.log('[initCfg] APP_CONFIG:', typeof APP_CONFIG !== 'undefined' ? 'DEFINED ✅' : 'UNDEFINED ❌');
+  console.log('[initCfg] SB_URL after init:', SB_URL ? SB_URL.slice(0,30)+'...' : 'EMPTY');
+  try {
+    // Essayer d'abord la config Diamond Pulse (APP_CONFIG injecté via config.js)
+    if (typeof APP_CONFIG !== 'undefined' && APP_CONFIG.supabaseUrl) {
+      SB_URL = APP_CONFIG.supabaseUrl;
+      SB_KEY = APP_CONFIG.supabaseKey;
+    } else {
+      const c = JSON.parse(localStorage.getItem(CFG_KEY) || '{}');
+      SB_URL = c.url || ''; SB_KEY = c.key || '';
+    }
+  } catch(e) {}
+  if (SB_URL) document.getElementById('inp-url').value = SB_URL;
+  if (SB_KEY) document.getElementById('inp-key').value = SB_KEY;
+  if (SB_URL && SB_KEY) document.getElementById('config-banner').classList.add('hidden');
+})();
+
+document.getElementById('btn-connect').addEventListener('click', async () => {
+  const url = document.getElementById('inp-url').value.trim().replace(/\/$/,'');
+  const key = document.getElementById('inp-key').value.trim();
+  if (!url || !key) return;
+  SB_URL = url; SB_KEY = key;
+  const ok = await testSB();
+  if (ok) {
+    localStorage.setItem(CFG_KEY, JSON.stringify({url, key}));
+    document.getElementById('config-banner').classList.add('hidden');
+    await initFromURL();
+    await loadLineup();
+  } else {
+    alert('Connexion impossible — vérifie l\'URL et la clé.');
+  }
+});
+
+// ── Supabase helpers ──────────────────────────────────
+const sbHeaders = () => ({ apikey:SB_KEY, Authorization:'Bearer '+SB_KEY, 'Content-Type':'application/json' });
+
+async function sbGet(path) {
+  const r = await fetch(SB_URL+path, { headers: sbHeaders() });
+  if (!r.ok) throw new Error('Supabase '+r.status);
+  return r.json();
+}
+async function sbPost(path, body) {
+  const r = await fetch(SB_URL+path, { method:'POST', headers:{ ...sbHeaders(), Prefer:'return=representation' }, body:JSON.stringify(body) });
+  if (!r.ok) { const e=await r.json().catch(()=>({})); throw new Error(e.message||'Supabase '+r.status); }
+  return r.json();
+}
+async function sbPatch(path, body) {
+  const r = await fetch(SB_URL+path, { method:'PATCH', headers:{ ...sbHeaders(), Prefer:'return=representation' }, body:JSON.stringify(body) });
+  if (!r.ok) throw new Error('Supabase '+r.status);
+  return r.json();
+}
+async function sbDelete(path) {
+  await fetch(SB_URL+path, { method:'DELETE', headers: sbHeaders() });
+}
+async function testSB() {
+  try { await sbGet('/rest/v1/config?key=eq.app&select=value&limit=1'); return true; }
+  catch(e) { return false; }
+}
+
+// ═══════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════
+const S = {
+  tool:'arrow', color:'#FF4500', size:3,
+  drawing:false, sx:0, sy:0, path:[],
+  annotations:[], temp:[],
+  player:null, pending:null,
+  fps:30,
+  videoName: '',
+};
+
+// ═══════════════════════════════════════════════════════
+//  ELEMENTS
+// ═══════════════════════════════════════════════════════
+const video    = document.getElementById('video');
+const canvas   = document.getElementById('draw-canvas');
+const ctx      = canvas.getContext('2d');
+const drop     = document.getElementById('drop-zone');
+const ws       = document.getElementById('workspace');
+const tl       = document.getElementById('timeline');
+const tdsp     = document.getElementById('time-display');
+const fnum     = document.getElementById('frame-num');
+const sbadge   = document.getElementById('speed-badge');
+const btnPlay  = document.getElementById('btn-play');
+const annList  = document.getElementById('annotations-list');
+const annCnt   = document.getElementById('annotation-count');
+const modal    = document.getElementById('player-modal');
+const plist    = document.getElementById('player-list');
+const mstatus  = document.getElementById('modal-status');
+const snapPrev = document.getElementById('snapshot-preview');
+const saveStatus = document.getElementById('ann-save-status');
+
+// ═══════════════════════════════════════════════════════
+//  VIDEO
+// ═══════════════════════════════════════════════════════
+function loadFile(f) {
+  if (!f || !f.type.startsWith('video/')) return;
+  S.videoName = f.name;
+  video.src = URL.createObjectURL(f); video.load();
+  video.addEventListener('loadedmetadata', () => {
+    drop.classList.add('hidden'); ws.classList.add('visible');
+    tl.max = video.duration; resize(); updateTD();
+  }, {once:true});
+}
+document.getElementById('file-input').addEventListener('change',   e => loadFile(e.target.files[0]));
+document.getElementById('camera-input').addEventListener('change', e => loadFile(e.target.files[0]));
+drop.addEventListener('dragover',  e => { e.preventDefault(); drop.classList.add('drag-over'); });
+drop.addEventListener('dragleave', () => drop.classList.remove('drag-over'));
+drop.addEventListener('drop',      e => { e.preventDefault(); drop.classList.remove('drag-over'); loadFile(e.dataTransfer.files[0]); });
+
+// ═══════════════════════════════════════════════════════
+//  CANVAS
+// ═══════════════════════════════════════════════════════
+function resize() { canvas.width=video.clientWidth; canvas.height=video.clientHeight; redraw(); }
+window.addEventListener('resize', resize);
+video.addEventListener('loadeddata', resize);
+
+// ═══════════════════════════════════════════════════════
+//  PLAYBACK
+// ═══════════════════════════════════════════════════════
+btnPlay.addEventListener('click', togglePlay);
+function togglePlay() {
+  video.paused
+    ? (video.play(), btnPlay.textContent='⏸', canvas.classList.remove('active'))
+    : (video.pause(), btnPlay.textContent='▶', canvas.classList.add('active'));
+}
+video.addEventListener('timeupdate', () => {
+  tl.value = video.currentTime; updateTD();
+  fnum.textContent = Math.floor(video.currentTime * S.fps);
+});
+video.addEventListener('pause', () => { btnPlay.textContent='▶'; canvas.classList.add('active'); redraw(); });
+video.addEventListener('play',  () => { btnPlay.textContent='⏸'; canvas.classList.remove('active'); });
+tl.addEventListener('input', () => { video.currentTime = parseFloat(tl.value); });
+function updateTD() { tdsp.textContent=`${fmt(video.currentTime)} / ${isNaN(video.duration)?'0:00':fmt(video.duration)}`; }
+function fmt(s) { return `${Math.floor(s/60)}:${Math.floor(s%60).toString().padStart(2,'0')}`; }
+document.getElementById('btn-prev').addEventListener('click', () => step(-1));
+document.getElementById('btn-next').addEventListener('click', () => step(1));
+function step(d) { video.pause(); video.currentTime = Math.max(0, Math.min(video.duration, video.currentTime+d/S.fps)); }
+document.querySelectorAll('.speed-btn').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('.speed-btn').forEach(x => x.classList.remove('active'));
+  b.classList.add('active'); video.playbackRate = parseFloat(b.dataset.speed);
+  sbadge.textContent = b.textContent;
+}));
+
+// ═══════════════════════════════════════════════════════
+//  TOOLS
+// ═══════════════════════════════════════════════════════
+document.querySelectorAll('.tool-btn').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('.tool-btn').forEach(x => x.classList.remove('active'));
+  b.classList.add('active'); S.tool = b.dataset.tool;
+  if (!video.paused) video.pause();
+}));
+document.querySelectorAll('.color-dot').forEach(d => d.addEventListener('click', () => {
+  document.querySelectorAll('.color-dot').forEach(x => x.classList.remove('active'));
+  d.classList.add('active'); S.color = d.dataset.color;
+}));
+document.getElementById('size-slider').addEventListener('input', e => S.size = parseInt(e.target.value));
+
+// ═══════════════════════════════════════════════════════
+//  DRAWING
+// ═══════════════════════════════════════════════════════
+function gp(e) {
+  const r=canvas.getBoundingClientRect(), s=e.touches?e.touches[0]:e;
+  return { x:(s.clientX-r.left)*(canvas.width/r.width), y:(s.clientY-r.top)*(canvas.height/r.height) };
+}
+canvas.addEventListener('mousedown',  sd); canvas.addEventListener('mousemove', md);
+canvas.addEventListener('mouseup', ed);   canvas.addEventListener('mouseleave', ed);
+canvas.addEventListener('touchstart', e=>{e.preventDefault();sd(e);},{passive:false});
+canvas.addEventListener('touchmove',  e=>{e.preventDefault();md(e);},{passive:false});
+canvas.addEventListener('touchend',   e=>{e.preventDefault();ed(e);},{passive:false});
+
+function sd(e) {
+  if (!canvas.classList.contains('active')) return;
+  const p=gp(e); S.drawing=true; S.sx=p.x; S.sy=p.y; S.path=[p];
+  if (S.tool==='text') {
+    const t=prompt('Texte :');
+    if (t) { S.temp.push({tool:'text',color:S.color,size:S.size,x:p.x,y:p.y,text:t}); redraw(); }
+    S.drawing=false;
+  }
+}
+function md(e) {
+  if (!S.drawing) return; const p=gp(e); S.path.push(p); redraw();
+  drawShape(ctx,{tool:S.tool,color:S.color,size:S.size,sx:S.sx,sy:S.sy,ex:p.x,ey:p.y,path:S.path},true);
+}
+function ed(e) {
+  if (!S.drawing) return; S.drawing=false;
+  const r=canvas.getBoundingClientRect(), src=e.changedTouches?e.changedTouches[0]:e;
+  const p={x:(src.clientX-r.left)*(canvas.width/r.width), y:(src.clientY-r.top)*(canvas.height/r.height)};
+  if (S.tool!=='text') S.temp.push({tool:S.tool,color:S.color,size:S.size,sx:S.sx,sy:S.sy,ex:p.x,ey:p.y,path:[...S.path]});
+  redraw();
+}
+
+function drawShape(c, s, prev=false) {
+  c.save(); c.strokeStyle=s.color; c.fillStyle=s.color;
+  c.lineWidth=s.size; c.lineCap='round'; c.lineJoin='round';
+  if (prev) c.globalAlpha=.8;
+  if (s.tool==='free') {
+    if (!s.path||s.path.length<2){c.restore();return;}
+    c.beginPath(); c.moveTo(s.path[0].x,s.path[0].y); s.path.forEach(p=>c.lineTo(p.x,p.y)); c.stroke();
+  } else if (s.tool==='line') {
+    c.beginPath(); c.moveTo(s.sx,s.sy); c.lineTo(s.ex,s.ey); c.stroke();
+  } else if (s.tool==='circle') {
+    const rx=Math.abs(s.ex-s.sx)/2, ry=Math.abs(s.ey-s.sy)/2;
+    c.beginPath(); c.ellipse((s.sx+s.ex)/2,(s.sy+s.ey)/2,Math.max(rx,2),Math.max(ry,2),0,0,Math.PI*2); c.stroke();
+  } else if (s.tool==='arrow') {
+    arrowShape(c,s.sx,s.sy,s.ex,s.ey,s.size);
+  } else if (s.tool==='text') {
+    c.font=`bold ${12+s.size*3}px Oswald,sans-serif`;
+    c.shadowColor='rgba(0,0,0,.8)'; c.shadowBlur=4; c.fillText(s.text,s.x,s.y);
+  }
+  c.restore();
+}
+function arrowShape(c,x1,y1,x2,y2,sz) {
+  const a=Math.atan2(y2-y1,x2-x1), len=Math.sqrt((x2-x1)**2+(y2-y1)**2);
+  if (len<2) return;
+  const hl=Math.min(sz*8,len*.5);
+  c.beginPath(); c.moveTo(x1,y1); c.lineTo(x2-Math.cos(a)*hl*.5,y2-Math.sin(a)*hl*.5); c.stroke();
+  c.beginPath(); c.moveTo(x2,y2);
+  c.lineTo(x2-Math.cos(a-.4)*hl,y2-Math.sin(a-.4)*hl);
+  c.lineTo(x2-Math.cos(a+.4)*hl,y2-Math.sin(a+.4)*hl);
+  c.closePath(); c.fill();
+}
+
+function redraw() {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const t = video.currentTime;
+  S.annotations
+    .filter(a => Math.abs(a.time-t) < 0.5)
+    .forEach(a => a.strokes.forEach(s => drawShape(ctx,s)));
+  S.temp.forEach(s => drawShape(ctx,s));
+}
+
+function drawAllStrokes(c, ann, scaleX, scaleY) {
+  c.save(); c.scale(scaleX, scaleY);
+  ann.strokes.forEach(s => drawShape(c, s));
+  c.restore();
+}
+
+document.getElementById('btn-undo').addEventListener('click',  () => { S.temp.pop(); redraw(); });
+document.getElementById('btn-clear').addEventListener('click', () => { S.temp=[]; redraw(); });
+
+// ═══════════════════════════════════════════════════════
+//  SAVE ANNOTATION (local + Supabase)
+// ═══════════════════════════════════════════════════════
+document.getElementById('btn-save-ann').addEventListener('click', async () => {
+  if (!S.temp.length) { alert('Dessine d\'abord quelque chose.'); return; }
+  const note = prompt('Note (optionnel) :') || '';
+  const icons = {arrow:'➡',circle:'⭕',line:'╱',free:'✏️',text:'T'};
+  const cnt={}; S.temp.forEach(s => cnt[s.tool]=(cnt[s.tool]||0)+1);
+  const main = Object.entries(cnt).sort((a,b)=>b[1]-a[1])[0][0];
+
+  const ann = {
+    id: Date.now(),
+    time: video.currentTime,
+    timeStr: fmt(video.currentTime),
+    strokes: [...S.temp],
+    note,
+    icon: icons[main]||'📌',
+    player: S.player ? {...S.player} : null,
+    videoName: S.videoName,
+    supabase_id: null, // sera rempli après sync
+  };
+
+  S.temp = [];
+  S.annotations.push(ann);
+  renderAnns();
+  redraw();
+
+  // Sync Supabase si connecté et joueur sélectionné
+  if (SB_URL && SB_KEY && S.player) {
+    setSaveStatus('Sauvegarde…');
+    try {
+      const row = await sbPost('/rest/v1/annotations', {
+        player_id:  S.player.id,
+        video_name: S.videoName,
+        time_sec:   ann.time,
+        note:       ann.note,
+        strokes:    ann.strokes,
+        created_at: new Date().toISOString(),
+      });
+      if (row && row[0]) ann.supabase_id = row[0].id;
+      setSaveStatus('✓ Sauvegardé');
+    } catch(err) {
+      setSaveStatus('⚠ Erreur Supabase', true);
+      console.warn('[annotations] save error:', err);
+    }
+  }
+});
+
+function setSaveStatus(msg, isErr=false) {
+  saveStatus.textContent = msg;
+  saveStatus.style.color = isErr ? '#e05555' : 'var(--text-dim)';
+  if (!isErr) setTimeout(() => { if (saveStatus.textContent===msg) saveStatus.textContent=''; }, 3000);
+}
+
+// ═══════════════════════════════════════════════════════
+//  LOAD ANNOTATIONS FROM SUPABASE
+// ═══════════════════════════════════════════════════════
+document.getElementById('btn-load-anns').addEventListener('click', loadAnnotations);
+
+async function loadAnnotations() {
+  if (!SB_URL || !SB_KEY) { alert('Configure d\'abord Supabase.'); return; }
+  if (!S.player) { alert('Sélectionne d\'abord un joueur.'); return; }
+  setSaveStatus('Chargement…');
+  try {
+    const rows = await sbGet(
+      `/rest/v1/annotations?player_id=eq.${S.player.id}&order=created_at.desc&limit=50`
+    );
+    if (!rows.length) { setSaveStatus('Aucune annotation trouvée.'); return; }
+
+    S.annotations = rows.map(r => ({
+      id:          r.id,
+      supabase_id: r.id,
+      time:        r.time_sec,
+      timeStr:     fmt(r.time_sec),
+      strokes:     r.strokes || [],
+      note:        r.note || '',
+      icon:        '📌',
+      player:      S.player,
+      videoName:   r.video_name || '',
+    }));
+    renderAnns();
+    redraw();
+    setSaveStatus(`✓ ${rows.length} annotation(s) chargée(s)`);
+  } catch(err) {
+    setSaveStatus('⚠ Erreur chargement', true);
+    console.warn('[annotations] load error:', err);
+  }
+}
+
+function renderAnns() {
+  annList.innerHTML = ''; annCnt.textContent = S.annotations.length;
+  S.annotations.forEach((a,i) => {
+    const el = document.createElement('div'); el.className='annotation-item';
+    const pn = a.player ? ` · #${a.player.jersey_number||'?'} ${a.player.name}` : '';
+    const vn = a.videoName ? ` · ${a.videoName}` : '';
+    el.innerHTML = `
+      <span class="ann-icon">${a.icon}</span>
+      <div class="ann-info">
+        <div class="ann-label">Annotation #${i+1}${a.note?' — '+a.note:''}</div>
+        <div class="ann-time">⏱ ${a.timeStr}${pn}${vn}${a.supabase_id?' ☁':''}` + `</div>
+      </div>
+      <button class="ann-delete" data-i="${i}" title="Supprimer">✕</button>`;
+    el.addEventListener('click', async ev => {
+      if (ev.target.classList.contains('ann-delete')) {
+        const idx = parseInt(ev.target.dataset.i);
+        const target = S.annotations[idx];
+        // Supprimer de Supabase si sync
+        if (target.supabase_id && SB_URL && SB_KEY) {
+          try { await sbDelete(`/rest/v1/annotations?id=eq.${target.supabase_id}`); } catch(e){}
+        }
+        S.annotations.splice(idx, 1);
+        renderAnns(); redraw();
+      } else {
+        video.currentTime = a.time; video.pause();
+        S.temp = []; redraw();
+        a.strokes.forEach(s => drawShape(ctx,s));
+      }
+    });
+    annList.appendChild(el);
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+//  SNAPSHOT PNG
+// ═══════════════════════════════════════════════════════
+document.getElementById('btn-snapshot').addEventListener('click', () => {
+  const w=video.videoWidth, h=video.videoHeight;
+  const oc=document.createElement('canvas'); oc.width=w; oc.height=h;
+  const c=oc.getContext('2d'); c.drawImage(video,0,0,w,h);
+  const sx=w/canvas.width, sy=h/canvas.height;
+  c.save(); c.scale(sx,sy);
+  S.temp.forEach(s => drawShape(c,s));
+  S.annotations.filter(a=>Math.abs(a.time-video.currentTime)<.5).forEach(a=>a.strokes.forEach(s=>drawShape(c,s)));
+  c.restore();
+  // Watermark
+  c.fillStyle='rgba(255,69,0,.75)'; c.font=`bold ${Math.round(h*.025)}px Oswald,sans-serif`;
+  c.fillText('DIAMOND PULSE',12,h-12);
+  if (S.player) {
+    c.fillStyle='rgba(255,255,255,.8)'; c.font=`${Math.round(h*.02)}px Oswald,sans-serif`;
+    c.fillText(`#${S.player.jersey_number||'?'} ${S.player.name} · ${S.player.position||''}`,12,h-36);
+  }
+  const url=oc.toDataURL('image/png');
+  document.getElementById('snapshot-img').src=url;
+  const dl=document.getElementById('snap-dl'); dl.href=url;
+  dl.download=`ann_${S.player?S.player.name.replace(/\s/g,'_'):'player'}_${fmt(video.currentTime).replace(':','-')}.png`;
+  snapPrev.classList.add('visible');
+});
+document.getElementById('btn-close-snap').addEventListener('click', () => snapPrev.classList.remove('visible'));
+
+// ═══════════════════════════════════════════════════════
+//  EXPORT MP4 avec annotations gravées (MediaRecorder)
+// ═══════════════════════════════════════════════════════
+document.getElementById('btn-export-mp4').addEventListener('click', exportMP4);
+
+async function exportMP4() {
+  if (!video.src) { alert('Charge d\'abord une vidéo.'); return; }
+  if (!S.annotations.length) { alert('Aucune annotation à graver.'); return; }
+
+  // Vérifier support MediaRecorder
+  if (!window.MediaRecorder) { alert('MediaRecorder non supporté sur ce navigateur.'); return; }
+
+  const prog   = document.getElementById('export-progress');
+  const bar    = document.getElementById('export-bar');
+  const label  = document.getElementById('export-label');
+
+  prog.classList.add('visible');
+  bar.style.width = '0%';
+  label.textContent = 'Préparation…';
+
+  // Canvas offscreen aux dimensions natives
+  const W = video.videoWidth  || canvas.width;
+  const H = video.videoHeight || canvas.height;
+  const offscreen = document.createElement('canvas');
+  offscreen.width = W; offscreen.height = H;
+  const oc = offscreen.getContext('2d');
+  const scaleX = W / canvas.width;
+  const scaleY = H / canvas.height;
+
+  // Stream + MediaRecorder
+  const stream = offscreen.captureStream(30);
+  const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
+    ? 'video/webm;codecs=vp9'
+    : 'video/webm';
+  const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 4_000_000 });
+  const chunks = [];
+  recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+
+  // Rejouer la vidéo depuis le début
+  video.pause();
+  video.currentTime = 0;
+  await new Promise(r => { video.addEventListener('seeked', r, {once:true}); });
+  video.playbackRate = 1;
+
+  recorder.start(100); // chunk toutes les 100ms
+
+  let animFrame;
+  const duration = video.duration;
+
+  function drawFrame() {
+    oc.drawImage(video, 0, 0, W, H);
+    // Graver les annotations actives à ce timecode
+    const t = video.currentTime;
+    S.annotations
+      .filter(a => Math.abs(a.time - t) < 0.5)
+      .forEach(a => {
+        oc.save(); oc.scale(scaleX, scaleY);
+        a.strokes.forEach(s => drawShape(oc, s));
+        oc.restore();
+      });
+    // Progress
+    const pct = Math.min(100, Math.round((t/duration)*100));
+    bar.style.width = pct + '%';
+    label.textContent = `Export… ${pct}% (${fmt(t)} / ${fmt(duration)})`;
+    if (!video.ended && !video.paused) animFrame = requestAnimationFrame(drawFrame);
+  }
+
+  video.addEventListener('play', () => { animFrame = requestAnimationFrame(drawFrame); }, {once:true});
+  video.addEventListener('ended', async () => {
+    cancelAnimationFrame(animFrame);
+    recorder.stop();
+    label.textContent = 'Finalisation…';
+    bar.style.width = '100%';
+    await new Promise(r => { recorder.onstop = r; });
+
+    const blob = new Blob(chunks, {type: mimeType});
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `annotated_${S.videoName || 'video'}.webm`;
+    a.click();
+    URL.revokeObjectURL(url);
+    prog.classList.remove('visible');
+    // Remettre la vidéo en pause au début
+    video.currentTime = 0;
+  }, {once:true});
+
+  video.play();
+}
+
+// ═══════════════════════════════════════════════════════
+//  EXPORT JSON
+// ═══════════════════════════════════════════════════════
+document.getElementById('btn-export-json').addEventListener('click', () => {
+  const data = {
+    player: S.player, videoName: S.videoName,
+    date: new Date().toISOString(),
+    annotations: S.annotations.map(a => ({
+      id:a.id, time:a.time, timeStr:a.timeStr,
+      note:a.note, strokes:a.strokes.length, player:a.player
+    }))
+  };
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));
+  a.download = `ann_${S.player?S.player.name.replace(/\s/g,'_'):'export'}.json`;
+  a.click();
+});
+
+// ═══════════════════════════════════════════════════════
+//  PLAYER CHIP + MODAL
+// ═══════════════════════════════════════════════════════
+document.getElementById('player-chip').addEventListener('click', openModal);
+
+async function openModal() {
+  console.log('[openModal] SB_URL:', SB_URL || 'EMPTY ❌', '| SB_KEY:', SB_KEY ? 'SET ✅' : 'EMPTY ❌');
+  S.pending = S.player ? {...S.player} : null;
+  modal.classList.add('visible');
+  document.getElementById('player-search').value = '';
+  mstatus.textContent = ''; mstatus.className = '';
+  await loadPlayers('');
+}
+document.getElementById('btn-cancel').addEventListener('click',  () => modal.classList.remove('visible'));
+document.getElementById('btn-confirm').addEventListener('click', () => {
+  if (!S.pending) { mstatus.textContent='Sélectionne un joueur.'; mstatus.className='err'; return; }
+  S.player = {...S.pending}; updateChip();
+  modal.classList.remove('visible');
+});
+
+let searchTO = null;
+document.getElementById('player-search').addEventListener('input', e => {
+  clearTimeout(searchTO); searchTO = setTimeout(() => loadPlayers(e.target.value.trim()), 300);
+});
+
+async function loadPlayers(q='') {
+  if (!SB_URL || !SB_KEY) { renderPList([]); return; }
+  try {
+    const rows = await sbGet('/rest/v1/config?key=eq.app&select=value');
+    console.log('[loadPlayers] raw rows:', JSON.stringify(rows).slice(0, 300));
+    const cfg = rows && rows[0] && rows[0].value;
+    console.log('[loadPlayers] cfg keys:', cfg ? Object.keys(cfg) : 'null');
+    console.log('[loadPlayers] allPlayers sample:', cfg && cfg.allPlayers ? JSON.stringify(Object.entries(cfg.allPlayers).slice(0,2)) : 'none');
+    if (!cfg || !cfg.allPlayers) { renderPList([]); return; }
+
+    // allPlayers = { pid: { name, pronunciation, emoji, photo } }
+    // lineup entries = { pid, jersey, pos, ... } — stockées dans teams[x].lineup
+    // On fusionne les deux pour avoir nom + maillot + position + photo
+    const lineupMap = {}; // pid → { jersey, pos }
+    Object.values(cfg.teams || {}).forEach(team => {
+      (team.lineup || []).forEach(entry => {
+        if (entry.pid != null) lineupMap[String(entry.pid)] = entry;
+      });
+    });
+
+    let players = Object.entries(cfg.allPlayers).map(([pid, p]) => {
+      const le = lineupMap[String(pid)] || {};
+      return {
+        id:            pid,
+        name:          p.name          || '',
+        jersey_number: le.jersey       || '',
+        position:      le.pos          || '',
+        photo_url:     p.photo         || null,
+      };
+    });
+
+    if (q) {
+      const lq = q.toLowerCase();
+      players = players.filter(p =>
+        p.name.toLowerCase().includes(lq) ||
+        String(p.jersey_number).includes(lq)
+      );
+    }
+    players.sort((a, b) => {
+      const na = parseInt(a.jersey_number) || 999;
+      const nb = parseInt(b.jersey_number) || 999;
+      return na - nb || a.name.localeCompare(b.name);
+    });
+    renderPList(players);
+  } catch(e) {
+    console.warn('[loadPlayers]', e);
+    renderPList([]);
+  }
+}
+
+function renderPList(players) {
+  plist.innerHTML = '';
+  if (!players.length) { plist.innerHTML='<div class="pl-msg">Aucun joueur trouvé.</div>'; return; }
+  players.forEach(p => {
+    const el=document.createElement('div');
+    el.className='player-row'+(S.pending&&S.pending.id===p.id?' selected':'');
+    const ini=(p.name||'').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)||'?';
+    el.innerHTML=`
+      <div class="pr-avatar">${p.photo_url || p.photo?`<img src="${p.photo_url || p.photo}" width="34" height="34" style="border-radius:50%;object-fit:cover;display:block" onerror="this.parentNode.textContent='${ini}'">`:`${ini}`}</div>
+      <div class="pr-info"><div class="pr-name">${p.name||'—'}</div><div class="pr-meta">${p.position||'—'}</div></div>
+      <div class="pr-num">${p.jersey_number!=null?'#'+p.jersey_number:''}</div>`;
+    el.addEventListener('click', () => {
+      document.querySelectorAll('.player-row').forEach(r=>r.classList.remove('selected'));
+      el.classList.add('selected'); S.pending=p;
+    });
+    plist.appendChild(el);
+  });
+}
+
+function updateChip() {
+  const p=S.player, btn=document.getElementById('btn-open-dp');
+  if (!p) {
+    document.getElementById('chip-avatar').textContent='?';
+    document.getElementById('chip-name').textContent='Sélectionner joueur';
+    document.getElementById('chip-pos').textContent='—';
+    btn.disabled=true; return;
+  }
+  const ini=(p.name||'').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)||'?';
+  const av=document.getElementById('chip-avatar');
+  av.innerHTML = p.photo_url || p.photo
+    ? `<img src="${p.photo_url || p.photo}" width="28" height="28" style="border-radius:50%;object-fit:cover;display:block" onerror="this.textContent='${ini}'">`
+    : ini;
+  document.getElementById('chip-name').textContent=`#${p.jersey_number??'?'} ${p.name||'—'}`;
+  document.getElementById('chip-pos').textContent=p.position||'—';
+  btn.disabled=false;
+}
+
+// Lien vers Diamond Pulse : index.html#player-{UUID}
+document.getElementById('btn-open-dp').addEventListener('click', () => {
+  if (!S.player) return;
+  const base = location.href.replace(/\/[^/?#]*([?#].*)?$/, '/index.html');
+  window.open(`${base}#player-${S.player.id}`, '_blank');
+});
+
+// ═══════════════════════════════════════════════════════
+//  LINEUP NAVIGATION (chargé depuis Supabase)
+// ═══════════════════════════════════════════════════════
+let lineupPlayers = []; // [{id, name, jersey_number, position, photo_url}]
+let lineupIndex   = -1;
+
+async function loadLineup() {
+  if (!SB_URL || !SB_KEY) return;
+  try {
+    const cfg = await sbGet('/rest/v1/config?key=eq.app&select=value');
+    if (!cfg || !cfg[0]) return;
+    const v = cfg[0].value;
+
+    const teamId = Object.keys(v.teams || {})[0];
+    if (!teamId) return;
+    const lineup = v.teams[teamId].lineup || [];
+    if (!lineup.length) return;
+
+    const allP = v.allPlayers || {};
+    lineupPlayers = lineup
+      .map(entry => {
+        const p = allP[String(entry.pid)];
+        if (!p) return null;
+        return {
+          id:            String(entry.pid),
+          name:          p.name   || '',
+          jersey_number: entry.jersey || '',
+          position:      entry.pos    || '',
+          photo_url:     p.photo      || null,
+        };
+      })
+      .filter(Boolean);
+
+    updateLineupNav();
+  } catch(e) {
+    console.warn('[lineup] load error:', e);
+  }
+}
+
+function updateLineupNav() {
+  const nav = document.getElementById('lineup-nav');
+  if (!lineupPlayers.length) { nav.style.display='none'; return; }
+  nav.style.display = 'flex';
+
+  // Trouver l'index du joueur actif
+  if (S.player) {
+    const idx = lineupPlayers.findIndex(p => String(p.id) === String(S.player.id));
+    if (idx !== -1) lineupIndex = idx;
+  }
+
+  const p   = lineupPlayers[lineupIndex] || lineupPlayers[0];
+  const pos = lineupIndex >= 0 ? `${lineupIndex + 1}/${lineupPlayers.length}` : '—';
+  document.getElementById('lineup-pos-label').textContent   = pos;
+  document.getElementById('lineup-player-label').textContent = p
+    ? `#${p.jersey_number||'?'} ${p.name}` : '—';
+
+  document.getElementById('btn-prev-player').disabled = lineupIndex <= 0;
+  document.getElementById('btn-next-player').disabled = lineupIndex >= lineupPlayers.length - 1;
+}
+
+async function navigateLineup(dir) {
+  const newIdx = lineupIndex + dir;
+  if (newIdx < 0 || newIdx >= lineupPlayers.length) return;
+  lineupIndex = newIdx;
+  const p = lineupPlayers[lineupIndex];
+  S.player  = p;
+  S.pending = p;
+  updateChip();
+  updateLineupNav();
+  // Mettre à jour le hash sans recharger
+  history.replaceState(null, '', `#player-${p.id}`);
+  // Charger les annotations du nouveau joueur
+  if (SB_URL && SB_KEY) {
+    setSaveStatus('Chargement annotations…');
+    await loadAnnotations();
+  }
+}
+
+document.getElementById('btn-prev-player').addEventListener('click', () => navigateLineup(-1));
+document.getElementById('btn-next-player').addEventListener('click', () => navigateLineup(+1));
+
+// ═══════════════════════════════════════════════════════
+//  INIT — lecture URL #player-UUID au chargement
+// ═══════════════════════════════════════════════════════
+async function initFromURL() {
+  const hash = location.hash;
+  if (!hash.startsWith('#player-')) return;
+  const playerId = hash.replace('#player-', '');
+  if (!playerId || !SB_URL || !SB_KEY) return;
+  try {
+    const rows = await sbGet('/rest/v1/config?key=eq.app&select=value');
+    if (!rows || !rows[0]) return;
+    const v = rows[0].value;
+    const p = (v.allPlayers || {})[String(playerId)];
+    if (!p) return;
+
+    // Chercher jersey/pos dans le lineup
+    let jersey = '', pos = '';
+    Object.values(v.teams || {}).forEach(team => {
+      (team.lineup || []).forEach(entry => {
+        if (String(entry.pid) === String(playerId)) {
+          jersey = entry.jersey || '';
+          pos    = entry.pos    || '';
+        }
+      });
+    });
+
+    S.player = { id: playerId, name: p.name || '', jersey_number: jersey, position: pos, photo_url: p.photo || null };
+    updateChip();
+    await loadLineup();
+    if (SB_URL && SB_KEY) {
+      setSaveStatus('Chargement annotations…');
+      await loadAnnotations();
+    }
+  } catch(e) {
+    console.warn('[init] URL player load error:', e);
+  }
+}
+
+// Lancer après que la config Supabase soit prête
+
+// Si déjà configuré au chargement, lancer directement
+window.addEventListener('DOMContentLoaded', async () => {
+  if (SB_URL && SB_KEY) {
+    await initFromURL();
+    await loadLineup();
+  }
+});
+function resetVid() {
+  video.pause(); video.src=''; S.temp=[]; S.annotations=[];
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ws.classList.remove('visible'); drop.classList.remove('hidden');
+  tl.value=0; btnPlay.textContent='▶'; S.videoName=''; renderAnns();
+}
+document.getElementById('btn-newvid').addEventListener('click',  resetVid);
+document.getElementById('btn-newvid2').addEventListener('click', resetVid);
+
+document.addEventListener('keydown', e => {
+  if (e.target.tagName==='INPUT') return;
+  if (e.key===' ')        { e.preventDefault(); togglePlay(); }
+  if (e.key==='ArrowLeft')  step(-1);
+  if (e.key==='ArrowRight') step(1);
+  if ((e.ctrlKey||e.metaKey)&&e.key==='z') { S.temp.pop(); redraw(); }
+  ['1','2','3','4','5'].forEach((k,i) => { if(e.key===k) document.querySelectorAll('.tool-btn')[i].click(); });
+});
+</script>
+</body>
+</html>
