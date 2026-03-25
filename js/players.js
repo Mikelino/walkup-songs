@@ -441,10 +441,6 @@ function render() {
       const base = location.href.replace(/\/[^/?#]*([?#].*)?$/, '/annotator.html');
       window.open(`${base}#player-${pid}`, '_blank');
     });
-      e.stopPropagation();
-      if (isAbsent) return;
-      togglePlay(i, e);
-    });
 
     // ✅ Clic carte : bloqué en mode édition (AJOUT)
     card.addEventListener('click', (e) => {

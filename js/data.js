@@ -158,7 +158,7 @@ async function uploadToSupabase(file, teamId, playerName) {
 
 async function saveConfig() {
   try {
-    await fetch(`${SUPABASE_URL}/rest/v1/config`, {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/config`, {
       method:  'POST',
       headers: HEADERS,
       body:    JSON.stringify({
@@ -167,9 +167,15 @@ async function saveConfig() {
         updated_at: new Date().toISOString(),
       }),
     });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || `HTTP ${res.status}`);
+    }
     showSaveIndicator();
   } catch (err) {
-    console.warn('Save failed:', err);
+    console.error('Save failed:', err);
+    const el = document.getElementById('saveIndicator');
+    if (el) { el.textContent = '⚠ Save error'; el.classList.add('visible'); setTimeout(() => el.classList.remove('visible'), 4000); }
   }
 }
 
@@ -181,9 +187,13 @@ async function loadConfig() {
       `${SUPABASE_URL}/rest/v1/config?key=eq.app&select=value`,
       { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }
     );
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || `HTTP ${res.status}`);
+    }
     const data = await res.json();
 
-    if (!data || !data[0] || !data[0].value) return;
+    if (!data || !data[0] || !data[0].value || Object.keys(data[0].value).length === 0) return;
     const v = data[0].value;
 
     // Joueurs
