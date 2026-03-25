@@ -1027,4 +1027,3 @@ if ('serviceWorker' in navigator) {
     regs.forEach(reg => reg.unregister());
   });
 }
-  </script>
