@@ -1245,8 +1245,6 @@ const LIVE_SOUNDS = {
   sadtrombone: { label: 'Sad Trombone',     icon: '😢', url: null, cat: 'ambiance' },
 };
 
-const liveSoundAudios = {}; // key → Audio instance
-let liveCustomSounds = []; // sera chargé depuis appSettings.soundboard.customSounds après loadConfig()
-// [{id, label, url}]
+// liveSoundAudios and liveCustomSounds are declared in soundboard.js
 
 

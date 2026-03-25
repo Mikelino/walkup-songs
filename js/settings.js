@@ -1203,8 +1203,7 @@ function ttsPopulateVoices() {
   speechSynthesis.onvoiceschanged = fill;
 }
 
-const ORDINALS_FR = ['Premier','Deuxième','Troisième','Quatrième','Cinquième','Sixième','Septième','Huitième','Neuvième'];
-const ORDINALS_EN = ['First','Second','Third','Fourth','Fifth','Sixth','Seventh','Eighth','Ninth'];
+// ORDINALS_FR and ORDINALS_EN are declared in audio.js
 
 function spellJersey(num, lang) {
   const fr = lang.startsWith('fr');
@@ -1325,7 +1324,7 @@ function ttsBuildIntroText(entry, orderIndex) {
 // iOS requires speechSynthesis.speak() to be called synchronously from a user gesture.
 // We unlock once on first user interaction so subsequent async calls work.
 // ── Pre-load TTS voices at startup to avoid delay on first use ──
-let _cachedVoices = [];
+// _cachedVoices is declared in audio.js
 function ttsPreloadVoices() {
   if (!window.speechSynthesis) return;
   const v = speechSynthesis.getVoices();
@@ -1336,8 +1335,7 @@ function ttsPreloadVoices() {
 }
 ttsPreloadVoices();
 
-let _ttsUnlocked = false;
-let _sharedAudioCtx = null;
+// _ttsUnlocked and _sharedAudioCtx are declared in audio.js
 function ttsUnlock() {
   if (!window.speechSynthesis) return;
   // speechSynthesis unlock
@@ -1502,12 +1500,7 @@ async function ttsLoadElevenLabsVoices() {
   }
 }
 
-const TTS_TEMPLATES = {
-  'en':       'Now batting, number {jersey}, {name}!',
-  'en-short': '{name}!',
-  'fr':       'Au bâton, numéro {jersey}, {name} !',
-  'fr-short': '{name} !',
-};
+// TTS_TEMPLATES is declared in audio.js
 
 function ttsSetTemplate(key) {
   const tmpl = document.getElementById('ttsTemplate');
