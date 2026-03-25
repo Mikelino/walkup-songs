@@ -219,7 +219,7 @@ async function render() {
                <rect x="-14" y="-2" width="28" height="20" rx="3" class="avatar-body"/>
              </svg>`
         }
-        <input type="file" accept="image/*" style="display:none" data-pid="${entry.pid}">
+        <input type="file" accept="image/*,.heic,.heif" style="display:none" data-pid="${entry.pid}">
       </div>
 
       <div class="player-info">
@@ -246,6 +246,7 @@ async function render() {
 
       <button class="delete-btn" title="Delete">✕</button>
       <button class="annotate-btn" title="Annoter ce joueur">🎬</button>
+      <button class="wbsc-btn" title="Stats WBSC" data-pid="${entry.pid}">📊</button>
     `;
 
     // Photo button : menu contextuel si photo existante, picker direct sinon
@@ -268,6 +269,22 @@ async function render() {
       if (!file) return;
       const pid = photoDiv.dataset.pid;
       e.target.value = '';
+      const isHeic = file.type === 'image/heic' || file.type === 'image/heif' || /\.hei[cf]$/i.test(file.name);
+      if (isHeic) {
+        if (typeof heic2any === 'function') {
+          try {
+            const convertedBlob = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.92 });
+            const converted = new File([convertedBlob], file.name.replace(/\.hei[cf]$/i, '.jpg'), { type: 'image/jpeg' });
+            openCropModal(converted, async (blob) => {
+              try { await doPhotoUpload(pid, blob); }
+              catch (err) { alert('Photo upload error: ' + err.message); }
+            });
+          } catch (err) { alert('Impossible de convertir le fichier HEIC.\nConvertissez-le en JPEG avant de l\'importer.'); }
+        } else {
+          alert('Format HEIC non supporté.\n• Sur iPhone : Réglages > Appareil photo > Formats > "Compatible"\n• Ou convertissez en JPEG avant d\'importer.');
+        }
+        return;
+      }
       openCropModal(file, async (blob) => {
         try { await doPhotoUpload(pid, blob); }
         catch (err) { alert('Photo upload error: ' + err.message); }
@@ -442,6 +459,12 @@ async function render() {
       window.open(`${base}#player-${pid}`, '_blank');
     });
 
+    // Stats WBSC
+    card.querySelector('.wbsc-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      wbscOpen(entry.pid);
+    });
+
     // ✅ Clic carte : bloqué en mode édition (AJOUT)
     card.addEventListener('click', (e) => {
       if (isEditMode) return;
@@ -605,4 +628,287 @@ async function addPlayer() {
   document.getElementById('addForm').classList.remove('open');
   render();
   saveConfig();
+}
+
+
+// ══════════════════════════════════════════════════════════════
+//  WBSC STATS IMPORT
+//  Fetches player stats from baseballsoftball.be via a Supabase
+//  Edge Function proxy (to avoid CORS).
+// ══════════════════════════════════════════════════════════════
+
+const WBSC_FED_ID   = 143; // Belgian federation
+const WBSC_CATEGORIES = ['D1','D2','BU18','BU15','BU12','SU18','SU15','SU12'];
+
+// ── Modal HTML (injected once into body) ──
+function wbscEnsureModal() {
+  if (document.getElementById('wbscModal')) return;
+  const el = document.createElement('div');
+  el.id = 'wbscModal';
+  el.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(0,0,0,0.82);z-index:500;align-items:center;justify-content:center';
+  el.innerHTML = `
+    <div style="background:var(--darkgray);border:1px solid var(--border);border-top:3px solid var(--orange);border-radius:6px;padding:28px 24px;width:520px;max-width:95vw;max-height:90vh;overflow-y:auto;display:flex;flex-direction:column;gap:16px" onclick="event.stopPropagation()">
+      <div style="font-family:'Oswald',sans-serif;font-size:18px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--white)">📊 Stats WBSC</div>
+      <div id="wbscPlayerName" style="font-family:'Oswald',sans-serif;font-size:14px;color:var(--orange)"></div>
+
+      <!-- URL input -->
+      <div id="wbscInputSection" style="display:flex;flex-direction:column;gap:10px">
+        <label style="font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1px;color:var(--muted);text-transform:uppercase">URL MyBallClub du joueur</label>
+        <div style="display:flex;gap:8px">
+          <input id="wbscUrlInput" type="text" placeholder="https://www.baseballsoftball.be/en/events/.../players/XXXXX"
+            style="flex:1;background:var(--gray);border:1px solid var(--border);border-radius:3px;color:var(--white);padding:9px 12px;font-family:'Barlow Condensed',sans-serif;font-size:13px;outline:none"
+            onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'"/>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <label style="font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1px;color:var(--muted);text-transform:uppercase;white-space:nowrap">Catégorie</label>
+          <select id="wbscCategory" style="background:var(--gray);border:1px solid var(--border);border-radius:3px;color:var(--white);padding:8px 10px;font-family:'Barlow Condensed',sans-serif;font-size:13px">
+            ${WBSC_CATEGORIES.map(c => `<option value="${c}">${c}</option>`).join('')}
+          </select>
+          <button onclick="wbscFetchStats()" id="wbscFetchBtn"
+            style="padding:9px 20px;background:var(--orange);border:none;border-radius:3px;color:#fff;font-family:'Oswald',sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer">
+            Charger
+          </button>
+        </div>
+        <div id="wbscError" style="display:none;color:#ff4444;font-size:12px;font-family:'Barlow Condensed',sans-serif"></div>
+      </div>
+
+      <!-- Stats display -->
+      <div id="wbscStatsSection" style="display:none;flex-direction:column;gap:12px">
+        <div id="wbscBatting"></div>
+        <div id="wbscPitching"></div>
+        <div id="wbscFielding"></div>
+      </div>
+
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:4px">
+        <button onclick="wbscSaveId()" id="wbscSaveBtn" style="display:none;padding:8px 16px;background:var(--orange);border:none;border-radius:3px;color:#fff;font-family:'Oswald',sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;cursor:pointer">💾 Sauvegarder l'ID</button>
+        <button onclick="wbscClose()" style="padding:8px 16px;background:transparent;border:1px solid var(--border);border-radius:3px;color:var(--muted);font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:1px;text-transform:uppercase;cursor:pointer">Fermer</button>
+      </div>
+    </div>`;
+  el.addEventListener('click', wbscClose);
+  document.body.appendChild(el);
+}
+
+let _wbscCurrentPid = null;
+let _wbscCurrentPId = null; // WBSC numeric ID
+
+function wbscOpen(pid) {
+  wbscEnsureModal();
+  _wbscCurrentPid = pid;
+  _wbscCurrentPId = null;
+  const player = allPlayers[pid];
+  document.getElementById('wbscPlayerName').textContent = player?.name || '';
+  document.getElementById('wbscUrlInput').value = player?.wbscUrl || '';
+  document.getElementById('wbscError').style.display = 'none';
+  document.getElementById('wbscStatsSection').style.display = 'none';
+  document.getElementById('wbscSaveBtn').style.display = 'none';
+  document.getElementById('wbscInputSection').style.display = 'flex';
+
+  // Pre-fill category from saved data
+  if (player?.wbscCategory) {
+    const sel = document.getElementById('wbscCategory');
+    sel.value = player.wbscCategory;
+  }
+
+  const modal = document.getElementById('wbscModal');
+  modal.style.display = 'flex';
+
+  // Auto-load if wbscId already saved
+  if (player?.wbscId) {
+    _wbscCurrentPId = player.wbscId;
+    const cat = player.wbscCategory || 'D1';
+    document.getElementById('wbscCategory').value = cat;
+    wbscLoadStats(player.wbscId, cat);
+  }
+}
+
+function wbscClose() {
+  const modal = document.getElementById('wbscModal');
+  if (modal) modal.style.display = 'none';
+}
+
+async function wbscFetchStats() {
+  const url      = document.getElementById('wbscUrlInput').value.trim();
+  const category = document.getElementById('wbscCategory').value;
+  const errEl    = document.getElementById('wbscError');
+  const btn      = document.getElementById('wbscFetchBtn');
+  errEl.style.display = 'none';
+
+  if (!url) { errEl.textContent = 'Collez l\'URL de la page joueur MyBallClub.'; errEl.style.display = 'block'; return; }
+
+  btn.textContent = '⏳'; btn.disabled = true;
+
+  try {
+    // 1. Fetch the player page HTML via Edge Function proxy to extract pId
+    const proxyUrl = `${SUPABASE_URL}/functions/v1/wbsc-proxy?url=${encodeURIComponent(url)}`;
+    const res = await fetch(proxyUrl, { headers: { 'Authorization': `Bearer ${SUPABASE_KEY}` } });
+    if (!res.ok) throw new Error(`Proxy error ${res.status}`);
+    const html = await res.text();
+
+    // 2. Extract pId from HTML
+    const match = html.match(/\/v1\/player\/stats\?pId=(\d+)/);
+    if (!match) throw new Error('ID joueur WBSC introuvable dans la page. Vérifiez l\'URL.');
+    const pId = match[1];
+    _wbscCurrentPId = pId;
+
+    // Save URL in player profile
+    if (_wbscCurrentPid && allPlayers[_wbscCurrentPid]) {
+      allPlayers[_wbscCurrentPid].wbscUrl = url;
+    }
+
+    await wbscLoadStats(pId, category);
+  } catch(err) {
+    errEl.textContent = err.message;
+    errEl.style.display = 'block';
+  } finally {
+    btn.textContent = 'Charger'; btn.disabled = false;
+  }
+}
+
+async function wbscLoadStats(pId, category) {
+  const errEl = document.getElementById('wbscError');
+  try {
+    const statsUrl = `https://www.baseballsoftball.be/api/v1/player/stats?pId=${pId}&lang=en&tab=career&fedId=${WBSC_FED_ID}&eventCategory=${category}`;
+    const proxyUrl = `${SUPABASE_URL}/functions/v1/wbsc-proxy?url=${encodeURIComponent(statsUrl)}`;
+    const res = await fetch(proxyUrl, { headers: { 'Authorization': `Bearer ${SUPABASE_KEY}` } });
+    if (!res.ok) throw new Error(`Stats error ${res.status}`);
+    const data = await res.json();
+
+    wbscRenderStats(data);
+    document.getElementById('wbscStatsSection').style.display = 'flex';
+    document.getElementById('wbscSaveBtn').style.display = 'inline-block';
+  } catch(err) {
+    errEl.textContent = err.message;
+    errEl.style.display = 'block';
+  }
+}
+
+function wbscRenderStats(data) {
+  const batting  = data.batting  || [];
+  const pitching = data.pitching || [];
+  const fielding = data.fielding || [];
+
+  const fmt3 = v => (v != null && v !== '') ? parseFloat(v).toFixed(3).replace('0.', '.') : '—';
+  const fmtN = v => (v != null && v !== '') ? v : '—';
+
+  const tableStyle = 'width:100%;border-collapse:collapse;font-family:"Barlow Condensed",sans-serif;font-size:12px';
+  const thStyle    = 'padding:6px 8px;text-align:center;background:var(--gray);color:var(--orange);letter-spacing:1px;text-transform:uppercase;white-space:nowrap';
+  const tdStyle    = 'padding:5px 8px;text-align:center;border-bottom:1px solid var(--border);color:var(--white)';
+  const tdLStyle   = 'padding:5px 8px;text-align:left;border-bottom:1px solid var(--border);color:var(--muted)';
+  const titleStyle = 'font-family:"Oswald",sans-serif;font-size:13px;font-weight:700;letter-spacing:2px;color:var(--orange);text-transform:uppercase;margin-bottom:6px';
+
+  // ── BATTING ──
+  const batEl = document.getElementById('wbscBatting');
+  if (batting.length) {
+    const rows = batting.map(r => `
+      <tr>
+        <td style="${tdLStyle}">${r.year}</td>
+        <td style="${tdLStyle}">${r.teamcode}</td>
+        <td style="${tdStyle}">${fmtN(r.g)}</td>
+        <td style="${tdStyle}">${fmtN(r.ab)}</td>
+        <td style="${tdStyle}">${fmtN(r.h)}</td>
+        <td style="${tdStyle}">${fmtN(r.double)}</td>
+        <td style="${tdStyle}">${fmtN(r.hr)}</td>
+        <td style="${tdStyle}">${fmtN(r.rbi)}</td>
+        <td style="${tdStyle}">${fmtN(r.bb)}</td>
+        <td style="${tdStyle}">${fmtN(r.so)}</td>
+        <td style="${tdStyle}">${fmtN(r.sb)}</td>
+        <td style="${tdStyle}" style="color:var(--orange);font-weight:700">${fmt3(r.avg)}</td>
+        <td style="${tdStyle}">${fmt3(r.obp)}</td>
+        <td style="${tdStyle}">${fmt3(r.ops)}</td>
+      </tr>`).join('');
+    batEl.innerHTML = `
+      <div style="${titleStyle}">⚾ Batting</div>
+      <div style="overflow-x:auto">
+      <table style="${tableStyle}">
+        <thead><tr>
+          <th style="${thStyle}">Year</th><th style="${thStyle}">Team</th>
+          <th style="${thStyle}">G</th><th style="${thStyle}">AB</th><th style="${thStyle}">H</th>
+          <th style="${thStyle}">2B</th><th style="${thStyle}">HR</th><th style="${thStyle}">RBI</th>
+          <th style="${thStyle}">BB</th><th style="${thStyle}">SO</th><th style="${thStyle}">SB</th>
+          <th style="${thStyle}">AVG</th><th style="${thStyle}">OBP</th><th style="${thStyle}">OPS</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table></div>`;
+  } else {
+    batEl.innerHTML = '';
+  }
+
+  // ── PITCHING ──
+  const pitEl = document.getElementById('wbscPitching');
+  if (pitching.length) {
+    const rows = pitching.map(r => `
+      <tr>
+        <td style="${tdLStyle}">${r.year}</td>
+        <td style="${tdLStyle}">${r.teamcode}</td>
+        <td style="${tdStyle}">${fmtN(r.pitch_win)}-${fmtN(r.pitch_loss)}</td>
+        <td style="${tdStyle}">${fmtN(r.pitch_appear)}</td>
+        <td style="${tdStyle}">${fmtN(r.pitch_ip)}</td>
+        <td style="${tdStyle}">${fmtN(r.pitch_h)}</td>
+        <td style="${tdStyle}">${fmtN(r.pitch_bb)}</td>
+        <td style="${tdStyle}">${fmtN(r.pitch_so)}</td>
+        <td style="${tdStyle}">${fmtN(r.pitch_er)}</td>
+        <td style="${tdStyle}" style="color:var(--orange);font-weight:700">${fmt3(r.era)}</td>
+        <td style="${tdStyle}">${fmt3(r.pitch_whip)}</td>
+      </tr>`).join('');
+    pitEl.innerHTML = `
+      <div style="${titleStyle}">⚡ Pitching</div>
+      <div style="overflow-x:auto">
+      <table style="${tableStyle}">
+        <thead><tr>
+          <th style="${thStyle}">Year</th><th style="${thStyle}">Team</th>
+          <th style="${thStyle}">W-L</th><th style="${thStyle}">APP</th><th style="${thStyle}">IP</th>
+          <th style="${thStyle}">H</th><th style="${thStyle}">BB</th><th style="${thStyle}">SO</th>
+          <th style="${thStyle}">ER</th><th style="${thStyle}">ERA</th><th style="${thStyle}">WHIP</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table></div>`;
+  } else {
+    pitEl.innerHTML = '';
+  }
+
+  // ── FIELDING ──
+  const fldEl = document.getElementById('wbscFielding');
+  if (fielding.length) {
+    const rows = fielding.map(r => `
+      <tr>
+        <td style="${tdLStyle}">${r.year}</td>
+        <td style="${tdLStyle}">${r.teamcode}</td>
+        <td style="${tdStyle}">${fmtN(r.pos)}</td>
+        <td style="${tdStyle}">${fmtN(r.field_g)}</td>
+        <td style="${tdStyle}">${fmtN(r.field_po)}</td>
+        <td style="${tdStyle}">${fmtN(r.field_a)}</td>
+        <td style="${tdStyle}">${fmtN(r.field_e)}</td>
+        <td style="${tdStyle}" style="color:var(--orange);font-weight:700">${fmt3(r.fldp)}</td>
+      </tr>`).join('');
+    fldEl.innerHTML = `
+      <div style="${titleStyle}">🧤 Fielding</div>
+      <div style="overflow-x:auto">
+      <table style="${tableStyle}">
+        <thead><tr>
+          <th style="${thStyle}">Year</th><th style="${thStyle}">Team</th><th style="${thStyle}">Pos</th>
+          <th style="${thStyle}">G</th><th style="${thStyle}">PO</th><th style="${thStyle}">A</th>
+          <th style="${thStyle}">E</th><th style="${thStyle}">FLDP</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table></div>`;
+  } else {
+    fldEl.innerHTML = '';
+  }
+
+  // If no stats at all
+  if (!batting.length && !pitching.length && !fielding.length) {
+    document.getElementById('wbscBatting').innerHTML =
+      `<div style="color:var(--muted);font-family:'Barlow Condensed',sans-serif;font-size:13px;text-align:center;padding:16px">Aucune statistique disponible pour cette catégorie.</div>`;
+  }
+}
+
+function wbscSaveId() {
+  if (!_wbscCurrentPid || !_wbscCurrentPId) return;
+  const category = document.getElementById('wbscCategory').value;
+  allPlayers[_wbscCurrentPid].wbscId       = _wbscCurrentPId;
+  allPlayers[_wbscCurrentPid].wbscCategory = category;
+  saveConfig();
+  const btn = document.getElementById('wbscSaveBtn');
+  btn.textContent = '✓ Sauvegardé';
+  setTimeout(() => { btn.textContent = '💾 Sauvegarder l\'ID'; }, 2000);
 }

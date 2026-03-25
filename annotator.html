@@ -92,7 +92,7 @@ main{flex:1;display:flex;flex-direction:column;padding:12px;gap:12px;max-width:9
 /* PLAYBACK */
 #playback-controls{background:var(--darkgray);border-radius:var(--radius);padding:10px 12px;display:flex;flex-direction:column;gap:10px}
 #timeline-row{display:flex;align-items:center;gap:8px}
-#timeline{flex:1;-webkit-appearance:none;height:4px;background:var(--midgray);border-radius:2px;outline:none;cursor:pointer}
+#timeline{flex:1;appearance:none;-webkit-appearance:none;height:4px;background:var(--midgray);border-radius:2px;outline:none;cursor:pointer}
 #timeline::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--orange);cursor:pointer;box-shadow:0 0 6px var(--orange-glow)}
 #time-display{font-family:'Oswald',sans-serif;font-size:13px;color:var(--text-dim);white-space:nowrap;min-width:80px;text-align:right}
 #playback-btns{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
@@ -116,7 +116,7 @@ main{flex:1;display:flex;flex-direction:column;padding:12px;gap:12px;max-width:9
 .color-dot{width:22px;height:22px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:transform .15s,border-color .15s;flex-shrink:0}
 .color-dot:hover{transform:scale(1.2)}
 .color-dot.active{border-color:white;transform:scale(1.15)}
-#size-slider{width:80px;-webkit-appearance:none;height:3px;background:var(--midgray);border-radius:2px;outline:none;cursor:pointer}
+#size-slider{width:80px;appearance:none;-webkit-appearance:none;height:3px;background:var(--midgray);border-radius:2px;outline:none;cursor:pointer}
 #size-slider::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--orange);cursor:pointer}
 
 /* ANNOTATIONS */
@@ -343,8 +343,6 @@ const CFG_KEY = 'dp_annotator_cfg';
 let SB_URL = '', SB_KEY = '';
 
 (function initCfg(){
-  console.log('[initCfg] APP_CONFIG:', typeof APP_CONFIG !== 'undefined' ? 'DEFINED ✅' : 'UNDEFINED ❌');
-  console.log('[initCfg] SB_URL after init:', SB_URL ? SB_URL.slice(0,30)+'...' : 'EMPTY');
   try {
     // Essayer d'abord la config Diamond Pulse (APP_CONFIG injecté via config.js)
     if (typeof APP_CONFIG !== 'undefined' && APP_CONFIG.supabaseUrl) {
@@ -847,7 +845,6 @@ document.getElementById('btn-export-json').addEventListener('click', () => {
 document.getElementById('player-chip').addEventListener('click', openModal);
 
 async function openModal() {
-  console.log('[openModal] SB_URL:', SB_URL || 'EMPTY ❌', '| SB_KEY:', SB_KEY ? 'SET ✅' : 'EMPTY ❌');
   S.pending = S.player ? {...S.player} : null;
   modal.classList.add('visible');
   document.getElementById('player-search').value = '';
@@ -870,10 +867,7 @@ async function loadPlayers(q='') {
   if (!SB_URL || !SB_KEY) { renderPList([]); return; }
   try {
     const rows = await sbGet('/rest/v1/config?key=eq.app&select=value');
-    console.log('[loadPlayers] raw rows:', JSON.stringify(rows).slice(0, 300));
     const cfg = rows && rows[0] && rows[0].value;
-    console.log('[loadPlayers] cfg keys:', cfg ? Object.keys(cfg) : 'null');
-    console.log('[loadPlayers] allPlayers sample:', cfg && cfg.allPlayers ? JSON.stringify(Object.entries(cfg.allPlayers).slice(0,2)) : 'none');
     if (!cfg || !cfg.allPlayers) { renderPList([]); return; }
 
     // allPlayers = { pid: { name, pronunciation, emoji, photo } }
