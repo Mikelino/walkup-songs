@@ -120,7 +120,7 @@ main{flex:1;display:flex;flex-direction:column;padding:12px;gap:12px;max-width:9
 #size-slider::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--orange);cursor:pointer}
 
 /* ANNOTATIONS */
-#annotations-panel{background:var(--darkgray);border-radius:var(--radius);overflow:hidden;display:none}
+#annotations-panel{background:var(--darkgray);border-radius:var(--radius);overflow:hidden}
 #annotations-header{display:flex;align-items:center;padding:10px 12px;border-bottom:1px solid var(--midgray);gap:8px}
 #annotations-header h3{font-family:'Oswald',sans-serif;font-size:14px;font-weight:500;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);flex:1}
 #annotation-count{background:var(--orange);color:white;border-radius:10px;padding:1px 7px;font-size:11px;font-family:'Oswald',sans-serif;font-weight:700}
@@ -288,22 +288,23 @@ main{flex:1;display:flex;flex-direction:column;padding:12px;gap:12px;max-width:9
       </div>
     </div>
 
-    <div id="annotations-panel">
-      <div id="annotations-header">
-        <h3>Annotations</h3>
-        <span id="annotation-count">0</span>
-        <span id="ann-save-status"></span>
-        <button class="btn btn-ghost" id="btn-load-anns" style="font-size:12px;padding:4px 10px">↓ Charger</button>
-        <button class="btn btn-ghost" id="btn-export-json" style="font-size:12px;padding:4px 10px">JSON</button>
-      </div>
-      <div id="annotations-list"></div>
-    </div>
-
     <div id="export-row">
       <button class="btn btn-secondary" id="btn-export-mp4" style="flex:1">🎬 Exporter MP4 annoté</button>
       <button class="btn btn-ghost" id="btn-newvid2">🔄 Nouvelle vidéo</button>
     </div>
 
+  </div>
+
+  <!-- Panel annotations — visible indépendamment du workspace -->
+  <div id="annotations-panel" style="display:none;max-width:900px;margin:0 auto;width:100%;padding:0 12px 12px;">
+    <div id="annotations-header">
+      <h3>Annotations</h3>
+      <span id="annotation-count">0</span>
+      <span id="ann-save-status"></span>
+      <button class="btn btn-ghost" id="btn-load-anns" style="font-size:12px;padding:4px 10px">↓ Charger</button>
+      <button class="btn btn-ghost" id="btn-export-json" style="font-size:12px;padding:4px 10px">JSON</button>
+    </div>
+    <div id="annotations-list"></div>
   </div>
 </main>
 
