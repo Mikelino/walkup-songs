@@ -640,6 +640,7 @@
       flex-shrink: 0;
       transition: border-color 0.2s;
       padding: 0;
+      position: relative;
     }
 
     .photo-btn:hover { border-color: var(--orange); }
@@ -690,6 +691,62 @@
       height: 100%;
       object-fit: cover;
       border-radius: 50%;
+    }
+    /* ── GDPR RESTRICTION ── */
+    /* Wrapper photo pour positionner l'overlay en dehors du overflow:hidden */
+    .photo-wrap {
+      position: relative;
+      width: 40px;
+      height: 40px;
+      flex-shrink: 0;
+    }
+
+    .gdpr-overlay {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 10;
+      border-radius: 50%;
+      overflow: hidden;
+    }
+    .gdpr-overlay svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .photo-btn.gdpr-restricted {
+      border-color: rgba(255, 69, 0, 0.6);
+      box-shadow: 0 0 0 2px rgba(255, 69, 0, 0.15);
+    }
+
+    /* Bouton GDPR — icône personne+cadenas */
+    .gdpr-btn {
+      display: flex;
+      width: 28px;
+      height: 28px;
+      border-radius: 3px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: rgba(255, 255, 255, 0.25);
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: color 0.15s, border-color 0.15s;
+      padding: 0;
+    }
+    .gdpr-btn svg { width: 16px; height: 16px; }
+    .gdpr-btn:hover {
+      color: rgba(255, 255, 255, 0.6);
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+    .gdpr-btn.gdpr-on {
+      color: #FF4500 !important;
+      border-color: rgba(255, 69, 0, 0.35) !important;
+    }
+    .gdpr-btn.gdpr-on:hover {
+      background: rgba(255, 69, 0, 0.1) !important;
     }
 
     /* ── DRAG HANDLE ── */
@@ -810,6 +867,15 @@
       background: rgba(255,255,255,0.08) !important;
       color: white !important;
       border-color: rgba(255,255,255,0.3) !important;
+    }
+
+    .annotate-btn.has-annotations {
+      color: var(--orange) !important;
+      border-color: rgba(255,69,0,0.3);
+    }
+    .annotate-btn.has-annotations:hover {
+      background: rgba(255,69,0,0.12) !important;
+      border-color: rgba(255,69,0,0.5) !important;
     }
 
     /* ── WBSC STATS BUTTON ── */
