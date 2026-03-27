@@ -23,44 +23,53 @@
 const EMOJIS = ['⚾','🏃','💥','🎯','⚡','🔥','💪','🌟','🎸','🏆','👊','🦅','🐻','💫','🎺'];
 
 // ── SUPABASE ─────────────────────────────────────────────────
-const SUPABASE_URL = APP_CONFIG.supabaseUrl;
-const SUPABASE_KEY = APP_CONFIG.supabaseKey;
-const BUCKET       = APP_CONFIG.bucket;
+// Lecture différée via getters — APP_CONFIG est lu au moment de l'appel,
+// pas au parsing du script. Évite les erreurs si config.js charge légèrement
+// après data.js (ex: GitHub Pages, cache navigateur).
+Object.defineProperty(window, 'SUPABASE_URL', { get: () => (typeof APP_CONFIG !== 'undefined' ? APP_CONFIG.supabaseUrl  : ''), configurable: true });
+Object.defineProperty(window, 'SUPABASE_KEY', { get: () => (typeof APP_CONFIG !== 'undefined' ? APP_CONFIG.supabaseKey  : ''), configurable: true });
+Object.defineProperty(window, 'BUCKET',       { get: () => (typeof APP_CONFIG !== 'undefined' ? APP_CONFIG.bucket       : 'songs'), configurable: true });
 
-const HEADERS = {
-  'apikey':        SUPABASE_KEY,
-  'Authorization': `Bearer ${SUPABASE_KEY}`,
-  'Content-Type':  'application/json',
-  'Prefer':        'resolution=merge-duplicates',
-};
+// HEADERS est une fonction pour être réévalué à chaque appel
+function getHeaders() {
+  return {
+    'apikey':        SUPABASE_KEY,
+    'Authorization': `Bearer ${SUPABASE_KEY}`,
+    'Content-Type':  'application/json',
+    'Prefer':        'resolution=merge-duplicates',
+  };
+}
+// Alias pour compatibilité avec le code existant qui utilise HEADERS directement
+const HEADERS = new Proxy({}, { get: (_, k) => getHeaders()[k] });
 
 // ── STATE GLOBAL ─────────────────────────────────────────────
+// APP_CONFIG est défini dans config.js (chargé avant data.js dans index.html)
+// Le guard ci-dessous évite tout crash si l'ordre de chargement est perturbé
+const _cfg = (typeof APP_CONFIG !== 'undefined') ? APP_CONFIG : {};
 
 // Répertoire global des joueurs — chargé depuis Supabase
 let allPlayers = {};
 
 // Équipes par défaut depuis config.js — écrasées au chargement par Supabase
 let teams = Object.fromEntries(
-  Object.entries(APP_CONFIG.defaultTeams || { Team1: 'Team 1' })
+  Object.entries(_cfg.defaultTeams || { Team1: 'Team 1' })
     .map(([k, label]) => [k, { label, lineup: [] }])
 );
 
 let currentTeamId    = Object.keys(teams)[0];
 let currentAudio     = null;
-let currentPid       = null;   // pid de l'entrée en cours de lecture
+let currentPid       = null;
 let progressInterval = null;
 let sortable         = null;
 let isEditMode       = false;
-let PLAY_DURATION    = APP_CONFIG.playDuration || 15;
+let PLAY_DURATION    = _cfg.playDuration || 15;
 
-// Paramètres modifiables via l'interface — persistés dans Supabase
-// config.js sert de valeurs par défaut au premier lancement uniquement
 let appSettings = {
-  adminPassword:   APP_CONFIG.adminPassword || 'ChangeMe2024!',
-  playDuration:    APP_CONFIG.playDuration  || 15,
-  extraPositions:  [],   // [{code, label, multi}]
-  posPronunciations: {}, // {code: pronunciation}
-  opponents:       [],   // [{id, name, logo}]
+  adminPassword:   _cfg.adminPassword || 'ChangeMe2024!',
+  playDuration:    _cfg.playDuration  || 15,
+  extraPositions:  [],
+  posPronunciations: {},
+  opponents:       [],
   tts: {
     enabled:          false,
     engine:           'webspeech',
@@ -86,11 +95,10 @@ let appSettings = {
   },
 };
 
-// Identité du club — persistée dans Supabase
 let clubSettings = {
-  name:     APP_CONFIG.clubName    || 'Your Team',
-  sub:      APP_CONFIG.clubSub     || 'Walk-Up Songs',
-  website:  APP_CONFIG.clubWebsite || 'yourclub.com',
+  name:     _cfg.clubName    || 'Your Team',
+  sub:      _cfg.clubSub     || 'Walk-Up Songs',
+  website:  _cfg.clubWebsite || 'yourclub.com',
   logo:     null,
   bgLineup: null,
   bgScore:  null,
@@ -160,7 +168,7 @@ async function saveConfig() {
   try {
     await fetch(`${SUPABASE_URL}/rest/v1/config`, {
       method:  'POST',
-      headers: HEADERS,
+      headers: getHeaders(),
       body:    JSON.stringify({
         key:        'app',
         value:      { allPlayers, teams, clubSettings, appSettings },
@@ -177,13 +185,36 @@ async function saveConfig() {
 
 async function loadConfig() {
   try {
-    const res  = await fetch(
+    if (!SUPABASE_URL || !SUPABASE_KEY) {
+      console.error('[loadConfig] SUPABASE_URL ou SUPABASE_KEY manquant — vérifiez config.js');
+      return;
+    }
+
+    const res = await fetch(
       `${SUPABASE_URL}/rest/v1/config?key=eq.app&select=value`,
       { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }
     );
+
+    if (!res.ok) {
+      console.error(`[loadConfig] HTTP ${res.status} — vérifiez les credentials Supabase et les RLS policies`);
+      return;
+    }
+
     const data = await res.json();
 
-    if (!data || !data[0] || !data[0].value) return;
+    if (!data || !Array.isArray(data)) {
+      console.error('[loadConfig] Réponse inattendue de Supabase :', data);
+      return;
+    }
+    if (data.length === 0) {
+      console.warn('[loadConfig] Table config vide — aucune donnée à charger');
+      return;
+    }
+    if (!data[0].value) {
+      console.warn('[loadConfig] Ligne config trouvée mais value est null/vide');
+      return;
+    }
+
     const v = data[0].value;
 
     // Joueurs
@@ -241,6 +272,6 @@ async function loadConfig() {
     }
 
   } catch (err) {
-    console.warn('Config load failed:', err);
+    console.error('[loadConfig] Erreur inattendue :', err);
   }
 }

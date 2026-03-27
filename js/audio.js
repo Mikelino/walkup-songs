@@ -25,6 +25,7 @@
    ============================================================ */
 
 function switchTeam(teamId) {
+  if (!teams[teamId]) return; // équipe pas encore chargée — ignorer
   stopPlayback();
   currentTeamId = teamId;
   localStorage.setItem('lastTeamId', teamId);
