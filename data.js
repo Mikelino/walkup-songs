@@ -1,254 +1,300 @@
 /* ============================================================
-   Diamond Pulse — js/data.js
-   État global de l'application + persistance Supabase
-
-   Contient :
-   - Variables globales (allPlayers, teams, appSettings, clubSettings)
-   - Supabase : saveConfig(), loadConfig(), uploadToSupabase()
-   - Helpers  : showSaveIndicator(), saveAndRender()
-
-   Extrait de index.html :
-     - Lignes 3952–4019  : DATA (variables globales)
-     - Lignes 4878–4929  : SUPABASE CONFIG + uploadToSupabase()
-     - Lignes 5184–5292  : saveConfig(), loadConfig(), showSaveIndicator()
-
-   MIGRATION :
-   Dans index.html, remplacer ces trois blocs par :
-     <script type="module" src="js/data.js"></script>
-   Et ajouter sur les fonctions qui en dépendent :
-     import { saveConfig, loadConfig, ... } from './js/data.js'
+   Diamond Pulse — js/wbsc-stats.js
+   Chargement des stats WBSC via la Supabase Edge Function wbsc-proxy
+   Ajoute un bouton 📊 sur chaque carte joueur (en mode édition)
+   et affiche un modal avec les stats parsées.
    ============================================================ */
 
-// ── CONSTANTES ───────────────────────────────────────────────
-const EMOJIS = ['⚾','🏃','💥','🎯','⚡','🔥','💪','🌟','🎸','🏆','👊','🦅','🐻','💫','🎺'];
+// ── MODAL HTML (injecté une seule fois dans le DOM) ──────────
+(function injectWbscModal() {
+  if (document.getElementById('wbscModal')) return;
+  const el = document.createElement('div');
+  el.id = 'wbscModal';
+  el.innerHTML = `
+    <div id="wbscBackdrop"></div>
+    <div id="wbscBox">
+      <div id="wbscHeader">
+        <span id="wbscIcon">📊</span>
+        <h2>STATS WBSC</h2>
+      </div>
+      <div id="wbscPlayerName"></div>
 
-// ── SUPABASE ─────────────────────────────────────────────────
-// Lecture différée via getters — APP_CONFIG est lu au moment de l'appel,
-// pas au parsing du script. Évite les erreurs si config.js charge légèrement
-// après data.js (ex: GitHub Pages, cache navigateur).
-Object.defineProperty(window, 'SUPABASE_URL', { get: () => (typeof APP_CONFIG !== 'undefined' ? APP_CONFIG.supabaseUrl  : ''), configurable: true });
-Object.defineProperty(window, 'SUPABASE_KEY', { get: () => (typeof APP_CONFIG !== 'undefined' ? APP_CONFIG.supabaseKey  : ''), configurable: true });
-Object.defineProperty(window, 'BUCKET',       { get: () => (typeof APP_CONFIG !== 'undefined' ? APP_CONFIG.bucket       : 'songs'), configurable: true });
+      <label class="wbsc-label">URL MYBALLCLUB DU JOUEUR</label>
+      <input id="wbscUrlInput" type="url"
+        placeholder="https://www.baseballsoftball.be/en/events/.../players/12345"
+        autocomplete="off">
 
-// HEADERS est une fonction pour être réévalué à chaque appel
-function getHeaders() {
-  return {
-    'apikey':        SUPABASE_KEY,
-    'Authorization': `Bearer ${SUPABASE_KEY}`,
-    'Content-Type':  'application/json',
-    'Prefer':        'resolution=merge-duplicates',
-  };
-}
-// Alias pour compatibilité avec le code existant qui utilise HEADERS directement
-const HEADERS = new Proxy({}, { get: (_, k) => getHeaders()[k] });
+      <div class="wbsc-row">
+        <label class="wbsc-label">CATÉGORIE</label>
+        <select id="wbscCategory">
+          <option value="">Auto</option>
+          <option value="BU12">BU12</option>
+          <option value="BU15">BU15</option>
+          <option value="BU18">BU18</option>
+          <option value="BU21">BU21</option>
+          <option value="Senior">Senior</option>
+          <option value="Women">Women</option>
+          <option value="Mixed">Mixed</option>
+        </select>
+        <button id="wbscLoadBtn" class="wbsc-btn-primary">CHARGER</button>
+      </div>
 
-// ── STATE GLOBAL ─────────────────────────────────────────────
-// APP_CONFIG est défini dans config.js (chargé avant data.js dans index.html)
-// Le guard ci-dessous évite tout crash si l'ordre de chargement est perturbé
-const _cfg = (typeof APP_CONFIG !== 'undefined') ? APP_CONFIG : {};
+      <div id="wbscMsg"></div>
+      <div id="wbscResults" style="display:none">
+        <div id="wbscBattingSection">
+          <div class="wbsc-section-title">⚾ BATTING</div>
+          <div id="wbscBattingGrid" class="wbsc-grid"></div>
+        </div>
+        <div id="wbscPitchingSection" style="display:none">
+          <div class="wbsc-section-title">🎯 PITCHING</div>
+          <div id="wbscPitchingGrid" class="wbsc-grid"></div>
+        </div>
+        <div class="wbsc-actions">
+          <button id="wbscSaveBtn" class="wbsc-btn-secondary">💾 Sauvegarder dans le profil</button>
+          <a id="wbscSourceLink" href="#" target="_blank" class="wbsc-btn-ghost">
+            Voir sur WBSC ↗
+          </a>
+        </div>
+      </div>
 
-// Répertoire global des joueurs — chargé depuis Supabase
-let allPlayers = {};
+      <button id="wbscCloseBtn" class="wbsc-btn-close">FERMER</button>
+    </div>
+  `;
+  document.body.appendChild(el);
 
-// Équipes par défaut depuis config.js — écrasées au chargement par Supabase
-let teams = Object.fromEntries(
-  Object.entries(_cfg.defaultTeams || { Team1: 'Team 1' })
-    .map(([k, label]) => [k, { label, lineup: [] }])
-);
+  // Styles du modal
+  const style = document.createElement('style');
+  style.textContent = `
+    #wbscModal { display:none; position:fixed; inset:0; z-index:500; align-items:center; justify-content:center; padding:16px; }
+    #wbscModal.open { display:flex; }
+    #wbscBackdrop { position:absolute; inset:0; background:rgba(0,0,0,.85); }
+    #wbscBox {
+      position:relative; background:#141414; border:1px solid var(--orange,#FF4500);
+      border-radius:8px; width:100%; max-width:480px; padding:20px;
+      box-shadow:0 0 30px rgba(255,69,0,.3); display:flex; flex-direction:column; gap:12px;
+      max-height:90vh; overflow-y:auto;
+    }
+    #wbscHeader { display:flex; align-items:center; gap:10px; }
+    #wbscIcon { font-size:22px; }
+    #wbscHeader h2 { font-family:'Oswald',sans-serif; font-size:20px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--orange,#FF4500); }
+    #wbscPlayerName { font-family:'Oswald',sans-serif; font-size:16px; color:var(--orange,#FF4500); }
+    .wbsc-label { font-family:'Oswald',sans-serif; font-size:11px; text-transform:uppercase; letter-spacing:1px; color:#888; }
+    #wbscUrlInput {
+      width:100%; background:#1e1e1e; border:1px solid #555; border-radius:6px;
+      color:#e8e8e8; padding:10px 12px; font-size:13px; outline:none; font-family:'Barlow',sans-serif;
+    }
+    #wbscUrlInput:focus { border-color:var(--orange,#FF4500); }
+    .wbsc-row { display:flex; align-items:center; gap:10px; }
+    .wbsc-row .wbsc-label { white-space:nowrap; }
+    #wbscCategory {
+      background:#1e1e1e; border:1px solid #555; border-radius:6px;
+      color:#e8e8e8; padding:8px 10px; font-size:13px; outline:none;
+    }
+    .wbsc-btn-primary {
+      background:var(--orange,#FF4500); color:white; border:none; border-radius:6px;
+      padding:10px 20px; font-family:'Oswald',sans-serif; font-size:14px; font-weight:600;
+      text-transform:uppercase; letter-spacing:.5px; cursor:pointer; transition:background .2s;
+    }
+    .wbsc-btn-primary:hover { background:#ff6030; }
+    .wbsc-btn-primary:disabled { opacity:.5; pointer-events:none; }
+    #wbscMsg { font-size:13px; color:#888; min-height:18px; }
+    #wbscMsg.error { color:#e05555; }
+    #wbscMsg.success { color:#4caf50; }
+    .wbsc-section-title { font-family:'Oswald',sans-serif; font-size:13px; font-weight:600; text-transform:uppercase; letter-spacing:1px; color:#888; margin-bottom:8px; }
+    .wbsc-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(70px,1fr)); gap:8px; }
+    .wbsc-stat { background:#1e1e1e; border-radius:6px; padding:8px; text-align:center; }
+    .wbsc-stat-key { font-family:'Oswald',sans-serif; font-size:10px; text-transform:uppercase; color:#888; letter-spacing:.5px; }
+    .wbsc-stat-val { font-family:'Oswald',sans-serif; font-size:18px; font-weight:700; color:#e8e8e8; margin-top:2px; }
+    .wbsc-stat-val.highlight { color:var(--orange,#FF4500); }
+    .wbsc-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:4px; }
+    .wbsc-btn-secondary {
+      background:#2a2a2a; color:#e8e8e8; border:1px solid #555; border-radius:6px;
+      padding:8px 16px; font-family:'Oswald',sans-serif; font-size:13px; font-weight:500;
+      text-transform:uppercase; cursor:pointer; transition:all .2s; text-decoration:none;
+    }
+    .wbsc-btn-secondary:hover { border-color:var(--orange,#FF4500); color:var(--orange,#FF4500); }
+    .wbsc-btn-ghost {
+      background:none; color:#888; border:1px solid #2a2a2a; border-radius:6px;
+      padding:8px 16px; font-family:'Oswald',sans-serif; font-size:13px;
+      text-transform:uppercase; cursor:pointer; transition:all .2s; text-decoration:none; display:inline-flex; align-items:center;
+    }
+    .wbsc-btn-ghost:hover { color:#e8e8e8; border-color:#555; }
+    #wbscCloseBtn {
+      background:none; color:#888; border:1px solid #2a2a2a; border-radius:6px;
+      padding:8px; font-family:'Oswald',sans-serif; font-size:13px; font-weight:500;
+      text-transform:uppercase; cursor:pointer; transition:all .2s; width:100%;
+    }
+    #wbscCloseBtn:hover { color:#e8e8e8; border-color:#555; }
+    #wbscBattingSection, #wbscPitchingSection { display:flex; flex-direction:column; }
+  `;
+  document.head.appendChild(style);
 
-let currentTeamId    = Object.keys(teams)[0];
-let currentAudio     = null;
-let currentPid       = null;
-let progressInterval = null;
-let sortable         = null;
-let isEditMode       = false;
-let PLAY_DURATION    = _cfg.playDuration || 15;
+  // Events
+  document.getElementById('wbscCloseBtn').addEventListener('click', closeWbscModal);
+  document.getElementById('wbscBackdrop').addEventListener('click', closeWbscModal);
+  document.getElementById('wbscLoadBtn').addEventListener('click', loadWbscStats);
+  document.getElementById('wbscSaveBtn').addEventListener('click', saveWbscToProfile);
+})();
 
-let appSettings = {
-  adminPassword:   _cfg.adminPassword || 'ChangeMe2024!',
-  playDuration:    _cfg.playDuration  || 15,
-  extraPositions:  [],
-  posPronunciations: {},
-  opponents:       [],
-  tts: {
-    enabled:          false,
-    engine:           'webspeech',
-    lang:             'en',
-    template:         'Now batting, number {jersey}, {name}!',
-    voiceName:        '',
-    openAIKey:        '',
-    openAIVoice:      'onyx',
-    elevenLabsKey:    '',
-    elevenLabsVoice:  'onwK4e9ZLuTAKqWW03F9',
-    elevenLabsLang:   '',
-    fadeDelay:        1.5,
-  },
-  soundboard: {
-    anthem:   null,
-    applause: null,
-    letsgo:   null,
-    homerun:  null,
-  },
-  intro: {
-    openingText:    '',
-    showRestOfTeam: true,
-  },
-};
+// ── STATE ────────────────────────────────────────────────────
+let wbscCurrentPid   = null; // pid du joueur ouvert
+let wbscLastStats    = null; // dernières stats chargées
 
-let clubSettings = {
-  name:     _cfg.clubName    || 'Your Team',
-  sub:      _cfg.clubSub     || 'Walk-Up Songs',
-  website:  _cfg.clubWebsite || 'yourclub.com',
-  logo:     null,
-  bgLineup: null,
-  bgScore:  null,
-  bgMvp:    null,
-};
+// ── OPEN / CLOSE ─────────────────────────────────────────────
+function openWbscModal(pid) {
+  wbscCurrentPid = pid;
+  const player   = allPlayers[pid] || {};
+  const entry    = currentLineup().find(e => e.pid == pid) || {};
 
-// ── HELPERS ──────────────────────────────────────────────────
+  document.getElementById('wbscPlayerName').textContent =
+    player.name + (entry.jersey ? ` — #${entry.jersey}` : '');
 
-function currentLineup() {
-  return teams[currentTeamId].lineup;
-}
+  // Pré-remplir l'URL si déjà sauvegardée
+  document.getElementById('wbscUrlInput').value = player.wbscUrl || '';
 
-function showSaveIndicator() {
-  const el = document.getElementById('saveIndicator');
-  el.textContent = '✓ Saved';
-  el.classList.add('visible');
-  setTimeout(() => el.classList.remove('visible'), 2000);
-}
-
-function saveAndRender() {
-  render();
-  saveConfig();
-}
-
-// ── SUPABASE : UPLOAD AUDIO ───────────────────────────────────
-
-async function uploadToSupabase(file, teamId, playerName) {
-  const ext      = file.name.split('.').pop().toLowerCase();
-  const safeName = playerName.toLowerCase()
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    .replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-  const path = `${teamId}/${safeName}.${ext}`;
-
-  let res = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${path}`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${SUPABASE_KEY}`,
-      'Content-Type':  file.type,
-      'x-upsert':      'true',
-    },
-    body: file,
-  });
-
-  if (!res.ok && res.status === 409) {
-    res = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${path}`, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${SUPABASE_KEY}`,
-        'Content-Type':  file.type,
-        'x-upsert':      'true',
-      },
-      body: file,
-    });
+  // Pré-sélectionner la catégorie
+  if (player.wbscCategory) {
+    document.getElementById('wbscCategory').value = player.wbscCategory;
   }
 
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.message || `HTTP ${res.status}`);
-  }
+  // Masquer les résultats précédents
+  document.getElementById('wbscResults').style.display = 'none';
+  document.getElementById('wbscMsg').textContent = '';
+  document.getElementById('wbscMsg').className = '';
+  wbscLastStats = null;
 
-  return `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${path}`;
+  document.getElementById('wbscModal').classList.add('open');
 }
 
-// ── SUPABASE : SAVE CONFIG ────────────────────────────────────
+function closeWbscModal() {
+  document.getElementById('wbscModal').classList.remove('open');
+  wbscCurrentPid = null;
+}
 
-async function saveConfig() {
+// ── LOAD STATS VIA EDGE FUNCTION ─────────────────────────────
+async function loadWbscStats() {
+  const url = document.getElementById('wbscUrlInput').value.trim();
+  if (!url) {
+    setWbscMsg('Colle l\'URL de la page joueur sur baseballsoftball.be', 'error');
+    return;
+  }
+  if (!url.includes('baseballsoftball.be')) {
+    setWbscMsg('L\'URL doit provenir de baseballsoftball.be ou myballclub', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('wbscLoadBtn');
+  btn.textContent = '⏳ CHARGEMENT…';
+  btn.disabled = true;
+  setWbscMsg('Connexion à WBSC…');
+  document.getElementById('wbscResults').style.display = 'none';
+
   try {
-    await fetch(`${SUPABASE_URL}/rest/v1/config`, {
+    // Appel à la Supabase Edge Function
+    const edgeFnUrl = `${SUPABASE_URL}/functions/v1/wbsc-proxy`;
+    const res = await fetch(edgeFnUrl, {
       method:  'POST',
-      headers: getHeaders(),
-      body:    JSON.stringify({
-        key:        'app',
-        value:      { allPlayers, teams, clubSettings, appSettings },
-        updated_at: new Date().toISOString(),
-      }),
+      headers: {
+        'Content-Type':  'application/json',
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'apikey':        SUPABASE_KEY,
+      },
+      body: JSON.stringify({ url }),
     });
-    showSaveIndicator();
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || `Erreur HTTP ${res.status}`);
+    }
+
+    const stats = await res.json();
+    wbscLastStats = stats;
+
+    renderWbscStats(stats);
+    setWbscMsg('✓ Stats chargées avec succès', 'success');
+
   } catch (err) {
-    console.warn('Save failed:', err);
+    setWbscMsg(err.message || 'Erreur de connexion', 'error');
+    console.error('[WBSC]', err);
+  } finally {
+    btn.textContent = 'CHARGER';
+    btn.disabled = false;
   }
 }
 
-// ── SUPABASE : LOAD CONFIG ────────────────────────────────────
+// ── RENDER STATS ─────────────────────────────────────────────
+function renderWbscStats(stats) {
+  // Batting
+  const battingSection = document.getElementById('wbscBattingSection');
+  const battingGrid    = document.getElementById('wbscBattingGrid');
+  battingGrid.innerHTML = '';
 
-async function loadConfig() {
-  try {
-    const res  = await fetch(
-      `${SUPABASE_URL}/rest/v1/config?key=eq.app&select=value`,
-      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }
-    );
-    const data = await res.json();
-
-    if (!data || !data[0] || !data[0].value) return;
-    const v = data[0].value;
-
-    // Joueurs
-    if (v.allPlayers) allPlayers = v.allPlayers;
-
-    // Équipes
-    if (v.teams && Object.keys(v.teams).length > 0) {
-      teams = v.teams;
-      if (!teams[currentTeamId]) currentTeamId = Object.keys(teams)[0];
-    }
-
-    // Identité du club
-    if (v.clubSettings) {
-      const merged  = { ...v.clubSettings };
-      const GENERIC = ['Your Team', 'Mon Club', 'Walk-Up Songs', 'yourclub.com', ''];
-      if (APP_CONFIG.clubName    && !GENERIC.includes(APP_CONFIG.clubName))    merged.name    = APP_CONFIG.clubName;
-      if (APP_CONFIG.clubSub     && !GENERIC.includes(APP_CONFIG.clubSub))     merged.sub     = APP_CONFIG.clubSub;
-      if (APP_CONFIG.clubWebsite && !GENERIC.includes(APP_CONFIG.clubWebsite)) merged.website = APP_CONFIG.clubWebsite;
-      clubSettings = { ...clubSettings, ...merged };
-      applyClubSettings();
-    } else {
-      applyClubSettings();
-    }
-
-    // Paramètres app
-    if (v.appSettings) {
-      appSettings   = { ...appSettings, ...v.appSettings };
-      PLAY_DURATION = appSettings.playDuration;
-      refreshNewPosSelect();
-
-      if (appSettings.fontPairId) {
-        const pair = FONT_PAIRS.find(p => p.id === appSettings.fontPairId);
-        if (pair) ifLoadFontPair(pair).then(() => ifApplyFontPair(pair));
-      }
-
-      if (appSettings.colorAccent) {
-        const accent = appSettings.colorAccent;
-        const bg     = appSettings.colorBg || '#0a0a0a';
-        const darken = (hex, amt) => {
-          const [r, g, b] = hex.match(/\w\w/g).map(x => parseInt(x, 16));
-          return '#' + [r, g, b].map(c => Math.max(0, c - amt).toString(16).padStart(2, '0')).join('');
-        };
-        const [rA, gA, bA] = [
-          parseInt(accent.slice(1, 3), 16),
-          parseInt(accent.slice(3, 5), 16),
-          parseInt(accent.slice(5, 7), 16),
-        ];
-        document.documentElement.style.setProperty('--orange',       accent);
-        document.documentElement.style.setProperty('--orange-dark',  darken(accent, 50));
-        document.documentElement.style.setProperty('--orange-glow',  `rgba(${rA},${gA},${bA},0.25)`);
-        document.documentElement.style.setProperty('--orange-avatar',`rgba(${rA},${gA},${bA},0.5)`);
-        document.documentElement.style.setProperty('--black',        bg);
-        document.documentElement.style.setProperty('--darkgray',     shiftColor(bg, 10));
-      }
-    }
-
-  } catch (err) {
-    console.warn('Config load failed:', err);
+  if (stats.batting && Object.keys(stats.batting).length > 0) {
+    const highlight = ['AVG','OBP','SLG','OPS','HR','RBI'];
+    Object.entries(stats.batting).forEach(([key, val]) => {
+      const isHL = highlight.includes(key);
+      battingGrid.innerHTML += `
+        <div class="wbsc-stat">
+          <div class="wbsc-stat-key">${key}</div>
+          <div class="wbsc-stat-val ${isHL ? 'highlight' : ''}">${val}</div>
+        </div>`;
+    });
+    battingSection.style.display = 'flex';
+  } else {
+    battingSection.style.display = 'none';
   }
+
+  // Pitching
+  const pitchingSection = document.getElementById('wbscPitchingSection');
+  const pitchingGrid    = document.getElementById('wbscPitchingGrid');
+  pitchingGrid.innerHTML = '';
+
+  if (stats.pitching && Object.keys(stats.pitching).length > 0) {
+    const highlight = ['ERA','WHIP','SO','W','L','SV'];
+    Object.entries(stats.pitching).forEach(([key, val]) => {
+      const isHL = highlight.includes(key);
+      pitchingGrid.innerHTML += `
+        <div class="wbsc-stat">
+          <div class="wbsc-stat-key">${key}</div>
+          <div class="wbsc-stat-val ${isHL ? 'highlight' : ''}">${val}</div>
+        </div>`;
+    });
+    pitchingSection.style.display = 'flex';
+  } else {
+    pitchingSection.style.display = 'none';
+  }
+
+  // Lien source
+  document.getElementById('wbscSourceLink').href = stats.sourceUrl || '#';
+
+  document.getElementById('wbscResults').style.display = 'block';
+}
+
+// ── SAVE TO PLAYER PROFILE ───────────────────────────────────
+function saveWbscToProfile() {
+  if (!wbscCurrentPid || !wbscLastStats) return;
+
+  const url      = document.getElementById('wbscUrlInput').value.trim();
+  const category = document.getElementById('wbscCategory').value;
+
+  // Stocker l'URL et les stats dans le profil joueur
+  if (!allPlayers[wbscCurrentPid]) return;
+  allPlayers[wbscCurrentPid].wbscUrl      = url;
+  allPlayers[wbscCurrentPid].wbscCategory = category;
+  allPlayers[wbscCurrentPid].wbscStats    = wbscLastStats;
+  allPlayers[wbscCurrentPid].wbscUpdated  = new Date().toISOString();
+
+  saveConfig();
+  setWbscMsg('✓ Sauvegardé dans le profil joueur', 'success');
+  document.getElementById('wbscSaveBtn').textContent = '✓ Sauvegardé';
+  setTimeout(() => {
+    document.getElementById('wbscSaveBtn').textContent = '💾 Sauvegarder dans le profil';
+  }, 2000);
+}
+
+// ── HELPER ───────────────────────────────────────────────────
+function setWbscMsg(msg, type = '') {
+  const el = document.getElementById('wbscMsg');
+  el.textContent = msg;
+  el.className   = type;
 }
