@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Diamond Pulse — OBS Overlay</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Barlow+Condensed:wght@400;600;700&family=Barlow:wght@400;600&display=swap" rel="stylesheet">
+
+  <!-- ═══════════════════════════════════════ CONFIG ══ -->
+  <script src="js/config.js"></script>
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --orange:     #FF4500;
+      --orange-dim: rgba(255,69,0,0.18);
+      --orange-glow:rgba(255,69,0,0.5);
+      --white:      #FFFFFF;
+      --offwhite:   #E8E8E8;
+      --muted:      rgba(255,255,255,0.55);
+      --dark:       rgba(8,4,0,0.82);
+      --dark-panel: rgba(10,5,0,0.88);
+      --border:     rgba(255,69,0,0.25);
+    }
+
+    html, body {
+      width: 1920px;
+      height: 1080px;
+      background: transparent;
+      overflow: hidden;
+      font-family: 'Barlow Condensed', sans-serif;
+    }
+
+    /* ── SCOREBOARD — bas gauche ── */
+    #scoreboard {
+      position: absolute;
+      bottom: 48px;
+      left: 48px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    #scoreboard.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Score principal */
+    .score-main {
+      display: flex;
+      align-items: stretch;
+      background: var(--dark-panel);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--orange);
+      border-radius: 4px;
+      overflow: hidden;
+      backdrop-filter: blur(6px);
+      box-shadow: 0 4px 32px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,69,0,0.1);
+    }
+
+    .team-block {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      padding: 10px 18px 10px 14px;
+      min-width: 160px;
+    }
+
+    .team-block + .team-block {
+      border-left: 1px solid var(--border);
+    }
+
+    .team-label {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 10px;
+      letter-spacing: 3px;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 2px;
+    }
+
+    .team-name {
+      font-family: 'Oswald', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: var(--white);
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .score-divider {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 0 4px;
+      background: var(--orange-dim);
+    }
+
+    .score-value {
+      font-family: 'Oswald', sans-serif;
+      font-size: 38px;
+      font-weight: 700;
+      color: var(--orange);
+      line-height: 1;
+      letter-spacing: -1px;
+      min-width: 44px;
+      text-align: center;
+      padding: 10px 14px;
+    }
+
+    .score-sep {
+      font-family: 'Oswald', sans-serif;
+      font-size: 28px;
+      font-weight: 400;
+      color: var(--border);
+      padding: 0 2px;
+      align-self: center;
+    }
+
+    /* Inning */
+    .inning-block {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 16px;
+      border-left: 1px solid var(--border);
+      min-width: 64px;
+    }
+
+    .inning-arrow {
+      font-size: 11px;
+      color: var(--orange);
+      line-height: 1;
+      margin-bottom: 1px;
+    }
+
+    .inning-num {
+      font-family: 'Oswald', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--white);
+      line-height: 1;
+    }
+
+    .inning-lbl {
+      font-size: 9px;
+      letter-spacing: 2px;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-top: 1px;
+    }
+
+    /* ── COUNTS — BSO ── */
+    .counts-row {
+      display: flex;
+      gap: 6px;
+    }
+
+    .count-block {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      background: var(--dark-panel);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 7px 12px;
+      backdrop-filter: blur(6px);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+    }
+
+    .count-label {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: var(--muted);
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+
+    .count-dots {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+    }
+
+    .dot {
+      width: 13px;
+      height: 13px;
+      border-radius: 2px;
+      transform: rotate(45deg);
+      border: 1.5px solid rgba(255,255,255,0.2);
+      background: transparent;
+      transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+      flex-shrink: 0;
+    }
+
+    .dot.on-balls   { background: #4CAF50; border-color: #4CAF50; box-shadow: 0 0 6px rgba(76,175,80,0.7); }
+    .dot.on-strikes { background: #FF9800; border-color: #FF9800; box-shadow: 0 0 6px rgba(255,152,0,0.7); }
+    .dot.on-outs    { background: #f44336; border-color: #f44336; box-shadow: 0 0 6px rgba(244,67,54,0.7); }
+
+    /* ── BATTER CARD — bas droite ── */
+    #batterCard {
+      position: absolute;
+      bottom: 48px;
+      right: 48px;
+      display: flex;
+      align-items: center;
+      gap: 0;
+      background: var(--dark-panel);
+      border: 1px solid var(--border);
+      border-right: 4px solid var(--orange);
+      border-radius: 4px;
+      overflow: hidden;
+      backdrop-filter: blur(6px);
+      box-shadow: 0 4px 32px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,69,0,0.1);
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity 0.5s ease 0.15s, transform 0.5s ease 0.15s;
+    }
+
+    #batterCard.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    #batterCard.batter-change {
+      animation: batter-flash 0.4s ease;
+    }
+
+    @keyframes batter-flash {
+      0%   { opacity: 1; transform: translateY(0); }
+      30%  { opacity: 0; transform: translateY(8px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+
+    .batter-photo-wrap {
+      width: 72px;
+      height: 72px;
+      flex-shrink: 0;
+      background: rgba(255,69,0,0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      border-right: 1px solid var(--border);
+    }
+
+    .batter-photo-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .batter-avatar-svg {
+      opacity: 0.4;
+    }
+
+    .batter-info {
+      padding: 10px 16px 10px 14px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-width: 180px;
+    }
+
+    .batter-lbl {
+      font-size: 9px;
+      letter-spacing: 3px;
+      color: var(--orange);
+      text-transform: uppercase;
+      margin-bottom: 3px;
+    }
+
+    .batter-name {
+      font-family: 'Oswald', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: var(--white);
+      text-transform: uppercase;
+      line-height: 1;
+      white-space: nowrap;
+    }
+
+    .batter-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .batter-jersey {
+      font-family: 'Oswald', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--orange);
+      letter-spacing: 1px;
+    }
+
+    .batter-pos {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: var(--muted);
+      text-transform: uppercase;
+      background: rgba(255,69,0,0.1);
+      border: 1px solid rgba(255,69,0,0.2);
+      border-radius: 2px;
+      padding: 1px 5px;
+    }
+
+    /* ── ORANGE PULSE on score change ── */
+    @keyframes score-pop {
+      0%   { transform: scale(1); }
+      40%  { transform: scale(1.25); color: #fff; }
+      100% { transform: scale(1); }
+    }
+    .score-value.popped { animation: score-pop 0.35s ease; }
+
+    /* ── ERROR STATE ── */
+    #errorMsg {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(200,0,0,0.7);
+      color: white;
+      font-size: 13px;
+      padding: 6px 16px;
+      border-radius: 3px;
+      display: none;
+      letter-spacing: 1px;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="errorMsg"></div>
+
+  <!-- ══ SCOREBOARD ══ -->
+  <div id="scoreboard">
+
+    <!-- Score ligne -->
+    <div class="score-main">
+      <div class="team-block">
+        <div class="team-label">Home</div>
+        <div class="team-name" id="teamHome">BLACK BEARS</div>
+      </div>
+      <div class="score-value" id="scoreHome">0</div>
+      <div class="score-sep">–</div>
+      <div class="score-value" id="scoreAway">0</div>
+      <div class="team-block">
+        <div class="team-label">Visitors</div>
+        <div class="team-name" id="teamAway">VISITORS</div>
+      </div>
+      <div class="inning-block">
+        <div class="inning-arrow" id="inningArrow">▲</div>
+        <div class="inning-num" id="inningNum">1</div>
+        <div class="inning-lbl">Inn.</div>
+      </div>
+    </div>
+
+    <!-- BSO -->
+    <div class="counts-row">
+      <div class="count-block">
+        <div class="count-label">B</div>
+        <div class="count-dots" id="dotsBalls">
+          <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        </div>
+      </div>
+      <div class="count-block">
+        <div class="count-label">S</div>
+        <div class="count-dots" id="dotsStrikes">
+          <div class="dot"></div><div class="dot"></div>
+        </div>
+      </div>
+      <div class="count-block">
+        <div class="count-label">O</div>
+        <div class="count-dots" id="dotsOuts">
+          <div class="dot"></div><div class="dot"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ BATTER CARD ══ -->
+  <div id="batterCard">
+    <div class="batter-photo-wrap">
+      <img id="batterPhoto" src="" alt="" style="display:none">
+      <svg class="batter-avatar-svg" width="40" height="40" viewBox="0 0 40 40" id="batterAvatar">
+        <circle cx="20" cy="14" r="9" fill="#555"/>
+        <ellipse cx="20" cy="36" rx="14" ry="9" fill="#333"/>
+        <ellipse cx="20" cy="10" rx="9" ry="5" fill="rgba(255,69,0,0.5)"/>
+      </svg>
+    </div>
+    <div class="batter-info">
+      <div class="batter-lbl">⚾ Au bâton</div>
+      <div class="batter-name" id="batterName">—</div>
+      <div class="batter-meta">
+        <div class="batter-jersey" id="batterJersey"></div>
+        <div class="batter-pos" id="batterPos"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ══ CONFIG (injectée via config.js) ══
+    const SUPABASE_URL = APP_CONFIG.supabaseUrl;
+    const SUPABASE_KEY = APP_CONFIG.supabaseKey;
+
+    // ══ STATE ══
+    let prev = {};
+    let teamNames = {};   // { home: '...', away: '...' }
+    let players  = [];    // liste ordonnée joueurs actifs
+    let photoCache = {};  // pid → url signée
+
+    // ══ INIT ══
+    async function init() {
+      await loadAppData();
+      document.getElementById('scoreboard').classList.add('visible');
+      document.getElementById('batterCard').classList.add('visible');
+      setInterval(poll, 2000);
+    }
+
+    // Charge config complète (teams + players + matchState)
+    async function loadAppData() {
+      try {
+        const res = await fetch(
+          `${SUPABASE_URL}/rest/v1/config?select=key,value`,
+          { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }
+        );
+        const rows = await res.json();
+        const app  = rows.find(r => r.key === 'app')?.value || {};
+        const cfg  = rows.find(r => r.key === 'clubSettings')?.value || {};
+
+        // Nom équipe home
+        const currentTeamId = app.currentTeamId || Object.keys(app.teams || {})[0] || '';
+        const homeTeam = (app.teams || {})[currentTeamId];
+        teamNames.home = homeTeam?.name || cfg.clubName || APP_CONFIG.clubName || 'HOME';
+        teamNames.away = app.opponentName || 'VISITORS';
+
+        document.getElementById('teamHome').textContent = teamNames.home.toUpperCase();
+        document.getElementById('teamAway').textContent = teamNames.away.toUpperCase();
+
+        // Joueurs
+        const allPlayers = app.players || {};
+        const order = homeTeam?.order || [];
+        players = order.map(id => allPlayers[id]).filter(p => p && !p.absent);
+
+        // Pré-charger les photos
+        await preloadPhotos(players);
+
+        // Render initial
+        const ms = app.matchState || {};
+        renderState(ms, true);
+        prev = { ...ms };
+
+      } catch(e) {
+        showError('Erreur de connexion Supabase');
+        console.error(e);
+      }
+    }
+
+    // Polling léger — ne recharge que matchState
+    async function poll() {
+      try {
+        const res = await fetch(
+          `${SUPABASE_URL}/rest/v1/config?key=eq.app&select=value`,
+          { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }
+        );
+        const rows = await res.json();
+        const ms = rows?.[0]?.value?.matchState;
+        if (!ms) return;
+
+        // Rechargement complet si batterIdx change (nouvelle photo éventuelle)
+        if (ms.batterIdx !== prev.batterIdx) {
+          await loadAppData();
+          return;
+        }
+
+        renderState(ms, false);
+        prev = { ...ms };
+      } catch(e) { /* silencieux en prod */ }
+    }
+
+    function renderState(ms, force) {
+      if (!ms) return;
+
+      // Scores
+      setScore('scoreHome', ms.scoreHome ?? 0, prev.scoreHome, force);
+      setScore('scoreAway', ms.scoreAway ?? 0, prev.scoreAway, force);
+
+      // Inning
+      document.getElementById('inningNum').textContent   = ms.inning ?? 1;
+      document.getElementById('inningArrow').textContent = ms.inningTop !== false ? '▲' : '▼';
+
+      // Dots
+      setDots('dotsBalls',   ms.balls   ?? 0, 3, 'balls');
+      setDots('dotsStrikes', ms.strikes ?? 0, 2, 'strikes');
+      setDots('dotsOuts',    ms.outs    ?? 0, 2, 'outs');
+
+      // Batter
+      const batter = players[(ms.batterIdx ?? 0) % Math.max(players.length, 1)];
+      if (batter) {
+        const nameChanged = batter.name !== document.getElementById('batterName').textContent;
+        if (nameChanged && !force) {
+          document.getElementById('batterCard').classList.add('batter-change');
+          setTimeout(() => document.getElementById('batterCard').classList.remove('batter-change'), 450);
+        }
+        document.getElementById('batterName').textContent   = batter.name || '—';
+        document.getElementById('batterJersey').textContent = batter.jersey ? `#${batter.jersey}` : '';
+        document.getElementById('batterPos').textContent    = batter.position || '';
+        setPhoto(batter);
+      }
+    }
+
+    function setScore(id, val, oldVal, force) {
+      const el = document.getElementById(id);
+      el.textContent = val;
+      if (!force && val !== oldVal) {
+        el.classList.remove('popped');
+        void el.offsetWidth; // reflow
+        el.classList.add('popped');
+        setTimeout(() => el.classList.remove('popped'), 400);
+      }
+    }
+
+    function setDots(containerId, val, max, type) {
+      const dots = document.getElementById(containerId).querySelectorAll('.dot');
+      dots.forEach((dot, i) => {
+        dot.className = 'dot';
+        if (i < val) dot.classList.add(`on-${type}`);
+      });
+    }
+
+    async function setPhoto(batter) {
+      const photoEl  = document.getElementById('batterPhoto');
+      const avatarEl = document.getElementById('batterAvatar');
+      const pid = batter.id || batter.name;
+
+      if (photoCache[pid]) {
+        photoEl.src = photoCache[pid];
+        photoEl.style.display = 'block';
+        avatarEl.style.display = 'none';
+        return;
+      }
+
+      if (batter.photoPath && !batter.gdprPhoto) {
+        try {
+          const res = await fetch(
+            `${SUPABASE_URL}/storage/v1/object/sign/photos/${batter.photoPath}`,
+            {
+              method: 'POST',
+              headers: {
+                'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ expiresIn: 3600 })
+            }
+          );
+          const data = await res.json();
+          if (data.signedURL) {
+            const url = SUPABASE_URL + data.signedURL;
+            photoCache[pid] = url;
+            photoEl.src = url;
+            photoEl.style.display = 'block';
+            avatarEl.style.display = 'none';
+            return;
+          }
+        } catch(e) { /* fallback avatar */ }
+      }
+
+      photoEl.style.display = 'none';
+      avatarEl.style.display = 'block';
+    }
+
+    async function preloadPhotos(playerList) {
+      for (const p of playerList) {
+        if (p && p.photoPath && !p.gdprPhoto) {
+          await setPhoto(p);
+        }
+      }
+    }
+
+    function showError(msg) {
+      const el = document.getElementById('errorMsg');
+      el.textContent = msg;
+      el.style.display = 'block';
+      setTimeout(() => el.style.display = 'none', 5000);
+    }
+
+    window.addEventListener('load', init);
+  </script>
+</body>
+</html>
