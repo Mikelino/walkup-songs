@@ -2395,9 +2395,9 @@
         padding-bottom: 60px;
       }
 
-      /* Grille player mobile : n° ordre | badge pos | info | play | présence */
+      /* Grille player mobile : n° ordre | présence | badge pos | info | play */
       .player-card {
-        grid-template-columns: 20px 36px 1fr 36px 22px;
+        grid-template-columns: 20px 22px 36px 1fr 36px;
         grid-template-rows: auto;
         gap: 8px;
         padding: 8px 10px;
@@ -2412,10 +2412,10 @@
       .player-card .annotate-btn { display: none !important; }
       /* Placement explicite des éléments visibles (évite le décalage dû aux display:none) */
       .player-card .order-num     { grid-column: 1; grid-row: 1; }
-      .player-card .presence-btn  { grid-column: 5; grid-row: 1; }
-      .player-card .player-avatar { grid-column: 2; grid-row: 1; }
-      .player-card .player-info   { grid-column: 3; grid-row: 1; min-width: 0; overflow: hidden; }
-      .player-card .play-btn      { grid-column: 4; grid-row: 1; }
+      .player-card .presence-btn  { grid-column: 2; grid-row: 1; }
+      .player-card .player-avatar { grid-column: 3; grid-row: 1; }
+      .player-card .player-info   { grid-column: 4; grid-row: 1; min-width: 0; overflow: hidden; }
+      .player-card .play-btn      { grid-column: 5; grid-row: 1; }
       .player-name {
         font-size: 15px;
         white-space: nowrap;
