@@ -610,25 +610,33 @@
         );
         const rows = await res.json();
         const app  = rows.find(r => r.key === 'app')?.value || {};
-        const cfg  = rows.find(r => r.key === 'clubSettings')?.value || {};
 
-        // Nom équipe home
+        console.log('[overlay] app keys:', Object.keys(app));
+        console.log('[overlay] app.teams:', app.teams);
+        console.log('[overlay] app.allPlayers count:', Object.keys(app.allPlayers || {}).length);
+
+        // Équipe active — currentTeamId sauvegardé par matchSave, sinon premier de la liste
         const currentTeamId = app.currentTeamId || Object.keys(app.teams || {})[0] || '';
         const homeTeam = (app.teams || {})[currentTeamId];
-        teamNames.home = homeTeam?.name || cfg.clubName || APP_CONFIG.clubName || 'HOME';
-        teamNames.away = app.opponentName || 'VISITORS';
+        console.log('[overlay] currentTeamId:', currentTeamId, '| homeTeam:', homeTeam);
+
+        teamNames.home = homeTeam?.label || homeTeam?.name || APP_CONFIG.clubName || 'HOME';
+        teamNames.away = app.matchState?.opponentName || app.opponentName || 'VISITORS';
 
         document.getElementById('teamHome').textContent = teamNames.home.toUpperCase();
         document.getElementById('teamAway').textContent = teamNames.away.toUpperCase();
 
-        // Joueurs — construits depuis team.lineup (même structure que le LineupMode)
+        // Joueurs — construits depuis team.lineup
         const allPlayers = app.allPlayers || {};
         const lineupEntries = (homeTeam?.lineup || []).filter(e => e && e.present !== false);
+        console.log('[overlay] lineupEntries:', lineupEntries.length, lineupEntries);
+
         players = lineupEntries.map(e => {
           const p = allPlayers[e.pid];
-          if (!p) return null;
+          if (!p) { console.warn('[overlay] allPlayers missing pid:', e.pid); return null; }
           return { ...p, id: e.pid, jersey: e.jersey || '', position: e.pos || '' };
         }).filter(Boolean);
+        console.log('[overlay] players built:', players.length, players.map(p => p.name));
 
         // Pré-charger les photos
         await preloadPhotos(players);

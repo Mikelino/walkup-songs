@@ -872,7 +872,7 @@ async function matchSave() {
         'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`,
         'Content-Type': 'application/json', 'Prefer': 'return=minimal'
       },
-      body: JSON.stringify({ value: { ...current, matchState } })
+      body: JSON.stringify({ value: { ...current, matchState, currentTeamId } })
     });
   } catch(e) { console.warn('matchSave failed', e); }
 }
