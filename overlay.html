@@ -638,8 +638,7 @@
         }).filter(Boolean);
         console.log('[overlay] players built:', players.length, players.map(p => p.name));
 
-        // Pré-charger les photos
-        await preloadPhotos(players);
+        preloadPhotos(players);
 
         // Render initial
         const ms = app.matchState || {};
@@ -758,96 +757,36 @@
       });
     }
 
-    async function setPhoto(batter) {
+    function setPhoto(batter) {
       const photoEl  = document.getElementById('batterPhoto');
       const avatarEl = document.getElementById('batterAvatar');
-      const pid = batter.id || batter.name;
-
-      if (photoCache[pid]) {
-        photoEl.src = photoCache[pid];
+      const url = batter.photo || '';
+      if (url && !batter.gdprRestricted) {
+        photoEl.src = url;
         photoEl.style.display = 'block';
         avatarEl.style.display = 'none';
-        return;
+      } else {
+        photoEl.style.display = 'none';
+        avatarEl.style.display = 'block';
       }
-
-      if (batter.photoPath && !batter.gdprPhoto) {
-        try {
-          const res = await fetch(
-            `${SUPABASE_URL}/storage/v1/object/sign/photos/${batter.photoPath}`,
-            {
-              method: 'POST',
-              headers: {
-                'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`,
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({ expiresIn: 3600 })
-            }
-          );
-          const data = await res.json();
-          if (data.signedURL) {
-            const url = SUPABASE_URL + data.signedURL;
-            photoCache[pid] = url;
-            photoEl.src = url;
-            photoEl.style.display = 'block';
-            avatarEl.style.display = 'none';
-            return;
-          }
-        } catch(e) { /* fallback avatar */ }
-      }
-
-      photoEl.style.display = 'none';
-      avatarEl.style.display = 'block';
     }
 
-    async function setOnDeckPhoto(player) {
+    function setOnDeckPhoto(player) {
       const photoEl  = document.getElementById('onDeckPhoto');
       const avatarEl = document.getElementById('onDeckAvatar');
       if (!photoEl || !avatarEl) return;
-      const pid = player.id || player.name;
-
-      if (photoCache[pid]) {
-        photoEl.src = photoCache[pid];
+      const url = player.photo || '';
+      if (url && !player.gdprRestricted) {
+        photoEl.src = url;
         photoEl.style.display = 'block';
         avatarEl.style.display = 'none';
-        return;
-      }
-
-      if (player.photoPath && !player.gdprPhoto) {
-        try {
-          const res = await fetch(
-            `${SUPABASE_URL}/storage/v1/object/sign/photos/${player.photoPath}`,
-            {
-              method: 'POST',
-              headers: {
-                'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`,
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({ expiresIn: 3600 })
-            }
-          );
-          const data = await res.json();
-          if (data.signedURL) {
-            const url = SUPABASE_URL + data.signedURL;
-            photoCache[pid] = url;
-            photoEl.src = url;
-            photoEl.style.display = 'block';
-            avatarEl.style.display = 'none';
-            return;
-          }
-        } catch(e) { /* fallback avatar */ }
-      }
-
-      photoEl.style.display = 'none';
-      avatarEl.style.display = 'block';
-    }
-
-    async function preloadPhotos(playerList) {
-      for (const p of playerList) {
-        if (p && p.photoPath && !p.gdprPhoto) {
-          await setPhoto(p);
-        }
+      } else {
+        photoEl.style.display = 'none';
+        avatarEl.style.display = 'block';
       }
     }
+
+    function preloadPhotos(playerList) { /* photos sont des URLs publiques directes — pas de preload nécessaire */ }
 
     function showError(msg) {
       const el = document.getElementById('errorMsg');
