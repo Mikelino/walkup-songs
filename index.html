@@ -684,13 +684,24 @@
               </div>
             </div>
 
-            <!-- Active batter -->
+            <!-- At Bat / On Deck -->
             <div>
-              <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:3px;color:var(--orange);text-transform:uppercase;margin-bottom:10px">Active Batter</div>
-              <div style="display:flex;align-items:center;gap:10px">
-                <button onclick="matchBatterAdj(-1)" style="width:32px;height:32px;border-radius:3px;border:1px solid var(--border);background:var(--gray);color:var(--muted);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center">◀</button>
-                <div id="matchBatterDisplay" style="flex:1;background:var(--gray);border:1px solid var(--border);border-radius:3px;padding:8px 12px;font-family:'Oswald',sans-serif;font-size:15px;font-weight:600;color:var(--white);letter-spacing:1px;min-height:36px">—</div>
-                <button onclick="matchBatterAdj(1)" style="width:32px;height:32px;border-radius:3px;border:1px solid var(--border);background:var(--gray);color:var(--muted);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center">▶</button>
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:3px;color:var(--orange);text-transform:uppercase;margin-bottom:10px">Batter</div>
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <!-- At Bat -->
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span style="font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:2px;color:var(--orange);text-transform:uppercase;flex-shrink:0;width:54px">At Bat</span>
+                  <button onclick="matchBatterAdj(-1)" style="width:28px;height:28px;border-radius:3px;border:1px solid var(--border);background:var(--gray);color:var(--muted);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">◀</button>
+                  <div id="matchBatterDisplay" style="flex:1;background:var(--gray);border:1px solid var(--border);border-left:3px solid var(--orange);border-radius:3px;padding:7px 12px;font-family:'Oswald',sans-serif;font-size:14px;font-weight:600;color:var(--white);letter-spacing:1px;min-height:32px">—</div>
+                  <button onclick="matchBatterAdj(1)" style="width:28px;height:28px;border-radius:3px;border:1px solid var(--border);background:var(--gray);color:var(--muted);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">▶</button>
+                </div>
+                <!-- On Deck -->
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span style="font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;flex-shrink:0;width:54px">On Deck</span>
+                  <div style="width:28px;flex-shrink:0"></div>
+                  <div id="matchOnDeckDisplay" style="flex:1;background:var(--darkgray);border:1px solid var(--border);border-left:3px solid var(--border);border-radius:3px;padding:7px 12px;font-family:'Oswald',sans-serif;font-size:14px;font-weight:600;color:var(--muted);letter-spacing:1px;min-height:32px">—</div>
+                  <div style="width:28px;flex-shrink:0"></div>
+                </div>
               </div>
             </div>
 

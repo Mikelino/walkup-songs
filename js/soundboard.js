@@ -894,10 +894,14 @@ function matchRenderPanel() {
   const players = team
     ? (team.order || []).map(id => allPlayers[id]).filter(Boolean).filter(p => !p.absent)
     : [];
-  const batter = players[matchState.batterIdx % Math.max(players.length, 1)];
-  document.getElementById('matchBatterDisplay').textContent = batter
-    ? `#${batter.jersey || '—'} ${batter.name} (${batter.position || '—'})`
-    : '—';
+  const n = players.length;
+  const batterIdx  = n ? matchState.batterIdx % n : 0;
+  const onDeckIdx  = n ? (batterIdx + 1) % n : 0;
+  const batter  = players[batterIdx];
+  const onDeck  = players[onDeckIdx];
+  const fmt = p => p ? `#${p.jersey || '—'} ${p.name}${p.position ? ' · ' + p.position : ''}` : '—';
+  document.getElementById('matchBatterDisplay').textContent  = fmt(batter);
+  document.getElementById('matchOnDeckDisplay').textContent  = fmt(onDeck);
 
   // Runners
   const runnerMap = { first: 'matchBase1', second: 'matchBase2', third: 'matchBase3' };
