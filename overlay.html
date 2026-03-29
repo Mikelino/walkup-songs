@@ -325,6 +325,90 @@
     }
     .score-value.popped { animation: score-pop 0.35s ease; }
 
+    /* ── ON DECK CARD ── */
+    #onDeckCard {
+      position: absolute;
+      bottom: 128px;
+      right: 48px;
+      display: flex;
+      align-items: center;
+      gap: 0;
+      background: rgba(10,5,0,0.72);
+      border: 1px solid rgba(255,69,0,0.15);
+      border-right: 3px solid rgba(255,69,0,0.4);
+      border-radius: 4px;
+      overflow: hidden;
+      backdrop-filter: blur(6px);
+      box-shadow: 0 2px 16px rgba(0,0,0,0.5);
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 0.5s ease 0.25s, transform 0.5s ease 0.25s;
+    }
+    #onDeckCard.visible { opacity: 1; transform: translateY(0); }
+
+    .ondeck-info {
+      padding: 7px 14px 7px 12px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-width: 160px;
+    }
+    .ondeck-lbl {
+      font-size: 8px;
+      letter-spacing: 3px;
+      color: rgba(255,69,0,0.6);
+      text-transform: uppercase;
+      margin-bottom: 2px;
+    }
+    .ondeck-name {
+      font-family: 'Oswald', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      color: rgba(255,255,255,0.65);
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .ondeck-meta {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 2px;
+    }
+    .ondeck-jersey {
+      font-family: 'Oswald', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      color: rgba(255,69,0,0.7);
+    }
+    .ondeck-pos {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: rgba(255,255,255,0.3);
+      text-transform: uppercase;
+    }
+
+    /* ── RUNNERS DIAMOND ── */
+    .runners-block {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--dark-panel);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 6px 10px;
+      backdrop-filter: blur(6px);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+    }
+    .runners-base {
+      transition: fill 0.2s, filter 0.2s;
+    }
+    .runners-base.occupied {
+      fill: var(--orange) !important;
+      filter: drop-shadow(0 0 5px rgba(255,69,0,0.8));
+    }
+
     /* ── ERROR STATE ── */
     #errorMsg {
       position: absolute;
@@ -368,7 +452,7 @@
       </div>
     </div>
 
-    <!-- BSO -->
+    <!-- BSO + Runners -->
     <div class="counts-row">
       <div class="count-block">
         <div class="count-label">B</div>
@@ -388,6 +472,39 @@
           <div class="dot"></div><div class="dot"></div>
         </div>
       </div>
+      <!-- Runners diamond -->
+      <div class="runners-block">
+        <svg width="46" height="46" viewBox="0 0 46 46">
+          <!-- base lines -->
+          <line x1="23" y1="4"  x2="42" y2="23" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>
+          <line x1="42" y1="23" x2="23" y2="42" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>
+          <line x1="23" y1="42" x2="4"  y2="23" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>
+          <line x1="4"  y1="23" x2="23" y2="4"  stroke="rgba(255,255,255,0.12)" stroke-width="1"/>
+          <!-- home plate -->
+          <polygon points="23,46 19,41 19,38 27,38 27,41" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+          <!-- 2nd base (top) -->
+          <rect id="overlayBase2" class="runners-base" x="17" y="2" width="12" height="12" rx="1.5"
+            transform="rotate(45 23 8)" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.25)" stroke-width="1.2"/>
+          <!-- 1st base (right) -->
+          <rect id="overlayBase1" class="runners-base" x="36" y="17" width="12" height="12" rx="1.5"
+            transform="rotate(45 42 23)" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.25)" stroke-width="1.2"/>
+          <!-- 3rd base (left) -->
+          <rect id="overlayBase3" class="runners-base" x="-2" y="17" width="12" height="12" rx="1.5"
+            transform="rotate(45 4 23)" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.25)" stroke-width="1.2"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ ON DECK CARD ══ -->
+  <div id="onDeckCard">
+    <div class="ondeck-info">
+      <div class="ondeck-lbl">🔜 On Deck</div>
+      <div class="ondeck-name" id="onDeckName">—</div>
+      <div class="ondeck-meta">
+        <div class="ondeck-jersey" id="onDeckJersey"></div>
+        <div class="ondeck-pos" id="onDeckPos"></div>
+      </div>
     </div>
   </div>
 
@@ -402,7 +519,7 @@
       </svg>
     </div>
     <div class="batter-info">
-      <div class="batter-lbl">⚾ Au bâton</div>
+      <div class="batter-lbl">⚾ At Bat</div>
       <div class="batter-name" id="batterName">—</div>
       <div class="batter-meta">
         <div class="batter-jersey" id="batterJersey"></div>
@@ -427,6 +544,7 @@
       await loadAppData();
       document.getElementById('scoreboard').classList.add('visible');
       document.getElementById('batterCard').classList.add('visible');
+      document.getElementById('onDeckCard').classList.add('visible');
       setInterval(poll, 2000);
     }
 
@@ -507,8 +625,11 @@
       setDots('dotsStrikes', ms.strikes ?? 0, 2, 'strikes');
       setDots('dotsOuts',    ms.outs    ?? 0, 2, 'outs');
 
-      // Batter
-      const batter = players[(ms.batterIdx ?? 0) % Math.max(players.length, 1)];
+      // Batter + On Deck
+      const n = Math.max(players.length, 1);
+      const batterIdx = (ms.batterIdx ?? 0) % n;
+      const batter  = players[batterIdx];
+      const onDeck  = players[(batterIdx + 1) % n];
       if (batter) {
         const nameChanged = batter.name !== document.getElementById('batterName').textContent;
         if (nameChanged && !force) {
@@ -520,6 +641,32 @@
         document.getElementById('batterPos').textContent    = batter.position || '';
         setPhoto(batter);
       }
+      if (onDeck && onDeck !== batter) {
+        document.getElementById('onDeckName').textContent   = onDeck.name || '—';
+        document.getElementById('onDeckJersey').textContent = onDeck.jersey ? `#${onDeck.jersey}` : '';
+        document.getElementById('onDeckPos').textContent    = onDeck.position || '';
+      } else {
+        document.getElementById('onDeckName').textContent   = '—';
+        document.getElementById('onDeckJersey').textContent = '';
+        document.getElementById('onDeckPos').textContent    = '';
+      }
+
+      // Runners
+      const runners = ms.runners || {};
+      const baseMap = { first: 'overlayBase1', second: 'overlayBase2', third: 'overlayBase3' };
+      Object.entries(baseMap).forEach(([base, id]) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        if (runners[base]) {
+          el.classList.add('occupied');
+          el.setAttribute('fill', 'var(--orange)');
+          el.setAttribute('stroke', 'var(--orange)');
+        } else {
+          el.classList.remove('occupied');
+          el.setAttribute('fill', 'rgba(255,255,255,0.08)');
+          el.setAttribute('stroke', 'rgba(255,255,255,0.25)');
+        }
+      });
     }
 
     function setScore(id, val, oldVal, force) {
