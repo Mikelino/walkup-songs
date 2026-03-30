@@ -166,21 +166,29 @@ async function uploadToSupabase(file, teamId, playerName) {
 
 async function saveConfig() {
   try {
-    await fetch(`${SUPABASE_URL}/rest/v1/config`, {
-      method:  'POST',
-      headers: getHeaders(),
+    // Lire la valeur actuelle pour ne pas écraser matchState / visitorsLineup
+    const readRes = await fetch(`${SUPABASE_URL}/rest/v1/config?key=eq.app&select=value`, {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+    });
+    const rows = await readRes.json();
+    const current = rows?.[0]?.value || {};
+
+    // Bumper dataVersion pour signaler le changement de lineup à l'overlay
+    const newDataVersion = Date.now();
+    const newMatchState = typeof matchState !== 'undefined'
+      ? { ...matchState, dataVersion: newDataVersion }
+      : (current.matchState || {});
+
+    await fetch(`${SUPABASE_URL}/rest/v1/config?key=eq.app`, {
+      method:  'PATCH',
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
       body:    JSON.stringify({
-        key:        'app',
-        value:      { allPlayers, teams, clubSettings, appSettings },
+        value:      { ...current, allPlayers, teams, clubSettings, appSettings, matchState: newMatchState },
         updated_at: new Date().toISOString(),
       }),
     });
     showSaveIndicator();
-    // Signal the overlay to reload lineup data
-    if (typeof matchState !== 'undefined' && typeof matchSave === 'function') {
-      matchState.dataVersion = Date.now();
-      matchSave();
-    }
+    if (typeof matchState !== 'undefined') matchState.dataVersion = newDataVersion;
   } catch (err) {
     console.warn('Save failed:', err);
   }

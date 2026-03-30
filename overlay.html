@@ -797,8 +797,14 @@
         }
         prevLastEvent = lastEvent;
 
-        // Rechargement complet si batterIdx, inningTop ou lineup change
-        if (ms.batterIdx !== prev.batterIdx || ms.inningTop !== prev.inningTop || ms.dataVersion !== prev.dataVersion) {
+        // Rechargement de page si le lineup a changé
+        if (ms.dataVersion && ms.dataVersion !== prev.dataVersion) {
+          window.location.reload();
+          return;
+        }
+
+        // Rechargement des données si batterIdx ou inningTop change
+        if (ms.batterIdx !== prev.batterIdx || ms.inningTop !== prev.inningTop) {
           await loadAppData(true);
           return;
         }
