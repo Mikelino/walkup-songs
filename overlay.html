@@ -797,8 +797,8 @@
         }
         prevLastEvent = lastEvent;
 
-        // Rechargement complet si batterIdx ou inningTop change
-        if (ms.batterIdx !== prev.batterIdx || ms.inningTop !== prev.inningTop) {
+        // Rechargement complet si batterIdx, inningTop ou lineup change
+        if (ms.batterIdx !== prev.batterIdx || ms.inningTop !== prev.inningTop || ms.dataVersion !== prev.dataVersion) {
           await loadAppData(true);
           return;
         }

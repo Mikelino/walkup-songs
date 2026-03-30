@@ -858,7 +858,8 @@ let matchState = {
   batterIdx: 0,
   runners: { first: false, second: false, third: false },
   pitcherName: '',
-  pitchCount: 0
+  pitchCount: 0,
+  dataVersion: 0
 };
 
 async function matchSave() {

@@ -176,6 +176,11 @@ async function saveConfig() {
       }),
     });
     showSaveIndicator();
+    // Signal the overlay to reload lineup data
+    if (typeof matchState !== 'undefined' && typeof matchSave === 'function') {
+      matchState.dataVersion = Date.now();
+      matchSave();
+    }
   } catch (err) {
     console.warn('Save failed:', err);
   }
