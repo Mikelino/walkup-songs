@@ -994,7 +994,9 @@ function matchWalk() {
   const team = teams[currentTeamId];
   const entries = team ? (team.lineup || []).filter(e => e.present !== false) : [];
   if (entries.length) matchState.batterIdx = (matchState.batterIdx + 1) % entries.length;
+  matchState.lastEvent = 'WALK';
   matchRenderPanel(); matchSave();
+  setTimeout(() => { matchState.lastEvent = null; matchSave(); }, 2000);
 }
 
 function matchStrikeout() {
@@ -1005,7 +1007,9 @@ function matchStrikeout() {
   const team = teams[currentTeamId];
   const entries = team ? (team.lineup || []).filter(e => e.present !== false) : [];
   if (entries.length) matchState.batterIdx = (matchState.batterIdx + 1) % entries.length;
+  matchState.lastEvent = 'STRIKEOUT';
   matchRenderPanel(); matchSave();
+  setTimeout(() => { matchState.lastEvent = null; matchSave(); }, 2000);
 }
 
 function matchResetPitcher() {
