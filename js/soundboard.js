@@ -845,6 +845,7 @@ function applyFeatures() {
       if (tabBtn) tabBtn.style.display = '';
     }
   }
+  matchAutoSetPitcher();
   matchRenderPanel();
 }
 
@@ -861,7 +862,9 @@ let matchState = {
   pitchCount: 0,
   dataVersion: 0,
   homeBatterIdx: null,
-  visitorBatterIdx: null
+  visitorBatterIdx: null,
+  homePitchCount: 0,
+  visitorPitchCount: 0
 };
 
 async function matchSave() {
@@ -972,7 +975,22 @@ function matchInningAdj(delta) {
 
 function matchInningToggle() {
   matchState.inningTop = !matchState.inningTop;
+  matchAutoSetPitcher();
   matchRenderPanel(); matchSave();
+}
+
+function matchAutoSetPitcher() {
+  // Auto-set seulement quand home pitche (inningTop=true)
+  if (!matchState.inningTop) return;
+  const team = teams[currentTeamId];
+  if (!team) return;
+  const entry = (team.lineup || []).find(e => e.present !== false && e.pos === 'P');
+  if (!entry) return;
+  const player = allPlayers[entry.pid];
+  if (!player) return;
+  matchState.pitcherName = player.name || '';
+  const input = document.getElementById('matchPitcherInput');
+  if (input) input.value = matchState.pitcherName;
 }
 
 function matchChangeField() {
@@ -985,10 +1003,23 @@ function matchChangeField() {
     matchState.homeBatterIdx = matchState.batterIdx;
   }
 
+  // Mémoriser le pitch count du pitcher qui quitte le monticule
+  // inningTop=true → home pitche ; inningTop=false → visitors pitchent
+  if (wasVisitorsBatting) {
+    matchState.homePitchCount = matchState.pitchCount;
+  } else {
+    matchState.visitorPitchCount = matchState.pitchCount;
+  }
+
   matchState.inningTop = !matchState.inningTop;
   matchState.balls = 0;
   matchState.strikes = 0;
   matchState.outs = 0;
+
+  // Restaurer le pitch count du pitcher qui revient au monticule
+  matchState.pitchCount = matchState.inningTop
+    ? matchState.homePitchCount
+    : matchState.visitorPitchCount;
 
   // Restaurer le prochain batteur de l'équipe qui revient en offense
   if (matchState.inningTop) {
@@ -1003,6 +1034,7 @@ function matchChangeField() {
     matchState.batterIdx = saved !== null ? (saved + 1) % n : 0;
   }
 
+  matchAutoSetPitcher();
   matchState.lastEvent = 'CHANGE FIELD';
   matchRenderPanel(); matchSave();
   setTimeout(() => { matchState.lastEvent = null; matchSave(); }, 3500);
@@ -1063,6 +1095,12 @@ function matchStrikeout() {
 
 function matchResetPitcher() {
   matchState.pitchCount = 0;
+  // Effacer aussi le compteur mémorisé pour ce pitcher (changement de pitcher)
+  if (matchState.inningTop) {
+    matchState.homePitchCount = 0;
+  } else {
+    matchState.visitorPitchCount = 0;
+  }
   matchRenderPanel(); matchSave();
 }
 
