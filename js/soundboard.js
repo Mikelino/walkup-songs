@@ -859,7 +859,9 @@ let matchState = {
   runners: { first: false, second: false, third: false },
   pitcherName: '',
   pitchCount: 0,
-  dataVersion: 0
+  dataVersion: 0,
+  homeBatterIdx: null,
+  visitorBatterIdx: null
 };
 
 async function matchSave() {
@@ -974,10 +976,33 @@ function matchInningToggle() {
 }
 
 function matchChangeField() {
+  const wasVisitorsBatting = matchState.inningTop;
+
+  // Mémoriser la position du dernier batteur de l'équipe qui quitte le terrain
+  if (wasVisitorsBatting) {
+    matchState.visitorBatterIdx = matchState.batterIdx;
+  } else {
+    matchState.homeBatterIdx = matchState.batterIdx;
+  }
+
   matchState.inningTop = !matchState.inningTop;
   matchState.balls = 0;
   matchState.strikes = 0;
   matchState.outs = 0;
+
+  // Restaurer le prochain batteur de l'équipe qui revient en offense
+  if (matchState.inningTop) {
+    // Visitors reviennent en offense
+    const n = visitorsLineup.length || 1;
+    const saved = matchState.visitorBatterIdx;
+    matchState.batterIdx = saved !== null ? (saved + 1) % n : 0;
+  } else {
+    // Home revient en offense
+    const n = ((teams[currentTeamId]?.lineup || []).filter(e => e.present !== false)).length || 1;
+    const saved = matchState.homeBatterIdx;
+    matchState.batterIdx = saved !== null ? (saved + 1) % n : 0;
+  }
+
   matchState.lastEvent = 'CHANGE FIELD';
   matchRenderPanel(); matchSave();
   setTimeout(() => { matchState.lastEvent = null; matchSave(); }, 3500);
