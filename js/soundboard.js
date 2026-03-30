@@ -961,10 +961,11 @@ function matchInningToggle() {
 }
 
 function matchSetCount(type, idx) {
-  const prevVal = matchState[type];
-  matchState[type] = idx + 1 === prevVal ? idx : idx + 1;
-  if ((type === 'balls' || type === 'strikes') && matchState[type] > prevVal) {
-    matchState.pitchCount++;
+  const isUnchecking = idx + 1 === matchState[type];
+  matchState[type] = isUnchecking ? idx : idx + 1;
+  // +1 pitch uniquement quand on coche un ball ou un strike (pas outs, pas décocher)
+  if (!isUnchecking && (type === 'balls' || type === 'strikes')) {
+    matchState.pitchCount = (matchState.pitchCount || 0) + 1;
   }
   matchRenderPanel(); matchSave();
 }
