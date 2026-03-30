@@ -346,15 +346,20 @@
       padding: 1px 5px;
     }
 
-    /* ── PITCHER (inside countsPanel) ── */
+    /* ── PITCHER (à gauche du runners-block) ── */
     #pitcherCard {
       display: none;
       flex-direction: column;
-      align-items: flex-end;
-      gap: 2px;
-      padding-top: 8px;
-      border-top: 1px solid var(--border);
-      width: 100%;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      /* mêmes dimensions que .runners-block */
+      background: var(--dark-panel);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 8px 12px;
+      backdrop-filter: blur(6px);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.6);
     }
     #pitcherCard.visible {
       display: flex;
@@ -364,26 +369,28 @@
       letter-spacing: 3px;
       color: var(--orange);
       text-transform: uppercase;
+      white-space: nowrap;
     }
     .pitcher-name {
       font-family: 'Oswald', sans-serif;
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 700;
       letter-spacing: 1px;
       color: var(--white);
       text-transform: uppercase;
       line-height: 1;
       white-space: nowrap;
+      text-align: center;
     }
     .pitcher-pitches {
       display: flex;
       align-items: baseline;
+      justify-content: center;
       gap: 4px;
-      margin-top: 2px;
     }
     .pitcher-count {
       font-family: 'Oswald', sans-serif;
-      font-size: 20px;
+      font-size: 32px;
       font-weight: 700;
       color: var(--orange);
       line-height: 1;
@@ -603,41 +610,44 @@
         </div>
       </div>
     </div>
-    <!-- Runners diamond — taille 80×80 pour éviter tout clipping -->
-    <div class="runners-block">
-      <svg width="80" height="80" viewBox="0 0 80 80" style="overflow:visible">
-        <!-- base lines -->
-        <line x1="40" y1="6"  x2="74" y2="40" stroke="rgba(255,255,255,0.12)" stroke-width="1.5"/>
-        <line x1="74" y1="40" x2="40" y2="74" stroke="rgba(255,255,255,0.12)" stroke-width="1.5"/>
-        <line x1="40" y1="74" x2="6"  y2="40" stroke="rgba(255,255,255,0.12)" stroke-width="1.5"/>
-        <line x1="6"  y1="40" x2="40" y2="6"  stroke="rgba(255,255,255,0.12)" stroke-width="1.5"/>
-        <!-- home plate -->
-        <polygon points="40,78 34,70 34,64 46,64 46,70"
-          fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
-        <!-- 2nd base (top) — centré sur 40,6 -->
-        <rect id="overlayBase2" class="runners-base"
-          x="30" y="-4" width="20" height="20" rx="2"
-          transform="rotate(45 40 6)"
-          fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
-        <!-- 1st base (right) — centré sur 74,40 -->
-        <rect id="overlayBase1" class="runners-base"
-          x="64" y="30" width="20" height="20" rx="2"
-          transform="rotate(45 74 40)"
-          fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
-        <!-- 3rd base (left) — centré sur 6,40 -->
-        <rect id="overlayBase3" class="runners-base"
-          x="-4" y="30" width="20" height="20" rx="2"
-          transform="rotate(45 6 40)"
-          fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
-      </svg>
-    </div>
-    <!-- Pitcher info — visible only when pitcherName is set -->
-    <div id="pitcherCard">
-      <div class="pitcher-lbl">⚾ Pitcher</div>
-      <div class="pitcher-name" id="pitcherName">—</div>
-      <div class="pitcher-pitches">
-        <span class="pitcher-count" id="pitchCount">0</span>
-        <span class="pitcher-count-lbl">pitches</span>
+    <!-- Ligne pitcher + runners -->
+    <div style="display:flex;gap:6px;align-items:stretch">
+      <!-- Pitcher info — visible only when pitcherName is set -->
+      <div id="pitcherCard">
+        <div class="pitcher-lbl">⚾ Pitcher</div>
+        <div class="pitcher-name" id="pitcherName">—</div>
+        <div class="pitcher-pitches">
+          <span class="pitcher-count" id="pitchCount">0</span>
+          <span class="pitcher-count-lbl">pitches</span>
+        </div>
+      </div>
+      <!-- Runners diamond — taille 80×80 pour éviter tout clipping -->
+      <div class="runners-block">
+        <svg width="80" height="80" viewBox="0 0 80 80" style="overflow:visible">
+          <!-- base lines -->
+          <line x1="40" y1="6"  x2="74" y2="40" stroke="rgba(255,255,255,0.12)" stroke-width="1.5"/>
+          <line x1="74" y1="40" x2="40" y2="74" stroke="rgba(255,255,255,0.12)" stroke-width="1.5"/>
+          <line x1="40" y1="74" x2="6"  y2="40" stroke="rgba(255,255,255,0.12)" stroke-width="1.5"/>
+          <line x1="6"  y1="40" x2="40" y2="6"  stroke="rgba(255,255,255,0.12)" stroke-width="1.5"/>
+          <!-- home plate -->
+          <polygon points="40,78 34,70 34,64 46,64 46,70"
+            fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+          <!-- 2nd base (top) — centré sur 40,6 -->
+          <rect id="overlayBase2" class="runners-base"
+            x="30" y="-4" width="20" height="20" rx="2"
+            transform="rotate(45 40 6)"
+            fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
+          <!-- 1st base (right) — centré sur 74,40 -->
+          <rect id="overlayBase1" class="runners-base"
+            x="64" y="30" width="20" height="20" rx="2"
+            transform="rotate(45 74 40)"
+            fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
+          <!-- 3rd base (left) — centré sur 6,40 -->
+          <rect id="overlayBase3" class="runners-base"
+            x="-4" y="30" width="20" height="20" rx="2"
+            transform="rotate(45 6 40)"
+            fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
+        </svg>
       </div>
     </div>
   </div>
