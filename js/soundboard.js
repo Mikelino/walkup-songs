@@ -961,7 +961,11 @@ function matchInningToggle() {
 }
 
 function matchSetCount(type, idx) {
-  matchState[type] = idx + 1 === matchState[type] ? idx : idx + 1;
+  const prevVal = matchState[type];
+  matchState[type] = idx + 1 === prevVal ? idx : idx + 1;
+  if ((type === 'balls' || type === 'strikes') && matchState[type] > prevVal) {
+    matchState.pitchCount++;
+  }
   matchRenderPanel(); matchSave();
 }
 
