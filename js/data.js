@@ -173,6 +173,9 @@ async function saveConfig() {
     const rows = await readRes.json();
     const current = rows?.[0]?.value || {};
 
+    // Sync pitcher name avant de sauvegarder (position P dans le lineup)
+    if (typeof matchAutoSetPitcher === 'function') matchAutoSetPitcher();
+
     // Bumper dataVersion pour signaler le changement de lineup à l'overlay
     const newDataVersion = Date.now();
     const newMatchState = typeof matchState !== 'undefined'
@@ -189,9 +192,7 @@ async function saveConfig() {
     });
     showSaveIndicator();
     if (typeof matchState !== 'undefined') matchState.dataVersion = newDataVersion;
-    // Mettre à jour le pitcher name si le lineup a changé
-    if (typeof matchAutoSetPitcher === 'function') matchAutoSetPitcher();
-    if (typeof matchRenderPanel    === 'function') matchRenderPanel();
+    if (typeof matchRenderPanel === 'function') matchRenderPanel();
   } catch (err) {
     console.warn('Save failed:', err);
   }
