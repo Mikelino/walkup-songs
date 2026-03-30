@@ -1166,6 +1166,10 @@ async function init() {
   }
   renderCustomSounds();
 
+  // Sync pitcher name depuis le lineup (position P)
+  matchAutoSetPitcher();
+  matchRenderPanel();
+
   // Charger les sons prédéfinis
   Object.keys(LIVE_SOUNDS).forEach(key => {
     const url = sb[key];

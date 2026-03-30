@@ -189,6 +189,9 @@ async function saveConfig() {
     });
     showSaveIndicator();
     if (typeof matchState !== 'undefined') matchState.dataVersion = newDataVersion;
+    // Mettre à jour le pitcher name si le lineup a changé
+    if (typeof matchAutoSetPitcher === 'function') matchAutoSetPitcher();
+    if (typeof matchRenderPanel    === 'function') matchRenderPanel();
   } catch (err) {
     console.warn('Save failed:', err);
   }
