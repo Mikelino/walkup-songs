@@ -1081,28 +1081,13 @@
     }
 
     // ═══════════════════════════════════════════════════════
-    // SPONSORS — Option D (Mode A ticker + Mode B pause)
+    // SPONSORS — Composant 1 : Logo Gold (bas gauche)
+    //            Composant 2 : Bloc Silver (pleine largeur)
     // ═══════════════════════════════════════════════════════
 
-    const clubId     = APP_CONFIG.clubId || 'default';
-    let goldSponsors = [];
-    let allSponsors  = [];
-    let tickerIndex  = 0;
-    let pauseIndex   = 0;
-    let tickerTimer  = null;
-    let pauseTimer   = null;
+    const clubId = APP_CONFIG.clubId || 'default';
 
-    // ── Silver ticker state ──
-    const TICKER_SPEED      = 80;   // px/s
-    const TICKER_AUTO_EVERY = 180;  // seconds between auto appearances
-    const TICKER_AUTO_DUR   = 30;   // seconds of auto display
-
-    let silverSponsors  = [];
-    let silverAutoTimer = null;
-    let silverHideTimer = null;
-    let silverAnimation = null;
-    let silverManualOn  = false;
-
+    // ── Fetch helpers ──
     async function _fetchSponsorsByTier(tier) {
       try {
         const res = await fetch(
@@ -1113,181 +1098,144 @@
       } catch (e) { return []; }
     }
 
-    async function initSponsors() {
-      goldSponsors    = await _fetchSponsorsByTier('gold');
-      const silver    = await _fetchSponsorsByTier('silver');
-      const bronze    = await _fetchSponsorsByTier('bronze');
-      allSponsors     = [...goldSponsors, ...silver, ...bronze];
-      tickerIndex     = 0;
-      startTicker();
-      await initSilverTicker(silver);
+    // ── Composant 1 : Logo Gold ──
+    const GOLD_VISIBLE_MS = 8000;
+    let goldSponsors = [];
+    let goldIndex    = 0;
+    let goldInterval = 45; // secondes, chargé depuis Supabase config
+    let goldTimer    = null;
+
+    async function initGoldSponsor() {
+      try {
+        const { data } = await window.supabase
+          .from('config')
+          .select('value')
+          .eq('key', 'sponsor_gold_interval')
+          .single();
+        goldInterval = data?.value?.seconds ?? 45;
+      } catch (e) { goldInterval = 45; }
+
+      goldSponsors = await _fetchSponsorsByTier('gold');
+      goldIndex    = 0;
+      if (goldTimer) clearTimeout(goldTimer);
+      if (goldSponsors.length) scheduleGold();
     }
 
-    // ── Mode A : ticker discret (Gold uniquement) ──
+    function scheduleGold() {
+      clearTimeout(goldTimer);
+      // Jitter ±20% pour éviter un affichage trop mécanique
+      const jitter = goldInterval * 1000 * (0.8 + Math.random() * 0.4);
+      goldTimer = setTimeout(showGoldSponsor, jitter);
+    }
 
-    function startTicker() {
-      if (tickerTimer) clearTimeout(tickerTimer);
+    function showGoldSponsor() {
       if (!goldSponsors.length) return;
-      tickerIndex = 0;
-      runTickerCycle();
-    }
+      const s   = goldSponsors[goldIndex % goldSponsors.length];
+      goldIndex++;
 
-    function runTickerCycle() {
-      const ticker = document.getElementById('sponsor-ticker');
-      const img    = document.getElementById('sponsor-ticker-logo');
-      const s      = goldSponsors[tickerIndex % goldSponsors.length];
-      tickerIndex++;
+      if (!s.logo_url) { scheduleGold(); return; }
 
-      if (!s.logo_url) {
-        tickerTimer = setTimeout(runTickerCycle, 500);
-        return;
-      }
-
-      ticker.classList.remove('hidden');
+      const el  = document.getElementById('gold-sponsor');
+      const img = document.getElementById('gold-sponsor-img');
       img.src = s.logo_url;
-      img.alt = s.name;
-
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => ticker.classList.add('visible'));
-      });
-
-      // visible 8s → fade out → pause 22s → next
-      tickerTimer = setTimeout(() => {
-        ticker.classList.remove('visible');
-        setTimeout(() => {
-          tickerTimer = setTimeout(runTickerCycle, 22000);
-        }, 500);
-      }, 8000);
-    }
-
-    // ── Mode B : écran pause plein écran ──
-
-    function startPause() {
-      if (tickerTimer) clearTimeout(tickerTimer);
-      document.getElementById('sponsor-ticker').classList.remove('visible');
-      document.getElementById('sponsor-ticker').classList.add('hidden');
-      hideSilverTicker();
-      const el = document.getElementById('sponsor-pause');
+      img.alt = s.name || '';
       el.classList.remove('hidden');
-      pauseIndex = 0;
-      showPauseSponsor();
-    }
+      requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('visible')));
 
-    function showPauseSponsor() {
-      if (!allSponsors.length) return;
-      const s   = allSponsors[pauseIndex % allSponsors.length];
-      const el  = document.getElementById('sponsor-pause');
-      const dur = s.tier === 'gold' ? 8000 : 6000;
-
-      document.getElementById('pause-logo').src = s.logo_url || '';
-      document.getElementById('pause-logo').alt = s.name;
-      document.getElementById('pause-name').textContent = s.name;
-      document.getElementById('pause-url').textContent  = s.website_url || '';
-
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => el.classList.add('visible'));
-      });
-
-      pauseTimer = setTimeout(() => {
+      goldTimer = setTimeout(() => {
         el.classList.remove('visible');
-        pauseIndex++;
-        setTimeout(showPauseSponsor, 600);
-      }, dur);
+        setTimeout(() => {
+          el.classList.add('hidden');
+          scheduleGold();
+        }, 500);
+      }, GOLD_VISIBLE_MS);
     }
 
-    function stopPause() {
-      if (pauseTimer) clearTimeout(pauseTimer);
-      const el = document.getElementById('sponsor-pause');
-      el.classList.remove('visible');
-      setTimeout(() => {
-        el.classList.add('hidden');
-        startTicker();
-        if (silverManualOn) showSilverTicker(); else scheduleAutoTicker();
-      }, 600);
-    }
+    // ── Composant 2 : Bloc Silver ──
+    const SILVER_SPEED      = 80;  // px/s
+    const SILVER_AUTO_EVERY = 180; // secondes entre apparitions auto
+    const SILVER_AUTO_DUR   = 25;  // secondes d'affichage auto
 
-    // ── Silver ticker functions ──
+    let silverSponsors  = [];
+    let silverAnim      = null;
+    let silverAutoTimer = null;
+    let silverHideTimer = null;
+    let silverManualOn  = false;
 
-    function buildSilverTicker() {
-      const content = document.getElementById('silver-ticker-content');
+    function buildSilverBlock() {
+      const track = document.getElementById('silver-block-track');
       if (!silverSponsors.length) return;
-      const items = [...silverSponsors, ...silverSponsors]; // duplicate for seamless loop
-      content.innerHTML = items.map((s, i) => `
-        <span class="silver-ticker-item">
+      const items = [...silverSponsors, ...silverSponsors]; // doublement pour boucle seamless
+      track.innerHTML = items.map((s, i) => `
+        <span class="silver-block-item">
           ${s.logo_url ? `<img src="${s.logo_url}" crossorigin="anonymous" alt="${s.name}" />` : ''}
           <span>${s.name}</span>
         </span>
-        ${i < items.length - 1 ? '<span class="silver-ticker-separator">·</span>' : ''}
+        ${i < items.length - 1 ? '<span class="silver-block-sep">·</span>' : ''}
       `).join('');
     }
 
     function startSilverScroll() {
-      const content  = document.getElementById('silver-ticker-content');
-      const totalW   = content.scrollWidth / 2; // half because items are doubled
-      const duration = (totalW / TICKER_SPEED) * 1000;
-      if (silverAnimation) silverAnimation.cancel();
-      silverAnimation = content.animate(
-        [{ transform: 'translateX(0)' }, { transform: `translateX(-${totalW}px)` }],
-        { duration, iterations: Infinity, easing: 'linear' }
-      );
-    }
-
-    function showSilverTicker() {
-      const el = document.getElementById('silver-ticker');
-      if (!silverSponsors.length) return;
-      buildSilverTicker();
-      el.classList.remove('hidden');
-      requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('visible')));
-      // Wait for slide-up before measuring scrollWidth
-      setTimeout(startSilverScroll, 420);
-    }
-
-    function hideSilverTicker() {
-      const el = document.getElementById('silver-ticker');
-      el.classList.remove('visible');
+      const track = document.getElementById('silver-block-track');
       setTimeout(() => {
-        el.classList.add('hidden');
-        if (silverAnimation) { silverAnimation.cancel(); silverAnimation = null; }
-      }, 400);
+        const totalW   = track.scrollWidth / 2;
+        const duration = (totalW / SILVER_SPEED) * 1000;
+        if (silverAnim) silverAnim.cancel();
+        silverAnim = track.animate(
+          [{ transform: 'translateX(0)' }, { transform: `translateX(-${totalW}px)` }],
+          { duration, iterations: Infinity, easing: 'linear' }
+        );
+      }, 200);
     }
 
-    function scheduleAutoTicker() {
+    function showSilverBlock() {
+      if (!silverSponsors.length) return;
+      buildSilverBlock();
+      const el = document.getElementById('silver-block');
+      el.classList.remove('hiding');
+      requestAnimationFrame(() => el.classList.add('visible'));
+      startSilverScroll();
+    }
+
+    function hideSilverBlock() {
+      const el = document.getElementById('silver-block');
+      el.classList.remove('visible');
+      el.classList.add('hiding');
+      setTimeout(() => {
+        if (silverAnim) { silverAnim.cancel(); silverAnim = null; }
+      }, 500);
+    }
+
+    function scheduleAutoSilver() {
       clearTimeout(silverAutoTimer);
-      clearTimeout(silverHideTimer);
       silverAutoTimer = setTimeout(() => {
-        if (!silverManualOn) {
-          showSilverTicker();
-          silverHideTimer = setTimeout(() => {
-            if (!silverManualOn) hideSilverTicker();
-            scheduleAutoTicker();
-          }, TICKER_AUTO_DUR * 1000);
-        } else {
-          scheduleAutoTicker(); // postpone if manual is active
-        }
-      }, TICKER_AUTO_EVERY * 1000);
+        if (silverManualOn) { scheduleAutoSilver(); return; }
+        showSilverBlock();
+        silverHideTimer = setTimeout(() => {
+          if (!silverManualOn) hideSilverBlock();
+          scheduleAutoSilver();
+        }, SILVER_AUTO_DUR * 1000);
+      }, SILVER_AUTO_EVERY * 1000);
     }
 
-    async function initSilverTicker(preloaded) {
-      silverSponsors = preloaded ?? await _fetchSponsorsByTier('silver');
-      if (silverSponsors.length) scheduleAutoTicker();
+    async function initSilverBlock() {
+      silverSponsors = await _fetchSponsorsByTier('silver');
+      if (silverSponsors.length) scheduleAutoSilver();
     }
 
-    // ── Realtime : écoute sponsor_pause broadcast ──
+    // ── Realtime ──
     try {
       window.supabase
         .channel(`overlay:${clubId}`)
-        .on('broadcast', { event: 'sponsor_pause' }, ({ payload }) => {
-          payload.active ? startPause() : stopPause();
-        })
-        .on('broadcast', { event: 'silver_ticker' }, ({ payload }) => {
+        .on('broadcast', { event: 'silver_block' }, ({ payload }) => {
           if (payload.active) {
             silverManualOn = true;
             clearTimeout(silverHideTimer);
-            showSilverTicker();
+            showSilverBlock();
           } else {
             silverManualOn = false;
-            hideSilverTicker();
-            scheduleAutoTicker();
+            hideSilverBlock();
+            scheduleAutoSilver();
           }
         })
         .subscribe();
@@ -1295,15 +1243,19 @@
       // Rechargement si sponsors modifiés en base
       window.supabase
         .channel('sponsors-changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'sponsors' }, () => {
-          initSponsors();
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'sponsors' }, async () => {
+          await initGoldSponsor();
+          await initSilverBlock();
         })
         .subscribe();
     } catch (e) {
       console.warn('[overlay] Realtime sponsors:', e);
     }
 
-    window.addEventListener('load', initSponsors);
+    window.addEventListener('load', async () => {
+      await initGoldSponsor();
+      await initSilverBlock();
+    });
 
     window.addEventListener('load', init);
   </script>

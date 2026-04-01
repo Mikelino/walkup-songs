@@ -187,6 +187,16 @@ async function adsRenderPanel() {
   // Cache for sync use in adsRenderList / adsSaveSponsor
   _adsSponsorSettings = settings;
 
+  // Load gold interval
+  try {
+    const { data } = await window.supabase
+      .from('config')
+      .select('value')
+      .eq('key', 'sponsor_gold_interval')
+      .single();
+    document.getElementById('goldIntervalInput').value = data?.value?.seconds ?? 45;
+  } catch (e) { /* keep default */ }
+
   ['gold', 'silver', 'bronze'].forEach(tier => adsRenderList(tier));
 }
 
@@ -406,56 +416,20 @@ async function adsToggleActive(id, tier, active) {
 
 // ── BROADCAST COLUMN — SPONSOR CONTROLS ──
 
-let _bcPauseActive  = false;
-let _bcTickerActive = false;
+let _bcSilverActive = false;
 
-async function broadcastSponsorPause() {
+async function broadcastSilverBlock() {
   const clubId = APP_CONFIG.clubId || 'default';
-  _bcPauseActive = !_bcPauseActive;
+  _bcSilverActive = !_bcSilverActive;
 
-  // Mutual exclusivity: deactivate ticker if pause is being turned on
-  if (_bcPauseActive && _bcTickerActive) {
-    _bcTickerActive = false;
-    _bcSetBtnState(document.getElementById('bcTickerBtn'), false, '▶ Ticker Silver', '⏹ Arrêter ticker Silver');
-    try {
-      await window.supabase.channel(`overlay:${clubId}`)
-        .send({ type: 'broadcast', event: 'silver_ticker', payload: { active: false } });
-    } catch (e) { console.error('[BC] silver_ticker off:', e); }
-  }
-
-  const btn = document.getElementById('bcPauseBtn');
+  const btn = document.getElementById('bcSilverBtn');
   try {
     await window.supabase.channel(`overlay:${clubId}`)
-      .send({ type: 'broadcast', event: 'sponsor_pause', payload: { active: _bcPauseActive } });
-    _bcSetBtnState(btn, _bcPauseActive, '⏸ Écran pause sponsors', '⏹ Arrêter pause sponsors');
+      .send({ type: 'broadcast', event: 'silver_block', payload: { active: _bcSilverActive } });
+    _bcSetBtnState(btn, _bcSilverActive, '▶ Bloc Silver', '⏹ Arrêter bloc Silver');
   } catch (e) {
-    console.error('[BC] sponsor_pause:', e);
-    _bcPauseActive = !_bcPauseActive; // revert on error
-  }
-}
-
-async function broadcastSilverTicker() {
-  const clubId = APP_CONFIG.clubId || 'default';
-  _bcTickerActive = !_bcTickerActive;
-
-  // Mutual exclusivity: deactivate pause if ticker is being turned on
-  if (_bcTickerActive && _bcPauseActive) {
-    _bcPauseActive = false;
-    _bcSetBtnState(document.getElementById('bcPauseBtn'), false, '⏸ Écran pause sponsors', '⏹ Arrêter pause sponsors');
-    try {
-      await window.supabase.channel(`overlay:${clubId}`)
-        .send({ type: 'broadcast', event: 'sponsor_pause', payload: { active: false } });
-    } catch (e) { console.error('[BC] sponsor_pause off:', e); }
-  }
-
-  const btn = document.getElementById('bcTickerBtn');
-  try {
-    await window.supabase.channel(`overlay:${clubId}`)
-      .send({ type: 'broadcast', event: 'silver_ticker', payload: { active: _bcTickerActive } });
-    _bcSetBtnState(btn, _bcTickerActive, '▶ Ticker Silver', '⏹ Arrêter ticker Silver');
-  } catch (e) {
-    console.error('[BC] silver_ticker:', e);
-    _bcTickerActive = !_bcTickerActive; // revert on error
+    console.error('[BC] silver_block:', e);
+    _bcSilverActive = !_bcSilverActive; // revert on error
   }
 }
 
@@ -477,83 +451,22 @@ function _bcSetBtnState(btn, active, labelOff, labelOn) {
   }
 }
 
-// ── OBS PAUSE SCREEN TOGGLE ──
+// ── GOLD INTERVAL SAVE ──
 
-let _adsPauseActive = false;
-
-async function adsTogglePauseScreen() {
-  const clubId = APP_CONFIG.clubId || 'default';
-  _adsPauseActive = !_adsPauseActive;
-
-  const btn    = document.getElementById('adsPauseBtn');
-  const status = document.getElementById('adsPauseStatus');
-
-  try {
-    await window.supabase
-      .channel(`overlay:${clubId}`)
-      .send({
-        type:    'broadcast',
-        event:   'sponsor_pause',
-        payload: { active: _adsPauseActive },
-      });
-  } catch (e) {
-    console.error('[ADS] sponsor_pause broadcast:', e);
-    _adsPauseActive = !_adsPauseActive; // revert
+async function adsSaveGoldInterval() {
+  const seconds = parseInt(document.getElementById('goldIntervalInput').value, 10);
+  if (!seconds || seconds < 10 || seconds > 300) {
+    alert('Intervalle invalide (10–300 secondes).');
     return;
   }
-
-  if (_adsPauseActive) {
-    btn.style.background  = '#cc0000';
-    btn.style.boxShadow   = '0 0 12px rgba(204,0,0,0.6)';
-    btn.style.animation   = 'adsPausePulse 1.4s ease-in-out infinite';
-    status.textContent    = '🔴 LIVE';
-    status.style.color    = '#cc0000';
-  } else {
-    btn.style.background  = '';
-    btn.style.boxShadow   = '';
-    btn.style.animation   = '';
-    status.textContent    = 'Off';
-    status.style.color    = '';
-  }
-}
-
-// ── SILVER TICKER TOGGLE ──
-
-let _adsTickerActive = false;
-
-async function adsToggleSilverTicker() {
-  const clubId = APP_CONFIG.clubId || 'default';
-  _adsTickerActive = !_adsTickerActive;
-
-  const btn    = document.getElementById('adsTickerBtn');
-  const status = document.getElementById('adsTickerStatus');
-
   try {
     await window.supabase
-      .channel(`overlay:${clubId}`)
-      .send({
-        type:    'broadcast',
-        event:   'silver_ticker',
-        payload: { active: _adsTickerActive },
-      });
+      .from('config')
+      .upsert({ key: 'sponsor_gold_interval', value: { seconds }, updated_at: new Date().toISOString() });
+    showSaveIndicator();
   } catch (e) {
-    console.error('[ADS] silver_ticker broadcast:', e);
-    _adsTickerActive = !_adsTickerActive;
-    return;
-  }
-
-  if (_adsTickerActive) {
-    btn.style.background = '#cc0000';
-    btn.style.boxShadow  = '0 0 12px rgba(204,0,0,0.6)';
-    btn.style.animation  = 'adsPausePulse 1.4s ease-in-out infinite';
-    status.textContent   = '🔴 LIVE';
-    status.style.color   = '#cc0000';
-  } else {
-    btn.style.background = '';
-    btn.style.boxShadow  = '';
-    btn.style.animation  = '';
-    status.textContent   = 'Off';
-    status.style.color   = '';
+    console.error('[ADS] saveGoldInterval:', e);
+    alert('Erreur lors de la sauvegarde.');
   }
 }
 

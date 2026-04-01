@@ -474,13 +474,9 @@
               <hr style="border:none;border-top:1px solid var(--border);margin:14px 0 10px">
               <div class="live-col-section-label">📺 Sponsors</div>
               <div style="display:flex;flex-direction:column;gap:6px">
-                <button id="bcPauseBtn" onclick="broadcastSponsorPause()"
+                <button id="bcSilverBtn" onclick="broadcastSilverBlock()"
                   style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:3px;background:var(--gray);color:var(--white);font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:600;letter-spacing:1px;text-transform:uppercase;cursor:pointer;text-align:left;transition:background 0.2s,border-color 0.2s,box-shadow 0.2s">
-                  ⏸ Écran pause sponsors
-                </button>
-                <button id="bcTickerBtn" onclick="broadcastSilverTicker()"
-                  style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:3px;background:var(--gray);color:var(--white);font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:600;letter-spacing:1px;text-transform:uppercase;cursor:pointer;text-align:left;transition:background 0.2s,border-color 0.2s,box-shadow 0.2s">
-                  ▶ Ticker Silver
+                  ▶ Bloc Silver
                 </button>
               </div>
 
@@ -1509,22 +1505,17 @@
 
           <!-- OBS Pause screen toggle -->
           <div class="config-section">
-            <div class="config-section-label">📺 OBS Overlay</div>
+            <div class="config-section-label">📺 OBS Overlay — Gold</div>
             <div class="config-add-form">
-              <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-                <button id="adsPauseBtn" class="add-btn" onclick="adsTogglePauseScreen()"
-                  style="padding:10px 24px;transition:background 0.2s,box-shadow 0.2s">
-                  📺 Écran pause
-                </button>
-                <span id="adsPauseStatus" style="font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;min-width:36px">Off</span>
-                <button id="adsTickerBtn" class="add-btn" onclick="adsToggleSilverTicker()"
-                  style="padding:10px 24px;background:var(--orange-dark);transition:background 0.2s,box-shadow 0.2s">
-                  📺 Ticker Silver
-                </button>
-                <span id="adsTickerStatus" style="font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;min-width:36px">Off</span>
+              <div class="config-form-row" style="align-items:flex-end;gap:12px;flex-wrap:wrap">
+                <div class="form-group" style="max-width:180px">
+                  <label class="form-label">Intervalle d'apparition (s)</label>
+                  <input class="form-input" id="goldIntervalInput" type="number" min="10" max="300" value="45" />
+                </div>
+                <button class="add-btn" style="padding:9px 20px" onclick="adsSaveGoldInterval()">Sauvegarder</button>
               </div>
               <div style="margin-top:8px;font-size:12px;color:var(--muted)">
-                Pause : bascule l'overlay en plein écran sponsors. Ticker : défilement Silver en bas de l'overlay.
+                Durée entre chaque apparition du logo Gold en bas gauche de l'overlay (±20% aléatoire).
               </div>
             </div>
           </div>
