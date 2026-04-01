@@ -559,32 +559,40 @@
       letter-spacing: 1px;
     }
 
-    /* ── SPONSORS BANNER — bas de l'overlay ── */
-    #sponsorsBanner {
+    /* ── SPONSORS — Mode A ticker (bottom-right) ── */
+    .sponsor-ticker {
       position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 60px;
-      background: rgba(0, 0, 0, 0.72);
-      border-top: 1px solid rgba(255, 69, 0, 0.3);
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      bottom: 16px;
+      right: 16px;
+      background: rgba(0, 0, 0, 0.6);
+      border-radius: 8px;
+      padding: 8px 12px;
+      opacity: 0;
+      transition: opacity 0.5s ease;
       z-index: 50;
     }
+    .sponsor-ticker img { height: 60px; max-width: 120px; object-fit: contain; display: block; }
+    .sponsor-ticker.visible { opacity: 1; }
 
-    #sponsorLogoEl {
-      max-height: 44px;
-      max-width: 240px;
-      object-fit: contain;
+    /* ── SPONSORS — Mode B pause (fullscreen) ── */
+    .sponsor-pause {
+      position: fixed;
+      inset: 0;
+      background: #000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
       opacity: 0;
       transition: opacity 0.6s ease;
     }
+    .sponsor-pause.visible { opacity: 1; }
+    .sponsor-pause img { max-width: 300px; max-height: 150px; object-fit: contain; margin-bottom: 24px; }
+    .sponsor-pause #pause-name { font-family: 'Oswald', sans-serif; font-size: 28px; color: #fff; letter-spacing: 2px; text-transform: uppercase; }
+    .sponsor-pause #pause-url  { font-family: 'Barlow Condensed', sans-serif; font-size: 14px; color: #888; margin-top: 8px; letter-spacing: 1px; }
 
-    #sponsorLogoEl.visible {
-      opacity: 1;
-    }
+    .hidden { display: none !important; }
   </style>
 </head>
 <body>
@@ -700,9 +708,16 @@
     </div>
   </div>
 
-  <!-- ══ SPONSORS BANNER ══ -->
-  <div id="sponsorsBanner">
-    <img id="sponsorLogoEl" src="" alt="" crossorigin="anonymous" />
+  <!-- ══ SPONSORS — Mode A : ticker discret ══ -->
+  <div id="sponsor-ticker" class="sponsor-ticker hidden">
+    <img id="sponsor-ticker-logo" crossorigin="anonymous" alt="" />
+  </div>
+
+  <!-- ══ SPONSORS — Mode B : écran pause plein écran ══ -->
+  <div id="sponsor-pause" class="sponsor-pause hidden">
+    <img id="pause-logo" crossorigin="anonymous" alt="" />
+    <p id="pause-name"></p>
+    <p id="pause-url"></p>
   </div>
 
   <!-- ══ CHEER OVERLAY ══ -->
@@ -1016,90 +1031,135 @@
     }
 
     // ═══════════════════════════════════════════════════════
-    // SPONSORS BANNER
+    // SPONSORS — Option D (Mode A ticker + Mode B pause)
     // ═══════════════════════════════════════════════════════
 
-    let _sponsorsList   = [];   // all active sponsors (gold first, then silver, bronze)
-    let _sponsorIdx     = 0;
-    let _sponsorTimer   = null;
-    let _supabaseClient = null;
+    const clubId     = APP_CONFIG.clubId || 'default';
+    let goldSponsors = [];
+    let allSponsors  = [];
+    let tickerIndex  = 0;
+    let pauseIndex   = 0;
+    let tickerTimer  = null;
+    let pauseTimer   = null;
 
-    // Rotation intervals per tier (ms)
-    const SPONSOR_INTERVALS = { gold: 8000, silver: 12000, bronze: 12000 };
-
-    async function initSponsors() {
-      const clubId = APP_CONFIG.clubId || 'default';
-      await loadSponsorsList(clubId);
-
-      // Supabase Realtime — reload sponsors on any change to this club's sponsors
-      try {
-        _supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        _supabaseClient
-          .channel('sponsors-overlay')
-          .on('postgres_changes', {
-            event:  '*',
-            schema: 'public',
-            table:  'sponsors',
-            filter: `club_id=eq.${clubId}`,
-          }, async () => {
-            await loadSponsorsList(clubId);
-          })
-          .subscribe();
-      } catch (e) {
-        console.warn('[overlay] Realtime sponsors failed (table may need Realtime enabled):', e);
-      }
-    }
-
-    async function loadSponsorsList(clubId) {
+    async function _fetchSponsorsByTier(tier) {
       try {
         const res = await fetch(
-          `${SUPABASE_URL}/rest/v1/sponsors?club_id=eq.${encodeURIComponent(clubId)}&active=eq.true&order=tier,display_order`,
+          `${SUPABASE_URL}/rest/v1/sponsors?club_id=eq.${encodeURIComponent(clubId)}&tier=eq.${tier}&active=eq.true&order=display_order`,
           { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }
         );
-        if (!res.ok) return;
-        _sponsorsList = await res.json();
-        _sponsorIdx   = 0;
-        restartSponsorRotation();
-      } catch (e) {
-        console.warn('[overlay] loadSponsors:', e);
-      }
+        return res.ok ? res.json() : [];
+      } catch (e) { return []; }
     }
 
-    function restartSponsorRotation() {
-      if (_sponsorTimer) clearTimeout(_sponsorTimer);
-      const banner = document.getElementById('sponsorsBanner');
-      if (!_sponsorsList.length) {
-        if (banner) banner.style.display = 'none';
+    async function initSponsors() {
+      goldSponsors    = await _fetchSponsorsByTier('gold');
+      const silver    = await _fetchSponsorsByTier('silver');
+      const bronze    = await _fetchSponsorsByTier('bronze');
+      allSponsors     = [...goldSponsors, ...silver, ...bronze];
+      tickerIndex     = 0;
+      startTicker();
+    }
+
+    // ── Mode A : ticker discret (Gold uniquement) ──
+
+    function startTicker() {
+      if (tickerTimer) clearTimeout(tickerTimer);
+      if (!goldSponsors.length) return;
+      tickerIndex = 0;
+      runTickerCycle();
+    }
+
+    function runTickerCycle() {
+      const ticker = document.getElementById('sponsor-ticker');
+      const img    = document.getElementById('sponsor-ticker-logo');
+      const s      = goldSponsors[tickerIndex % goldSponsors.length];
+      tickerIndex++;
+
+      if (!s.logo_url) {
+        tickerTimer = setTimeout(runTickerCycle, 500);
         return;
       }
-      if (banner) banner.style.display = 'flex';
-      showSponsor(_sponsorIdx);
+
+      ticker.classList.remove('hidden');
+      img.src = s.logo_url;
+      img.alt = s.name;
+
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => ticker.classList.add('visible'));
+      });
+
+      // visible 8s → fade out → pause 22s → next
+      tickerTimer = setTimeout(() => {
+        ticker.classList.remove('visible');
+        setTimeout(() => {
+          tickerTimer = setTimeout(runTickerCycle, 22000);
+        }, 500);
+      }, 8000);
     }
 
-    function showSponsor(idx) {
-      const logo = document.getElementById('sponsorLogoEl');
-      if (!logo || !_sponsorsList.length) return;
+    // ── Mode B : écran pause plein écran ──
 
-      const sponsor = _sponsorsList[idx % _sponsorsList.length];
-      const delay   = SPONSOR_INTERVALS[sponsor.tier] || 10000;
+    function startPause() {
+      if (tickerTimer) clearTimeout(tickerTimer);
+      document.getElementById('sponsor-ticker').classList.remove('visible');
+      document.getElementById('sponsor-ticker').classList.add('hidden');
+      const el = document.getElementById('sponsor-pause');
+      el.classList.remove('hidden');
+      pauseIndex = 0;
+      showPauseSponsor();
+    }
 
-      // Fade out, swap image, fade in
-      logo.classList.remove('visible');
+    function showPauseSponsor() {
+      if (!allSponsors.length) return;
+      const s   = allSponsors[pauseIndex % allSponsors.length];
+      const el  = document.getElementById('sponsor-pause');
+      const dur = s.tier === 'gold' ? 8000 : 6000;
+
+      document.getElementById('pause-logo').src = s.logo_url || '';
+      document.getElementById('pause-logo').alt = s.name;
+      document.getElementById('pause-name').textContent = s.name;
+      document.getElementById('pause-url').textContent  = s.website_url || '';
+
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => el.classList.add('visible'));
+      });
+
+      pauseTimer = setTimeout(() => {
+        el.classList.remove('visible');
+        pauseIndex++;
+        setTimeout(showPauseSponsor, 600);
+      }, dur);
+    }
+
+    function stopPause() {
+      if (pauseTimer) clearTimeout(pauseTimer);
+      const el = document.getElementById('sponsor-pause');
+      el.classList.remove('visible');
       setTimeout(() => {
-        if (sponsor.logo_url) {
-          logo.src = sponsor.logo_url + '?t=' + Math.floor(Date.now() / 60000); // 1-min cache bust
-          logo.alt = sponsor.name;
-          logo.style.display = 'block';
-          logo.classList.add('visible');
-        } else {
-          logo.style.display = 'none';
-        }
-      }, 650);
+        el.classList.add('hidden');
+        startTicker();
+      }, 600);
+    }
 
-      _sponsorTimer = setTimeout(() => {
-        _sponsorIdx = (idx + 1) % _sponsorsList.length;
-        showSponsor(_sponsorIdx);
-      }, delay);
+    // ── Realtime : écoute sponsor_pause broadcast ──
+    try {
+      window.supabase
+        .channel(`overlay:${clubId}`)
+        .on('broadcast', { event: 'sponsor_pause' }, ({ payload }) => {
+          payload.active ? startPause() : stopPause();
+        })
+        .subscribe();
+
+      // Rechargement si sponsors modifiés en base
+      window.supabase
+        .channel('sponsors-changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'sponsors' }, () => {
+          initSponsors();
+        })
+        .subscribe();
+    } catch (e) {
+      console.warn('[overlay] Realtime sponsors:', e);
     }
 
     window.addEventListener('load', initSponsors);

@@ -388,6 +388,46 @@ async function adsToggleActive(id, tier, active) {
   } catch (e) { console.error('[ADS] toggleActive:', e); }
 }
 
+// ── OBS PAUSE SCREEN TOGGLE ──
+
+let _adsPauseActive = false;
+
+async function adsTogglePauseScreen() {
+  const clubId = APP_CONFIG.clubId || 'default';
+  _adsPauseActive = !_adsPauseActive;
+
+  const btn    = document.getElementById('adsPauseBtn');
+  const status = document.getElementById('adsPauseStatus');
+
+  try {
+    await window.supabase
+      .channel(`overlay:${clubId}`)
+      .send({
+        type:    'broadcast',
+        event:   'sponsor_pause',
+        payload: { active: _adsPauseActive },
+      });
+  } catch (e) {
+    console.error('[ADS] sponsor_pause broadcast:', e);
+    _adsPauseActive = !_adsPauseActive; // revert
+    return;
+  }
+
+  if (_adsPauseActive) {
+    btn.style.background  = '#cc0000';
+    btn.style.boxShadow   = '0 0 12px rgba(204,0,0,0.6)';
+    btn.style.animation   = 'adsPausePulse 1.4s ease-in-out infinite';
+    status.textContent    = '🔴 LIVE';
+    status.style.color    = '#cc0000';
+  } else {
+    btn.style.background  = '';
+    btn.style.boxShadow   = '';
+    btn.style.animation   = '';
+    status.textContent    = 'Off';
+    status.style.color    = '';
+  }
+}
+
 async function adsSaveSettings() {
   const settings = {
     max_gold:   parseInt(document.getElementById('adsMaxGold').value,   10) || 3,

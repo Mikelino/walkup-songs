@@ -2928,6 +2928,11 @@
       cursor: not-allowed;
     }
 
+    @keyframes adsPausePulse {
+      0%, 100% { box-shadow: 0 0 8px rgba(204,0,0,0.5); }
+      50%       { box-shadow: 0 0 20px rgba(204,0,0,0.9); }
+    }
+
     @media (max-width: 540px) {
       .ads-sponsor-item { padding: 8px 10px; gap: 8px; }
       .ads-logo-thumb, .ads-logo-placeholder { width: 48px; height: 24px; }
