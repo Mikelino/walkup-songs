@@ -1497,15 +1497,20 @@
           <div class="config-section">
             <div class="config-section-label">📺 OBS Overlay</div>
             <div class="config-add-form">
-              <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+              <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
                 <button id="adsPauseBtn" class="add-btn" onclick="adsTogglePauseScreen()"
-                  style="padding:10px 24px;min-width:220px;transition:background 0.2s,box-shadow 0.2s">
-                  📺 Écran pause sponsors
+                  style="padding:10px 24px;transition:background 0.2s,box-shadow 0.2s">
+                  📺 Écran pause
                 </button>
-                <span id="adsPauseStatus" style="font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:2px;color:var(--muted);text-transform:uppercase">Off</span>
+                <span id="adsPauseStatus" style="font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;min-width:36px">Off</span>
+                <button id="adsTickerBtn" class="add-btn" onclick="adsToggleSilverTicker()"
+                  style="padding:10px 24px;background:var(--orange-dark);transition:background 0.2s,box-shadow 0.2s">
+                  📺 Ticker Silver
+                </button>
+                <span id="adsTickerStatus" style="font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;min-width:36px">Off</span>
               </div>
               <div style="margin-top:8px;font-size:12px;color:var(--muted)">
-                Bascule l'overlay OBS en mode plein écran sponsors. Désactivez avant la reprise du match.
+                Pause : bascule l'overlay en plein écran sponsors. Ticker : défilement Silver en bas de l'overlay.
               </div>
             </div>
           </div>

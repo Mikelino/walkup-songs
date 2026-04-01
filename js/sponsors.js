@@ -428,6 +428,46 @@ async function adsTogglePauseScreen() {
   }
 }
 
+// ── SILVER TICKER TOGGLE ──
+
+let _adsTickerActive = false;
+
+async function adsToggleSilverTicker() {
+  const clubId = APP_CONFIG.clubId || 'default';
+  _adsTickerActive = !_adsTickerActive;
+
+  const btn    = document.getElementById('adsTickerBtn');
+  const status = document.getElementById('adsTickerStatus');
+
+  try {
+    await window.supabase
+      .channel(`overlay:${clubId}`)
+      .send({
+        type:    'broadcast',
+        event:   'silver_ticker',
+        payload: { active: _adsTickerActive },
+      });
+  } catch (e) {
+    console.error('[ADS] silver_ticker broadcast:', e);
+    _adsTickerActive = !_adsTickerActive;
+    return;
+  }
+
+  if (_adsTickerActive) {
+    btn.style.background = '#cc0000';
+    btn.style.boxShadow  = '0 0 12px rgba(204,0,0,0.6)';
+    btn.style.animation  = 'adsPausePulse 1.4s ease-in-out infinite';
+    status.textContent   = '🔴 LIVE';
+    status.style.color   = '#cc0000';
+  } else {
+    btn.style.background = '';
+    btn.style.boxShadow  = '';
+    btn.style.animation  = '';
+    status.textContent   = 'Off';
+    status.style.color   = '';
+  }
+}
+
 async function adsSaveSettings() {
   const settings = {
     max_gold:   parseInt(document.getElementById('adsMaxGold').value,   10) || 3,

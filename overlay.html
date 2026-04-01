@@ -559,6 +559,62 @@
       letter-spacing: 1px;
     }
 
+    /* ── SPONSORS — Silver ticker horizontal ── */
+    .silver-ticker {
+      position: fixed;
+      bottom: 92px; /* above gold ticker: 16px margin + ~76px gold ticker height */
+      left: 0;
+      right: 0;
+      height: 52px;
+      background: rgba(0, 0, 0, 0.85);
+      border-top: 2px solid #FF4500;
+      overflow: hidden;
+      transform: translateY(60px);
+      transition: transform 0.4s ease;
+      z-index: 40;
+    }
+    .silver-ticker.visible { transform: translateY(0); }
+    .silver-ticker-track {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+    }
+    .silver-ticker-content {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+      white-space: nowrap;
+      will-change: transform;
+    }
+    .silver-ticker-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+    .silver-ticker-item img {
+      height: 36px;
+      width: 36px;
+      object-fit: contain;
+      border-radius: 4px;
+    }
+    .silver-ticker-item span {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 18px;
+      font-weight: 600;
+      color: #ffffff;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .silver-ticker-separator {
+      color: #FF4500;
+      font-size: 20px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
     /* ── SPONSORS — Mode A ticker (bottom-right) ── */
     .sponsor-ticker {
       position: fixed;
@@ -705,6 +761,13 @@
         <div class="ondeck-jersey" id="onDeckJersey"></div>
         <div class="ondeck-pos" id="onDeckPos"></div>
       </div>
+    </div>
+  </div>
+
+  <!-- ══ SPONSORS — Silver ticker horizontal ══ -->
+  <div id="silver-ticker" class="silver-ticker hidden">
+    <div class="silver-ticker-track">
+      <div id="silver-ticker-content" class="silver-ticker-content"></div>
     </div>
   </div>
 
@@ -1042,6 +1105,17 @@
     let tickerTimer  = null;
     let pauseTimer   = null;
 
+    // ── Silver ticker state ──
+    const TICKER_SPEED      = 80;   // px/s
+    const TICKER_AUTO_EVERY = 180;  // seconds between auto appearances
+    const TICKER_AUTO_DUR   = 30;   // seconds of auto display
+
+    let silverSponsors  = [];
+    let silverAutoTimer = null;
+    let silverHideTimer = null;
+    let silverAnimation = null;
+    let silverManualOn  = false;
+
     async function _fetchSponsorsByTier(tier) {
       try {
         const res = await fetch(
@@ -1059,6 +1133,7 @@
       allSponsors     = [...goldSponsors, ...silver, ...bronze];
       tickerIndex     = 0;
       startTicker();
+      await initSilverTicker(silver);
     }
 
     // ── Mode A : ticker discret (Gold uniquement) ──
@@ -1104,6 +1179,7 @@
       if (tickerTimer) clearTimeout(tickerTimer);
       document.getElementById('sponsor-ticker').classList.remove('visible');
       document.getElementById('sponsor-ticker').classList.add('hidden');
+      hideSilverTicker();
       const el = document.getElementById('sponsor-pause');
       el.classList.remove('hidden');
       pauseIndex = 0;
@@ -1139,7 +1215,74 @@
       setTimeout(() => {
         el.classList.add('hidden');
         startTicker();
+        if (silverManualOn) showSilverTicker(); else scheduleAutoTicker();
       }, 600);
+    }
+
+    // ── Silver ticker functions ──
+
+    function buildSilverTicker() {
+      const content = document.getElementById('silver-ticker-content');
+      if (!silverSponsors.length) return;
+      const items = [...silverSponsors, ...silverSponsors]; // duplicate for seamless loop
+      content.innerHTML = items.map((s, i) => `
+        <span class="silver-ticker-item">
+          ${s.logo_url ? `<img src="${s.logo_url}" crossorigin="anonymous" alt="${s.name}" />` : ''}
+          <span>${s.name}</span>
+        </span>
+        ${i < items.length - 1 ? '<span class="silver-ticker-separator">·</span>' : ''}
+      `).join('');
+    }
+
+    function startSilverScroll() {
+      const content  = document.getElementById('silver-ticker-content');
+      const totalW   = content.scrollWidth / 2; // half because items are doubled
+      const duration = (totalW / TICKER_SPEED) * 1000;
+      if (silverAnimation) silverAnimation.cancel();
+      silverAnimation = content.animate(
+        [{ transform: 'translateX(0)' }, { transform: `translateX(-${totalW}px)` }],
+        { duration, iterations: Infinity, easing: 'linear' }
+      );
+    }
+
+    function showSilverTicker() {
+      const el = document.getElementById('silver-ticker');
+      if (!silverSponsors.length) return;
+      buildSilverTicker();
+      el.classList.remove('hidden');
+      requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('visible')));
+      // Wait for slide-up before measuring scrollWidth
+      setTimeout(startSilverScroll, 420);
+    }
+
+    function hideSilverTicker() {
+      const el = document.getElementById('silver-ticker');
+      el.classList.remove('visible');
+      setTimeout(() => {
+        el.classList.add('hidden');
+        if (silverAnimation) { silverAnimation.cancel(); silverAnimation = null; }
+      }, 400);
+    }
+
+    function scheduleAutoTicker() {
+      clearTimeout(silverAutoTimer);
+      clearTimeout(silverHideTimer);
+      silverAutoTimer = setTimeout(() => {
+        if (!silverManualOn) {
+          showSilverTicker();
+          silverHideTimer = setTimeout(() => {
+            if (!silverManualOn) hideSilverTicker();
+            scheduleAutoTicker();
+          }, TICKER_AUTO_DUR * 1000);
+        } else {
+          scheduleAutoTicker(); // postpone if manual is active
+        }
+      }, TICKER_AUTO_EVERY * 1000);
+    }
+
+    async function initSilverTicker(preloaded) {
+      silverSponsors = preloaded ?? await _fetchSponsorsByTier('silver');
+      if (silverSponsors.length) scheduleAutoTicker();
     }
 
     // ── Realtime : écoute sponsor_pause broadcast ──
@@ -1148,6 +1291,17 @@
         .channel(`overlay:${clubId}`)
         .on('broadcast', { event: 'sponsor_pause' }, ({ payload }) => {
           payload.active ? startPause() : stopPause();
+        })
+        .on('broadcast', { event: 'silver_ticker' }, ({ payload }) => {
+          if (payload.active) {
+            silverManualOn = true;
+            clearTimeout(silverHideTimer);
+            showSilverTicker();
+          } else {
+            silverManualOn = false;
+            hideSilverTicker();
+            scheduleAutoTicker();
+          }
         })
         .subscribe();
 
