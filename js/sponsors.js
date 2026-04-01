@@ -404,6 +404,79 @@ async function adsToggleActive(id, tier, active) {
   } catch (e) { console.error('[ADS] toggleActive:', e); }
 }
 
+// ── BROADCAST COLUMN — SPONSOR CONTROLS ──
+
+let _bcPauseActive  = false;
+let _bcTickerActive = false;
+
+async function broadcastSponsorPause() {
+  const clubId = APP_CONFIG.clubId || 'default';
+  _bcPauseActive = !_bcPauseActive;
+
+  // Mutual exclusivity: deactivate ticker if pause is being turned on
+  if (_bcPauseActive && _bcTickerActive) {
+    _bcTickerActive = false;
+    _bcSetBtnState(document.getElementById('bcTickerBtn'), false, '▶ Ticker Silver', '⏹ Arrêter ticker Silver');
+    try {
+      await window.supabase.channel(`overlay:${clubId}`)
+        .send({ type: 'broadcast', event: 'silver_ticker', payload: { active: false } });
+    } catch (e) { console.error('[BC] silver_ticker off:', e); }
+  }
+
+  const btn = document.getElementById('bcPauseBtn');
+  try {
+    await window.supabase.channel(`overlay:${clubId}`)
+      .send({ type: 'broadcast', event: 'sponsor_pause', payload: { active: _bcPauseActive } });
+    _bcSetBtnState(btn, _bcPauseActive, '⏸ Écran pause sponsors', '⏹ Arrêter pause sponsors');
+  } catch (e) {
+    console.error('[BC] sponsor_pause:', e);
+    _bcPauseActive = !_bcPauseActive; // revert on error
+  }
+}
+
+async function broadcastSilverTicker() {
+  const clubId = APP_CONFIG.clubId || 'default';
+  _bcTickerActive = !_bcTickerActive;
+
+  // Mutual exclusivity: deactivate pause if ticker is being turned on
+  if (_bcTickerActive && _bcPauseActive) {
+    _bcPauseActive = false;
+    _bcSetBtnState(document.getElementById('bcPauseBtn'), false, '⏸ Écran pause sponsors', '⏹ Arrêter pause sponsors');
+    try {
+      await window.supabase.channel(`overlay:${clubId}`)
+        .send({ type: 'broadcast', event: 'sponsor_pause', payload: { active: false } });
+    } catch (e) { console.error('[BC] sponsor_pause off:', e); }
+  }
+
+  const btn = document.getElementById('bcTickerBtn');
+  try {
+    await window.supabase.channel(`overlay:${clubId}`)
+      .send({ type: 'broadcast', event: 'silver_ticker', payload: { active: _bcTickerActive } });
+    _bcSetBtnState(btn, _bcTickerActive, '▶ Ticker Silver', '⏹ Arrêter ticker Silver');
+  } catch (e) {
+    console.error('[BC] silver_ticker:', e);
+    _bcTickerActive = !_bcTickerActive; // revert on error
+  }
+}
+
+function _bcSetBtnState(btn, active, labelOff, labelOn) {
+  if (!btn) return;
+  btn.textContent = active ? labelOn : labelOff;
+  if (active) {
+    btn.style.background   = '#8b0000';
+    btn.style.borderColor  = '#cc0000';
+    btn.style.boxShadow    = '0 0 10px rgba(204,0,0,0.5)';
+    btn.style.animation    = 'adsPausePulse 1.4s ease-in-out infinite';
+    btn.style.color        = '#fff';
+  } else {
+    btn.style.background   = '';
+    btn.style.borderColor  = '';
+    btn.style.boxShadow    = '';
+    btn.style.animation    = '';
+    btn.style.color        = '';
+  }
+}
+
 // ── OBS PAUSE SCREEN TOGGLE ──
 
 let _adsPauseActive = false;

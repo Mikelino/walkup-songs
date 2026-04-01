@@ -470,6 +470,20 @@
                 <button onclick="matchCopyOverlayUrl()" style="padding:5px 10px;background:var(--orange);border:none;border-radius:3px;color:#fff;font-family:'Oswald',sans-serif;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;flex-shrink:0">Copy</button>
               </div>
 
+              <!-- Sponsors -->
+              <hr style="border:none;border-top:1px solid var(--border);margin:14px 0 10px">
+              <div class="live-col-section-label">📺 Sponsors</div>
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <button id="bcPauseBtn" onclick="broadcastSponsorPause()"
+                  style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:3px;background:var(--gray);color:var(--white);font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:600;letter-spacing:1px;text-transform:uppercase;cursor:pointer;text-align:left;transition:background 0.2s,border-color 0.2s,box-shadow 0.2s">
+                  ⏸ Écran pause sponsors
+                </button>
+                <button id="bcTickerBtn" onclick="broadcastSilverTicker()"
+                  style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:3px;background:var(--gray);color:var(--white);font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:600;letter-spacing:1px;text-transform:uppercase;cursor:pointer;text-align:left;transition:background 0.2s,border-color 0.2s,box-shadow 0.2s">
+                  ▶ Ticker Silver
+                </button>
+              </div>
+
             </div>
           </div>
 
