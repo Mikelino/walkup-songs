@@ -23,6 +23,7 @@
   <script src="js/social.js"></script>
   <script src="js/settings.js"></script>
   <script src="js/soundboard.js"></script>
+  <script src="js/sponsors.js"></script>
 
 
   <!-- Styles -->
@@ -922,6 +923,12 @@
           </span>
           <span class="cfg-nav-label">Security</span>
         </button>
+        <button class="cfg-nav-btn" id="cfgNavAds" onclick="cfgSwitchTab('ads')">
+          <span class="cfg-nav-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M21 7H3c-1.1 0-2 .9-2 2v6c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2zm-10 7H5v-2h6v2zm4-2c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm3 0c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z"/></svg>
+          </span>
+          <span class="cfg-nav-label">ADS</span>
+        </button>
       </nav>
 
       <!-- CONTENT PANELS -->
@@ -1481,6 +1488,94 @@
           </div>
 
         </div>
+
+        <!-- PANEL : ADS / SPONSORS -->
+        <div class="config-panel" id="cfgPanelAds">
+
+          <!-- Settings: max per tier -->
+          <div class="config-section">
+            <div class="config-section-label">⚙️ Limits by tier</div>
+            <div class="config-add-form">
+              <div class="config-form-row" style="flex-wrap:wrap;gap:14px;align-items:flex-end">
+                <div class="form-group" style="max-width:110px">
+                  <label class="form-label">🥇 Max Gold</label>
+                  <input class="form-input" id="adsMaxGold" type="number" min="1" max="20" value="3" />
+                </div>
+                <div class="form-group" style="max-width:110px">
+                  <label class="form-label">🥈 Max Silver</label>
+                  <input class="form-input" id="adsMaxSilver" type="number" min="1" max="20" value="5" />
+                </div>
+                <div class="form-group" style="max-width:110px">
+                  <label class="form-label">🥉 Max Bronze</label>
+                  <input class="form-input" id="adsMaxBronze" type="number" min="1" max="50" value="10" />
+                </div>
+                <button class="add-btn" style="padding:9px 20px" onclick="adsSaveSettings()">Save</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Gold sponsors -->
+          <div class="config-section">
+            <div class="config-section-label" style="display:flex;align-items:center;justify-content:space-between">
+              <span>🥇 Gold Sponsors</span>
+              <button class="add-btn" id="adsAddGoldBtn" onclick="adsOpenForm(null,'gold')" style="padding:5px 14px;font-size:12px">+ Add</button>
+            </div>
+            <div id="adsListGold" class="ads-sponsor-list"></div>
+          </div>
+
+          <!-- Silver sponsors -->
+          <div class="config-section">
+            <div class="config-section-label" style="display:flex;align-items:center;justify-content:space-between">
+              <span>🥈 Silver Sponsors</span>
+              <button class="add-btn" id="adsAddSilverBtn" onclick="adsOpenForm(null,'silver')" style="padding:5px 14px;font-size:12px">+ Add</button>
+            </div>
+            <div id="adsListSilver" class="ads-sponsor-list"></div>
+          </div>
+
+          <!-- Bronze sponsors -->
+          <div class="config-section">
+            <div class="config-section-label" style="display:flex;align-items:center;justify-content:space-between">
+              <span>🥉 Bronze Sponsors</span>
+              <button class="add-btn" id="adsAddBronzeBtn" onclick="adsOpenForm(null,'bronze')" style="padding:5px 14px;font-size:12px">+ Add</button>
+            </div>
+            <div id="adsListBronze" class="ads-sponsor-list"></div>
+          </div>
+
+          <!-- Inline edit / add form -->
+          <div id="adsSponsorForm" class="config-section" style="display:none;border:1px solid rgba(255,69,0,0.3);border-radius:4px;background:rgba(255,69,0,0.04)">
+            <div class="config-section-label" id="adsSponsorFormTitle">Add Sponsor</div>
+            <input type="hidden" id="adsSponsorId" />
+            <input type="hidden" id="adsSponsorTier" />
+            <div class="config-add-form">
+              <div class="config-form-row" style="flex-wrap:wrap;gap:14px">
+                <div class="form-group">
+                  <label class="form-label">Name *</label>
+                  <input class="form-input" id="adsSponsorName" placeholder="Sponsor name" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Website URL</label>
+                  <input class="form-input" id="adsSponsorUrl" placeholder="https://…" />
+                </div>
+                <div class="form-group" style="min-width:100%">
+                  <label class="form-label">Logo (image file)</label>
+                  <label class="audio-upload-label" style="cursor:pointer">
+                    <span id="adsLogoText">📂 Choose an image…</span>
+                    <input type="file" id="adsLogoFile" accept="image/*" style="display:none" onchange="adsHandleLogoPreview(this)" />
+                  </label>
+                </div>
+                <div id="adsLogoPreview" style="display:none;align-items:center;gap:12px;min-width:100%">
+                  <img id="adsLogoImg" src="" alt="Logo preview" style="height:40px;max-width:120px;object-fit:contain;border-radius:3px;border:1px solid var(--border)" crossorigin="anonymous" />
+                  <span style="font-size:11px;color:var(--muted)">Preview (will be resized to 400×200)</span>
+                </div>
+                <div style="display:flex;gap:10px;min-width:100%">
+                  <button class="add-btn" onclick="adsSaveSponsor()" style="padding:9px 24px">Save</button>
+                  <button class="cfg-modal-cancel" onclick="adsCloseForm()" style="padding:9px 16px">Cancel</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /cfgPanelAds -->
 
       </div><!-- /config-panels -->
     </div><!-- /config-body -->

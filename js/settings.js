@@ -29,7 +29,7 @@
    ============================================================ */
 
 function cfgSwitchTab(tab) {
-  const tabs = { teams: 'Teams', interface: 'Interface', positions: 'Positions', opponents: 'Opponents', securite: 'Security' };
+  const tabs = { teams: 'Teams', interface: 'Interface', positions: 'Positions', opponents: 'Opponents', securite: 'Security', ads: 'ADS' };
   document.querySelectorAll('.cfg-nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('cfgNav' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
   document.querySelectorAll('.config-panel').forEach(p => p.classList.remove('active'));
@@ -38,6 +38,7 @@ function cfgSwitchTab(tab) {
   if (tab === 'interface') ifInitPanel();
   if (tab === 'positions') cfgRenderPositions();
   if (tab === 'opponents') cfgRenderOpponents();
+  if (tab === 'ads') adsRenderPanel();
 }
 
 // ── POSITIONS MANAGEMENT ──

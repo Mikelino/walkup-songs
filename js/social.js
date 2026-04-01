@@ -425,6 +425,23 @@ async function exportStory() {
   ctx.textAlign = 'center';
   ctx.fillText(clubSettings.website || 'yourclub.com', W/2, H - 24);
 
+  // ── SPONSOR GOLD (bottom-right corner) ──
+  try {
+    const clubId = (typeof APP_CONFIG !== 'undefined' && APP_CONFIG.clubId) || 'default';
+    const goldSponsors = await getActiveSponsorsByTier(clubId, 'gold');
+    if (goldSponsors.length && goldSponsors[0].logo_url) {
+      const sponsorImg = new Image();
+      sponsorImg.crossOrigin = 'anonymous';
+      await new Promise(r => { sponsorImg.onload = r; sponsorImg.onerror = r; sponsorImg.src = goldSponsors[0].logo_url; });
+      if (sponsorImg.naturalWidth > 0) {
+        const sW = 120, sH = 60, margin = 16;
+        ctx.globalAlpha = 0.85;
+        ctx.drawImage(sponsorImg, W - sW - margin, H - sH - margin - 6, sW, sH);
+        ctx.globalAlpha = 1;
+      }
+    }
+  } catch (e) { /* sponsor logo is optional — don't block story export */ }
+
   // ── PARTAGE ──
   const filename = `walkup-lineup-${currentTeamId}-${date || 'match'}.png`;
   shareStory(canvas, filename);
@@ -646,6 +663,23 @@ async function exportScoreStory() {
   ctx.font = '28px Barlow Condensed, sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText(clubSettings.website || 'yourclub.com', W/2, H-24);
+
+  // ── SPONSOR GOLD (bottom-right corner) ──
+  try {
+    const clubId = (typeof APP_CONFIG !== 'undefined' && APP_CONFIG.clubId) || 'default';
+    const goldSponsors = await getActiveSponsorsByTier(clubId, 'gold');
+    if (goldSponsors.length && goldSponsors[0].logo_url) {
+      const sponsorImg = new Image();
+      sponsorImg.crossOrigin = 'anonymous';
+      await new Promise(r => { sponsorImg.onload = r; sponsorImg.onerror = r; sponsorImg.src = goldSponsors[0].logo_url; });
+      if (sponsorImg.naturalWidth > 0) {
+        const sW = 120, sH = 60, margin = 16;
+        ctx.globalAlpha = 0.85;
+        ctx.drawImage(sponsorImg, W - sW - margin, H - sH - margin - 6, sW, sH);
+        ctx.globalAlpha = 1;
+      }
+    }
+  } catch (e) { /* sponsor logo is optional — don't block story export */ }
 
   const filename = `walkup-score-${currentTeamId}-${date || 'match'}.png`;
   shareStory(canvas, filename);

@@ -8,6 +8,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Barlow+Condensed:wght@400;600;700&family=Barlow:wght@400;600&display=swap" rel="stylesheet">
 
   <!-- ═══════════════════════════════════════ CONFIG ══ -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="js/config.js"></script>
 
   <style>
@@ -557,6 +558,33 @@
       display: none;
       letter-spacing: 1px;
     }
+
+    /* ── SPONSORS BANNER — bas de l'overlay ── */
+    #sponsorsBanner {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      background: rgba(0, 0, 0, 0.72);
+      border-top: 1px solid rgba(255, 69, 0, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+    }
+
+    #sponsorLogoEl {
+      max-height: 44px;
+      max-width: 240px;
+      object-fit: contain;
+      opacity: 0;
+      transition: opacity 0.6s ease;
+    }
+
+    #sponsorLogoEl.visible {
+      opacity: 1;
+    }
   </style>
 </head>
 <body>
@@ -670,6 +698,11 @@
         <div class="ondeck-pos" id="onDeckPos"></div>
       </div>
     </div>
+  </div>
+
+  <!-- ══ SPONSORS BANNER ══ -->
+  <div id="sponsorsBanner">
+    <img id="sponsorLogoEl" src="" alt="" crossorigin="anonymous" />
   </div>
 
   <!-- ══ CHEER OVERLAY ══ -->
@@ -981,6 +1014,95 @@
       el.style.display = 'block';
       setTimeout(() => el.style.display = 'none', 5000);
     }
+
+    // ═══════════════════════════════════════════════════════
+    // SPONSORS BANNER
+    // ═══════════════════════════════════════════════════════
+
+    let _sponsorsList   = [];   // all active sponsors (gold first, then silver, bronze)
+    let _sponsorIdx     = 0;
+    let _sponsorTimer   = null;
+    let _supabaseClient = null;
+
+    // Rotation intervals per tier (ms)
+    const SPONSOR_INTERVALS = { gold: 8000, silver: 12000, bronze: 12000 };
+
+    async function initSponsors() {
+      const clubId = APP_CONFIG.clubId || 'default';
+      await loadSponsorsList(clubId);
+
+      // Supabase Realtime — reload sponsors on any change to this club's sponsors
+      try {
+        _supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        _supabaseClient
+          .channel('sponsors-overlay')
+          .on('postgres_changes', {
+            event:  '*',
+            schema: 'public',
+            table:  'sponsors',
+            filter: `club_id=eq.${clubId}`,
+          }, async () => {
+            await loadSponsorsList(clubId);
+          })
+          .subscribe();
+      } catch (e) {
+        console.warn('[overlay] Realtime sponsors failed (table may need Realtime enabled):', e);
+      }
+    }
+
+    async function loadSponsorsList(clubId) {
+      try {
+        const res = await fetch(
+          `${SUPABASE_URL}/rest/v1/sponsors?club_id=eq.${encodeURIComponent(clubId)}&active=eq.true&order=tier,display_order`,
+          { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }
+        );
+        if (!res.ok) return;
+        _sponsorsList = await res.json();
+        _sponsorIdx   = 0;
+        restartSponsorRotation();
+      } catch (e) {
+        console.warn('[overlay] loadSponsors:', e);
+      }
+    }
+
+    function restartSponsorRotation() {
+      if (_sponsorTimer) clearTimeout(_sponsorTimer);
+      const banner = document.getElementById('sponsorsBanner');
+      if (!_sponsorsList.length) {
+        if (banner) banner.style.display = 'none';
+        return;
+      }
+      if (banner) banner.style.display = 'flex';
+      showSponsor(_sponsorIdx);
+    }
+
+    function showSponsor(idx) {
+      const logo = document.getElementById('sponsorLogoEl');
+      if (!logo || !_sponsorsList.length) return;
+
+      const sponsor = _sponsorsList[idx % _sponsorsList.length];
+      const delay   = SPONSOR_INTERVALS[sponsor.tier] || 10000;
+
+      // Fade out, swap image, fade in
+      logo.classList.remove('visible');
+      setTimeout(() => {
+        if (sponsor.logo_url) {
+          logo.src = sponsor.logo_url + '?t=' + Math.floor(Date.now() / 60000); // 1-min cache bust
+          logo.alt = sponsor.name;
+          logo.style.display = 'block';
+          logo.classList.add('visible');
+        } else {
+          logo.style.display = 'none';
+        }
+      }, 650);
+
+      _sponsorTimer = setTimeout(() => {
+        _sponsorIdx = (idx + 1) % _sponsorsList.length;
+        showSponsor(_sponsorIdx);
+      }, delay);
+    }
+
+    window.addEventListener('load', initSponsors);
 
     window.addEventListener('load', init);
   </script>

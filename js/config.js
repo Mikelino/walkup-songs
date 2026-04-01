@@ -26,6 +26,10 @@ const APP_CONFIG = {
   // Valeurs par défaut affichées au premier chargement.
   // Elles peuvent ensuite être modifiées depuis Config > Interface.
 
+  // Identifiant unique du club — utilisé pour isoler les sponsors en base.
+  // Modifiez cette valeur si vous hébergez plusieurs clubs sur le même projet Supabase.
+  clubId: 'andenne-black-bears',
+
   clubName:    'Andenne Black Bears',
   clubSub:     'Walk-Up Songs',
   clubWebsite: 'https://www.andenne-baseball.be/',
