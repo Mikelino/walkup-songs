@@ -30,10 +30,11 @@
    ============================================================ */
 
 // ── STATE ──
-let _adsSponsors = { gold: [], silver: [], bronze: [] };
-let _adsLogoFile  = null;
-let _adsCurrentId   = null;
-let _adsCurrentTier = null;
+let _adsSponsors        = { gold: [], silver: [], bronze: [] };
+let _adsSponsorSettings = { max_gold: 3, max_silver: 5, max_bronze: 10 };
+let _adsLogoFile        = null;
+let _adsCurrentId       = null;
+let _adsCurrentTier     = null;
 
 function _adsHeaders() {
   return {
@@ -147,13 +148,19 @@ async function updateSponsorOrder(sponsorIds) {
   ));
 }
 
-function loadSponsorSettings() {
-  return appSettings.sponsorSettings || { max_gold: 3, max_silver: 5, max_bronze: 10 };
+async function loadSponsorSettings() {
+  const { data } = await window.supabase
+    .from('config')
+    .select('value')
+    .eq('key', 'sponsor_settings')
+    .single();
+  return data?.value ?? { max_gold: 3, max_silver: 5, max_bronze: 10 };
 }
 
 async function saveSponsorSettings(settings) {
-  appSettings.sponsorSettings = settings;
-  await saveConfig();
+  await window.supabase
+    .from('config')
+    .upsert({ key: 'sponsor_settings', value: settings, updated_at: new Date().toISOString() });
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -172,10 +179,13 @@ async function adsRenderPanel() {
   _adsSponsors = { gold: [], silver: [], bronze: [] };
   rows.forEach(s => { if (_adsSponsors[s.tier]) _adsSponsors[s.tier].push(s); });
 
-  const settings = loadSponsorSettings();
+  const settings = await loadSponsorSettings();
   document.getElementById('adsMaxGold').value   = settings.max_gold   ?? 3;
   document.getElementById('adsMaxSilver').value = settings.max_silver ?? 5;
   document.getElementById('adsMaxBronze').value = settings.max_bronze ?? 10;
+
+  // Cache for sync use in adsRenderList / adsSaveSponsor
+  _adsSponsorSettings = settings;
 
   ['gold', 'silver', 'bronze'].forEach(tier => adsRenderList(tier));
 }
@@ -186,7 +196,7 @@ function adsRenderList(tier) {
   if (!list) return;
 
   const sponsors = _adsSponsors[tier] || [];
-  const settings = loadSponsorSettings();
+  const settings = _adsSponsorSettings;
   const atLimit  = sponsors.length >= (settings[`max_${tier}`] || 99);
 
   const addBtn = document.getElementById(`adsAdd${cap}Btn`);
@@ -299,7 +309,7 @@ async function adsSaveSponsor() {
 
   if (!name) { alert('Please enter a sponsor name.'); return; }
 
-  const settings = loadSponsorSettings();
+  const settings = _adsSponsorSettings;
   if (!_adsCurrentId && (_adsSponsors[tier]?.length || 0) >= (settings[`max_${tier}`] || 99)) {
     alert(`Cannot add more ${tier} sponsors (limit: ${settings[`max_${tier}`]}).`);
     return;
@@ -386,7 +396,9 @@ async function adsSaveSettings() {
   };
   try {
     await saveSponsorSettings(settings);
+    _adsSponsorSettings = settings;
     ['gold', 'silver', 'bronze'].forEach(tier => adsRenderList(tier));
+    showSaveIndicator();
   } catch (e) {
     console.error('[ADS] saveSettings:', e);
   }

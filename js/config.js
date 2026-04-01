@@ -49,3 +49,6 @@ const APP_CONFIG = {
   playDuration: 15,
 
 };
+
+// Supabase JS client — available globally as window.supabase
+window.supabase = supabase.createClient(APP_CONFIG.supabaseUrl, APP_CONFIG.supabaseKey);
