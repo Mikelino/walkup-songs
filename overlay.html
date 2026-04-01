@@ -559,94 +559,88 @@
       letter-spacing: 1px;
     }
 
-    /* ── SPONSORS — Silver ticker horizontal ── */
-    .silver-ticker {
+    /* ── SPONSORS — Logo Gold (bas gauche) ── */
+    .gold-sponsor {
       position: fixed;
-      bottom: 92px; /* above gold ticker: 16px margin + ~76px gold ticker height */
+      bottom: 16px;
+      left: 16px;
+      background: rgba(0, 0, 0, 0.65);
+      border-radius: 10px;
+      padding: 10px 16px;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+      z-index: 50;
+    }
+    .gold-sponsor.visible { opacity: 1; }
+    .gold-sponsor img {
+      max-width: 140px;
+      max-height: 70px;
+      object-fit: contain;
+      display: block;
+    }
+
+    /* ── SPONSORS — Bloc Silver (pleine largeur, monte du bas) ── */
+    .silver-block {
+      position: fixed;
+      bottom: 0;
       left: 0;
       right: 0;
-      height: 52px;
-      background: rgba(0, 0, 0, 0.85);
-      border-top: 2px solid #FF4500;
+      height: 72px;
+      background: #000000;
+      border-top: 3px solid #FF4500;
+      transform: translateY(100%);
+      transition: transform 0.5s ease-out;
+      z-index: 60;
       overflow: hidden;
-      transform: translateY(60px);
-      transition: transform 0.4s ease;
-      z-index: 40;
     }
-    .silver-ticker.visible { transform: translateY(0); }
-    .silver-ticker-track {
+    .silver-block.visible {
+      transform: translateY(0);
+      transition: transform 0.5s ease-out;
+    }
+    .silver-block.hiding {
+      transform: translateY(100%);
+      transition: transform 0.5s ease-in;
+    }
+    .silver-block-inner {
       width: 100%;
       height: 100%;
       overflow: hidden;
       display: flex;
       align-items: center;
     }
-    .silver-ticker-content {
+    .silver-block-track {
       display: flex;
       align-items: center;
-      gap: 32px;
+      gap: 40px;
       white-space: nowrap;
       will-change: transform;
     }
-    .silver-ticker-item {
+    .silver-block-item {
       display: inline-flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
       flex-shrink: 0;
     }
-    .silver-ticker-item img {
-      height: 36px;
-      width: 36px;
+    .silver-block-item img {
+      height: 44px;
+      width: 44px;
       object-fit: contain;
       border-radius: 4px;
     }
-    .silver-ticker-item span {
+    .silver-block-item span {
       font-family: 'Barlow Condensed', sans-serif;
-      font-size: 18px;
+      font-size: 20px;
       font-weight: 600;
       color: #ffffff;
-      letter-spacing: 0.05em;
       text-transform: uppercase;
+      letter-spacing: 0.06em;
     }
-    .silver-ticker-separator {
+    .silver-block-sep {
       color: #FF4500;
-      font-size: 20px;
+      font-size: 22px;
       font-weight: 700;
       flex-shrink: 0;
     }
-
-    /* ── SPONSORS — Mode A ticker (bottom-right) ── */
-    .sponsor-ticker {
-      position: fixed;
-      bottom: 16px;
-      right: 16px;
-      background: rgba(0, 0, 0, 0.6);
-      border-radius: 8px;
-      padding: 8px 12px;
-      opacity: 0;
-      transition: opacity 0.5s ease;
-      z-index: 50;
-    }
-    .sponsor-ticker img { height: 60px; max-width: 120px; object-fit: contain; display: block; }
-    .sponsor-ticker.visible { opacity: 1; }
-
-    /* ── SPONSORS — Mode B pause (fullscreen) ── */
-    .sponsor-pause {
-      position: fixed;
-      inset: 0;
-      background: #000;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      z-index: 999;
-      opacity: 0;
-      transition: opacity 0.6s ease;
-    }
-    .sponsor-pause.visible { opacity: 1; }
-    .sponsor-pause img { max-width: 300px; max-height: 150px; object-fit: contain; margin-bottom: 24px; }
-    .sponsor-pause #pause-name { font-family: 'Oswald', sans-serif; font-size: 28px; color: #fff; letter-spacing: 2px; text-transform: uppercase; }
-    .sponsor-pause #pause-url  { font-family: 'Barlow Condensed', sans-serif; font-size: 14px; color: #888; margin-top: 8px; letter-spacing: 1px; }
 
     .hidden { display: none !important; }
   </style>
@@ -764,23 +758,16 @@
     </div>
   </div>
 
-  <!-- ══ SPONSORS — Silver ticker horizontal ══ -->
-  <div id="silver-ticker" class="silver-ticker hidden">
-    <div class="silver-ticker-track">
-      <div id="silver-ticker-content" class="silver-ticker-content"></div>
+  <!-- ══ SPONSORS — Logo Gold (bas gauche) ══ -->
+  <div id="gold-sponsor" class="gold-sponsor hidden">
+    <img id="gold-sponsor-img" crossorigin="anonymous" alt="" />
+  </div>
+
+  <!-- ══ SPONSORS — Bloc Silver (bas pleine largeur) ══ -->
+  <div id="silver-block" class="silver-block">
+    <div class="silver-block-inner">
+      <div id="silver-block-track" class="silver-block-track"></div>
     </div>
-  </div>
-
-  <!-- ══ SPONSORS — Mode A : ticker discret ══ -->
-  <div id="sponsor-ticker" class="sponsor-ticker hidden">
-    <img id="sponsor-ticker-logo" crossorigin="anonymous" alt="" />
-  </div>
-
-  <!-- ══ SPONSORS — Mode B : écran pause plein écran ══ -->
-  <div id="sponsor-pause" class="sponsor-pause hidden">
-    <img id="pause-logo" crossorigin="anonymous" alt="" />
-    <p id="pause-name"></p>
-    <p id="pause-url"></p>
   </div>
 
   <!-- ══ CHEER OVERLAY ══ -->
