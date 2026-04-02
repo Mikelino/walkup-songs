@@ -641,6 +641,16 @@
       font-weight: 700;
       flex-shrink: 0;
     }
+    .silver-block-intro {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 18px;
+      font-weight: 400;
+      color: rgba(255,255,255,0.6);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
 
     .hidden { display: none !important; }
   </style>
@@ -1166,13 +1176,14 @@
       const track = document.getElementById('silver-block-track');
       if (!silverSponsors.length) return;
       const items = [...silverSponsors, ...silverSponsors]; // doublement pour boucle seamless
-      track.innerHTML = items.map((s, i) => `
+      const sponsorItems = items.map((s, i) => `
         <span class="silver-block-item">
           ${s.logo_url ? `<img src="${s.logo_url}" crossorigin="anonymous" alt="${s.name}" />` : ''}
           <span>${s.name}</span>
         </span>
         ${i < items.length - 1 ? '<span class="silver-block-sep">·</span>' : ''}
       `).join('');
+      track.innerHTML = `<span class="silver-block-intro">Thank you to all our sponsors:</span><span class="silver-block-sep">·</span>` + sponsorItems;
     }
 
     function startSilverScroll() {
