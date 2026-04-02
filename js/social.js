@@ -262,11 +262,6 @@ async function exportStory() {
       const lw = (oppLogoImg.width / oppLogoImg.height) * logoSize;
       const oppX = vsX + vsW/2 + gap;
       ctx.drawImage(oppLogoImg, oppX, vsY - logoSize/2, lw, logoSize);
-      // Nom sous le logo
-      ctx.fillStyle = 'rgba(255,255,255,0.6)';
-      ctx.font = '26px Barlow Condensed, sans-serif';
-      ctx.textAlign = 'left';
-      ctx.fillText(opponent.toUpperCase(), oppX, vsY + logoSize/2 + 30);
     } else {
       // Pas de logo : nom adversaire à droite, taille auto
       const maxNameW = W - 80 - (vsX + vsW/2 + gap);
