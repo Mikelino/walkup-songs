@@ -574,6 +574,7 @@
       z-index: 50;
     }
     .gold-sponsor.visible { opacity: 1; }
+    body.silver-visible .gold-sponsor { bottom: 88px; transition: bottom 0.5s ease; }
     .gold-sponsor img {
       max-width: 140px;
       max-height: 70px;
@@ -1180,13 +1181,22 @@
     function startSilverScroll() {
       const track = document.getElementById('silver-block-track');
       setTimeout(() => {
-        const totalW   = track.scrollWidth / 2;
-        const duration = (totalW / SILVER_SPEED) * 1000;
+        const totalW      = track.scrollWidth / 2;
+        const loopDur     = (totalW / SILVER_SPEED) * 1000;
+        const enterDur    = (1920 / SILVER_SPEED) * 1000;
         if (silverAnim) silverAnim.cancel();
-        silverAnim = track.animate(
-          [{ transform: 'translateX(0)' }, { transform: `translateX(-${totalW}px)` }],
-          { duration, iterations: Infinity, easing: 'linear' }
+        // Entrée depuis la droite (hors écran), puis boucle seamless
+        const enterAnim = track.animate(
+          [{ transform: 'translateX(1920px)' }, { transform: 'translateX(0)' }],
+          { duration: enterDur, fill: 'forwards', easing: 'linear' }
         );
+        silverAnim = enterAnim;
+        enterAnim.onfinish = () => {
+          silverAnim = track.animate(
+            [{ transform: 'translateX(0)' }, { transform: `translateX(-${totalW}px)` }],
+            { duration: loopDur, iterations: Infinity, easing: 'linear' }
+          );
+        };
       }, 200);
     }
 
@@ -1196,6 +1206,7 @@
       const el = document.getElementById('silver-block');
       el.classList.remove('hiding');
       requestAnimationFrame(() => el.classList.add('visible'));
+      document.body.classList.add('silver-visible');
       startSilverScroll();
     }
 
@@ -1203,6 +1214,7 @@
       const el = document.getElementById('silver-block');
       el.classList.remove('visible');
       el.classList.add('hiding');
+      document.body.classList.remove('silver-visible');
       setTimeout(() => {
         if (silverAnim) { silverAnim.cancel(); silverAnim = null; }
       }, 500);
