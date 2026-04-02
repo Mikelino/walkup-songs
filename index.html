@@ -634,6 +634,12 @@
                   <input type="file" id="featuredPhotoFile" accept="image/png,image/webp" style="display:none" onchange="handleFeaturedPhoto(this)" />
                 </label>
               </div>
+              <div class="form-group">
+                <label class="form-label">🥇 Sponsor Gold</label>
+                <select class="form-input" id="storyGoldSponsor">
+                  <option value="">— Aucun —</option>
+                </select>
+              </div>
               <button class="add-btn" onclick="exportStory().catch(e => { console.error(e); alert('Error: ' + e.message); })">Generate story</button>
             </div>
           </div>
@@ -678,6 +684,12 @@
                   </label>
                 </div>
               </div>
+              <div class="form-group">
+                <label class="form-label">🥇 Sponsor Gold</label>
+                <select class="form-input" id="scoreGoldSponsor">
+                  <option value="">— Aucun —</option>
+                </select>
+              </div>
               <button class="add-btn" onclick="exportScoreStory().catch(e => { console.error(e); alert('Error: ' + e.message); })">Generate story</button>
             </div>
           </div>
@@ -713,6 +725,12 @@
               <div class="form-group" style="min-width:100%">
                 <label class="form-label">Quote / Message</label>
                 <input class="form-input" id="mvpQuote" placeholder="e.g. Perfect game, 3 for 3!" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">🥇 Sponsor Gold</label>
+                <select class="form-input" id="mvpGoldSponsor">
+                  <option value="">— Aucun —</option>
+                </select>
               </div>
               <button class="add-btn" onclick="exportMvpStory().catch(e => { console.error(e); alert('Error: ' + e.message); })">Generate story</button>
             </div>

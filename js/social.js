@@ -132,6 +132,8 @@ function toggleStoryForm() {
   sel.onchange = () => {
     document.getElementById('featuredPhotoGroup').style.display = sel.value ? 'flex' : 'none';
   };
+
+  populateGoldSponsorSelect('storyGoldSponsor');
 }
 
 // ── COULEUR DYNAMIQUE POUR LES EXPORTS CANVAS ──
@@ -311,9 +313,6 @@ async function exportStory() {
   }
 
   // ── JOUEURS ──
-  console.log('[story] entries:', entries.length, entries.map(e => e.pid));
-  console.log('[story] allPlayers keys:', Object.keys(allPlayers).slice(0, 5));
-
   const startY = 680;
   const rowH = Math.min(98, (H - startY - 120) / Math.max(entries.length, 1));
   const maxRows = Math.floor((H - startY - 120) / rowH);
@@ -321,7 +320,6 @@ async function exportStory() {
   for (let idx = 0; idx < Math.min(entries.length, maxRows); idx++) {
     const entry = entries[idx];
     const player = allPlayers[entry.pid];
-    console.log(`[story] idx=${idx} pid=${entry.pid} (type:${typeof entry.pid}) player=`, player);
     if (!player) continue;
 
     const y = startY + idx * rowH;
@@ -428,22 +426,21 @@ async function exportStory() {
   ctx.textAlign = 'center';
   ctx.fillText(clubSettings.website || 'yourclub.com', W/2, H - 24);
 
-  // ── SPONSOR GOLD (bottom-right corner) ──
+  // ── SPONSOR GOLD (bottom-left) ──
   try {
-    const clubId = (typeof APP_CONFIG !== 'undefined' && APP_CONFIG.clubId) || 'default';
-    const goldSponsors = await getActiveSponsorsByTier(clubId, 'gold');
-    if (goldSponsors.length && goldSponsors[0].logo_url) {
+    const logoUrl = document.getElementById('storyGoldSponsor')?.value;
+    if (logoUrl) {
       const sponsorImg = new Image();
       sponsorImg.crossOrigin = 'anonymous';
-      await new Promise(r => { sponsorImg.onload = r; sponsorImg.onerror = r; sponsorImg.src = goldSponsors[0].logo_url; });
+      await new Promise(r => { sponsorImg.onload = r; sponsorImg.onerror = r; sponsorImg.src = logoUrl; });
       if (sponsorImg.naturalWidth > 0) {
-        const sW = 120, sH = 60, margin = 16;
-        ctx.globalAlpha = 0.85;
-        ctx.drawImage(sponsorImg, W - sW - margin, H - sH - margin - 6, sW, sH);
+        const sW = 220, sH = 110, margin = 24;
+        ctx.globalAlpha = 0.9;
+        ctx.drawImage(sponsorImg, margin, H - sH - margin - 6, sW, sH);
         ctx.globalAlpha = 1;
       }
     }
-  } catch (e) { /* sponsor logo is optional — don't block story export */ }
+  } catch (e) { /* sponsor logo is optional */ }
 
   // ── PARTAGE ──
   const filename = `walkup-lineup-${currentTeamId}-${date || 'match'}.png`;
@@ -451,12 +448,33 @@ async function exportStory() {
 }
 
 
+// ── SPONSOR GOLD SELECT — helper ──
+async function populateGoldSponsorSelect(selectId) {
+  const sel = document.getElementById(selectId);
+  if (!sel) return;
+  sel.innerHTML = '<option value="">— Aucun —</option>';
+  try {
+    const clubId = (typeof APP_CONFIG !== 'undefined' && APP_CONFIG.clubId) || 'default';
+    const sponsors = await getActiveSponsorsByTier(clubId, 'gold');
+    sponsors.forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = s.logo_url || '';
+      opt.textContent = s.name;
+      sel.appendChild(opt);
+    });
+    if (sponsors.length === 1) sel.value = sponsors[0].logo_url || '';
+  } catch (e) { /* optional */ }
+}
+
 // ── SOCIAL : TOGGLE FORMS ──
 function toggleScoreForm() {
   const f = document.getElementById('scoreForm');
   f.classList.toggle('open');
-  if (f.classList.contains('open') && !document.getElementById('scoreDate').value)
-    document.getElementById('scoreDate').value = new Date().toISOString().split('T')[0];
+  if (f.classList.contains('open')) {
+    if (!document.getElementById('scoreDate').value)
+      document.getElementById('scoreDate').value = new Date().toISOString().split('T')[0];
+    populateGoldSponsorSelect('scoreGoldSponsor');
+  }
 }
 
 function toggleMvpForm() {
@@ -478,6 +496,7 @@ function toggleMvpForm() {
     });
     // Lier onchange pour mise à jour photo
     sel.onchange = updateMvpPhoto;
+    populateGoldSponsorSelect('mvpGoldSponsor');
   }
 }
 
@@ -667,22 +686,21 @@ async function exportScoreStory() {
   ctx.textAlign = 'center';
   ctx.fillText(clubSettings.website || 'yourclub.com', W/2, H-24);
 
-  // ── SPONSOR GOLD (bottom-right corner) ──
+  // ── SPONSOR GOLD (bottom-left) ──
   try {
-    const clubId = (typeof APP_CONFIG !== 'undefined' && APP_CONFIG.clubId) || 'default';
-    const goldSponsors = await getActiveSponsorsByTier(clubId, 'gold');
-    if (goldSponsors.length && goldSponsors[0].logo_url) {
+    const logoUrl = document.getElementById('scoreGoldSponsor')?.value;
+    if (logoUrl) {
       const sponsorImg = new Image();
       sponsorImg.crossOrigin = 'anonymous';
-      await new Promise(r => { sponsorImg.onload = r; sponsorImg.onerror = r; sponsorImg.src = goldSponsors[0].logo_url; });
+      await new Promise(r => { sponsorImg.onload = r; sponsorImg.onerror = r; sponsorImg.src = logoUrl; });
       if (sponsorImg.naturalWidth > 0) {
-        const sW = 120, sH = 60, margin = 16;
-        ctx.globalAlpha = 0.85;
-        ctx.drawImage(sponsorImg, W - sW - margin, H - sH - margin - 6, sW, sH);
+        const sW = 220, sH = 110, margin = 24;
+        ctx.globalAlpha = 0.9;
+        ctx.drawImage(sponsorImg, margin, H - sH - margin - 6, sW, sH);
         ctx.globalAlpha = 1;
       }
     }
-  } catch (e) { /* sponsor logo is optional — don't block story export */ }
+  } catch (e) { /* sponsor logo is optional */ }
 
   const filename = `walkup-score-${currentTeamId}-${date || 'match'}.png`;
   shareStory(canvas, filename);
@@ -840,6 +858,22 @@ async function exportMvpStory() {
   ctx.font = '28px Barlow Condensed, sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText(clubSettings.website || 'yourclub.com', W/2, H-24);
+
+  // ── SPONSOR GOLD (bottom-left) ──
+  try {
+    const logoUrl = document.getElementById('mvpGoldSponsor')?.value;
+    if (logoUrl) {
+      const sponsorImg = new Image();
+      sponsorImg.crossOrigin = 'anonymous';
+      await new Promise(r => { sponsorImg.onload = r; sponsorImg.onerror = r; sponsorImg.src = logoUrl; });
+      if (sponsorImg.naturalWidth > 0) {
+        const sW = 220, sH = 110, margin = 24;
+        ctx.globalAlpha = 0.9;
+        ctx.drawImage(sponsorImg, margin, H - sH - margin - 6, sW, sH);
+        ctx.globalAlpha = 1;
+      }
+    }
+  } catch (e) { /* sponsor logo is optional */ }
 
   const filename = `walkup-mvp-${player.name.toLowerCase().replace(/\s+/g,'-')}-${date || 'match'}.png`;
   shareStory(canvas, filename);
