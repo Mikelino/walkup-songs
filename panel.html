@@ -6,12 +6,11 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <title>Diamond Pulse · Panel</title>
-<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
-    --bg:  #0d0d14; --bg2: #13131f; --bg3: #1a1a28;
-    --bd:  rgba(255,255,255,0.09);
+    --bg: #0d0d14; --bg2: #13131f; --bg3: #1a1a28;
+    --bd: rgba(255,255,255,0.09);
     --txt: rgba(255,255,255,0.75); --mut: rgba(255,255,255,0.35); --hnt: rgba(255,255,255,0.18);
     --live: #E24B4A; --lineup: #378ADD; --social: #1D9E75; --bc: #EF9F27;
   }
@@ -23,32 +22,34 @@
   #screen-connect { display:flex; flex-direction:column; align-items:center;
     justify-content:center; height:100%; gap:20px; padding:32px; }
   .logo { font-size:13px; font-weight:500; letter-spacing:.12em; color:var(--mut); text-transform:uppercase; }
-  .code-label { font-size:12px; color:var(--mut); text-align:center; }
+  .code-hint { font-size:12px; color:var(--mut); text-align:center; line-height:1.5; }
   .code-input { display:flex; gap:10px; }
-  .code-digit { width:54px; height:66px; background:var(--bg2); border:0.5px solid var(--bd);
-    border-radius:10px; color:var(--txt); font-size:28px; font-weight:500; text-align:center;
-    outline:none; -webkit-appearance:none; inputmode:numeric; transition:border-color .15s; }
-  .code-digit:focus { border-color:rgba(255,255,255,.35); }
-  .connect-btn { width:100%; max-width:220px; padding:14px; background:var(--bg3);
+  .code-digit { width:56px; height:68px; background:var(--bg2); border:0.5px solid var(--bd);
+    border-radius:10px; color:var(--txt); font-size:30px; font-weight:500; text-align:center;
+    outline:none; -webkit-appearance:none; transition:border-color .15s; caret-color:var(--live); }
+  .code-digit:focus { border-color:rgba(255,255,255,.4); }
+  .connect-btn { width:100%; max-width:240px; padding:15px; background:var(--bg3);
     border:0.5px solid var(--bd); border-radius:10px; color:var(--txt);
     font-size:14px; font-weight:500; cursor:pointer; transition:background .15s, transform .1s; }
-  .connect-btn:active { transform:scale(.97); }
-  .conn-status { font-size:12px; color:var(--mut); min-height:18px; text-align:center; }
-  .conn-status.err { color:var(--live); } .conn-status.ok { color:var(--social); }
+  .connect-btn:active { transform:scale(.97); background:#22223a; }
+  .cst { font-size:12px; color:var(--mut); min-height:18px; text-align:center; }
+  .cst.err { color:var(--live); } .cst.ok { color:var(--social); }
 
   /* ── Panel ── */
   #screen-panel { display:none; flex-direction:column; height:100%; padding:10px; gap:8px; }
   #screen-panel.on { display:flex; }
 
-  .status-bar { display:flex; align-items:center; justify-content:space-between;
+  /* Status bar */
+  .sbar { display:flex; align-items:center; justify-content:space-between;
     padding:6px 10px; background:var(--bg2); border-radius:8px; border:0.5px solid var(--bd); flex-shrink:0; }
-  .status-left { display:flex; align-items:center; gap:8px; }
-  .cdot { width:7px; height:7px; border-radius:50%; background:var(--social); flex-shrink:0; }
-  .cdot.warn { background:var(--bc); }
+  .sleft { display:flex; align-items:center; gap:8px; }
+  .dot { width:7px; height:7px; border-radius:50%; background:var(--social); flex-shrink:0; transition:background .3s; }
+  .dot.warn { background:var(--bc); }
   .stxt { font-size:11px; color:var(--mut); }
-  .clock { font-size:13px; font-weight:500; color:var(--txt); font-variant-numeric:tabular-nums; }
+  .clk { font-size:13px; font-weight:500; color:var(--txt); font-variant-numeric:tabular-nums; }
 
-  .mode-sel { display:grid; grid-template-columns:repeat(4,1fr); gap:5px; flex-shrink:0; }
+  /* Mode selector */
+  .msel { display:grid; grid-template-columns:repeat(4,1fr); gap:5px; flex-shrink:0; }
   .mbtn { padding:8px 4px; border-radius:7px; border:0.5px solid var(--bd); background:var(--bg2);
     color:var(--mut); font-size:11px; font-weight:500; text-align:center; cursor:pointer;
     transition:all .12s; user-select:none; }
@@ -59,6 +60,7 @@
   .mbtn.on[data-m="social"]    { background:var(--social); }
   .mbtn.on[data-m="broadcast"] { background:var(--bc); }
 
+  /* Labels */
   .slabel { font-size:9px; font-weight:500; letter-spacing:.08em; color:var(--hnt);
     text-transform:uppercase; padding:0 2px; flex-shrink:0; display:flex; align-items:center; gap:6px; }
   .cbadge { font-size:9px; padding:2px 7px; border-radius:4px; font-weight:500; }
@@ -67,26 +69,26 @@
   .cbadge[data-m="social"]    { background:rgba(29,158,117,.2); color:var(--social); }
   .cbadge[data-m="broadcast"] { background:rgba(239,159,39,.2); color:var(--bc); }
 
-  /* Score widget */
+  /* Score */
   .score-w { display:grid; grid-template-columns:1fr auto 1fr; gap:6px; align-items:center;
     background:var(--bg2); border-radius:10px; border:0.5px solid var(--bd); padding:10px 12px; flex-shrink:0; }
   .steam { text-align:center; }
-  .steam-name { font-size:10px; color:var(--mut); margin-bottom:4px; }
+  .steam-n { font-size:10px; color:var(--mut); margin-bottom:4px; }
   .sctrl { display:flex; align-items:center; gap:8px; }
-  .sbtn { width:28px; height:28px; border-radius:6px; border:0.5px solid var(--bd);
-    background:var(--bg3); color:var(--txt); font-size:16px; display:flex;
-    align-items:center; justify-content:center; cursor:pointer; transition:transform .1s; user-select:none; }
-  .sbtn:active { transform:scale(.88); }
-  .snum { font-size:26px; font-weight:500; min-width:32px; text-align:center; font-variant-numeric:tabular-nums; }
-  .ssep { font-size:18px; color:var(--hnt); padding:0 4px; }
+  .sbtn { width:30px; height:30px; border-radius:6px; border:0.5px solid var(--bd); background:var(--bg3);
+    color:var(--txt); font-size:18px; display:flex; align-items:center; justify-content:center;
+    cursor:pointer; user-select:none; transition:transform .1s; }
+  .sbtn:active { transform:scale(.86); }
+  .snum { font-size:28px; font-weight:500; min-width:34px; text-align:center; font-variant-numeric:tabular-nums; }
+  .ssep { font-size:20px; color:var(--hnt); padding:0 4px; }
 
   /* Tiles */
   .tgrid { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; flex-shrink:0; }
   .tile { background:rgba(255,255,255,.05); border-radius:10px; border:0.5px solid var(--bd);
     padding:12px 6px 10px; cursor:pointer; display:flex; flex-direction:column;
-    align-items:center; gap:5px; transition:all .12s; min-height:72px;
-    justify-content:center; user-select:none; }
-  .tile:active { transform:scale(.93); background:rgba(255,255,255,.1); }
+    align-items:center; gap:5px; min-height:72px; justify-content:center;
+    user-select:none; transition:all .1s; }
+  .tile:active { transform:scale(.92); background:rgba(255,255,255,.1); }
   .tile.on { background:rgba(226,75,74,.15); border-color:rgba(226,75,74,.4); }
   .tile.on .ti { color:var(--live); }
   .ti { font-size:18px; color:rgba(255,255,255,.55); line-height:1; }
@@ -103,62 +105,59 @@
   .fgrid { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; flex-shrink:0; }
   .ftile { background:rgba(255,255,255,.03); border-radius:9px; border:0.5px solid rgba(255,255,255,.07);
     padding:10px 6px 8px; cursor:pointer; display:flex; flex-direction:column;
-    align-items:center; gap:5px; transition:all .12s; user-select:none; }
-  .ftile:active { transform:scale(.93); }
+    align-items:center; gap:5px; user-select:none; transition:all .1s; }
+  .ftile:active { transform:scale(.92); }
   .ftile .ti { font-size:16px; color:rgba(255,255,255,.4); }
   .ftile .tl { font-size:9px; color:rgba(255,255,255,.3); }
   .ftile.on { background:rgba(226,75,74,.15); border-color:rgba(226,75,74,.35); }
   .ftile.on .ti { color:var(--live); }
   .ftile.danger { border-color:rgba(226,75,74,.25); }
   .ftile.danger .ti { color:var(--live); }
-  .ftile.danger .tl { color:rgba(226,75,74,.6); }
+  .ftile.danger .tl { color:rgba(226,75,74,.5); }
 
-  .div { height:0.5px; background:var(--bd); margin:0 2px; flex-shrink:0; }
+  .divl { height:0.5px; background:var(--bd); margin:0 2px; flex-shrink:0; }
   .sp { flex:1; }
   .foot { font-size:9px; color:var(--hnt); text-align:center; padding:2px 0 0; flex-shrink:0; }
-
   .ctx { display:none; }
   .ctx.on { display:contents; }
 </style>
 </head>
 <body>
 
-<!-- Connexion -->
+<!-- ── Connexion ── -->
 <div id="screen-connect">
   <div class="logo">◆ Diamond Pulse</div>
-  <p class="code-label">Code affiché dans Diamond Pulse sur le PC</p>
+  <p class="code-hint">Code affiché en bas à gauche<br>de Diamond Pulse sur le PC</p>
   <div class="code-input">
     <input class="code-digit" id="d1" type="tel" maxlength="1" placeholder="·">
     <input class="code-digit" id="d2" type="tel" maxlength="1" placeholder="·">
     <input class="code-digit" id="d3" type="tel" maxlength="1" placeholder="·">
     <input class="code-digit" id="d4" type="tel" maxlength="1" placeholder="·">
   </div>
-  <button class="connect-btn" onclick="doConnect()">Connecter</button>
-  <div class="conn-status" id="cst">En attente du code…</div>
+  <button class="connect-btn" id="conn-btn" onclick="doConnect()">Connecter</button>
+  <div class="cst" id="cst">En attente du code…</div>
 </div>
 
-<!-- Panel -->
+<!-- ── Panel ── -->
 <div id="screen-panel">
-
-  <div class="status-bar">
-    <div class="status-left">
-      <div class="cdot" id="pdot"></div>
+  <div class="sbar">
+    <div class="sleft">
+      <div class="dot" id="pdot"></div>
       <span class="stxt">Diamond Pulse</span>
     </div>
-    <span class="clock" id="clk">--:--:--</span>
+    <span class="clk" id="clk">--:--:--</span>
   </div>
 
-  <div class="mode-sel">
+  <div class="msel">
     <div class="mbtn on" data-m="live"      onclick="doMode('live')">Live</div>
     <div class="mbtn"    data-m="lineup"    onclick="doMode('lineup')">Lineup</div>
     <div class="mbtn"    data-m="social"    onclick="doMode('social')">Social</div>
     <div class="mbtn"    data-m="broadcast" onclick="doMode('broadcast')">Broadcast</div>
   </div>
 
-  <!-- Score (toujours visible) -->
   <div class="score-w">
     <div class="steam">
-      <div class="steam-name">Domicile</div>
+      <div class="steam-n">Domicile</div>
       <div class="sctrl">
         <div class="sbtn" onclick="cmd('score_home_dec')">−</div>
         <div class="snum" id="sh">0</div>
@@ -167,7 +166,7 @@
     </div>
     <div class="ssep">–</div>
     <div class="steam">
-      <div class="steam-name">Visiteurs</div>
+      <div class="steam-n">Visiteurs</div>
       <div class="sctrl">
         <div class="sbtn" onclick="cmd('score_away_dec')">−</div>
         <div class="snum" id="sa">0</div>
@@ -192,9 +191,9 @@
       <div class="tile" onclick="cmd('batter_prev')"><div class="ti">◀</div><div class="tl">Frappeur −</div></div>
       <div class="tile"><div class="ti">⚾</div><div class="tl" id="atbat">At bat</div></div>
       <div class="tile" onclick="cmd('batter_next')"><div class="ti">▶</div><div class="tl">Frappeur +</div></div>
-      <div class="tile" onclick="cmd('runner_first')"><div class="ti" style="font-size:13px;font-weight:500;">1B</div><div class="tl">1re base</div></div>
-      <div class="tile" onclick="cmd('runner_second')"><div class="ti" style="font-size:13px;font-weight:500;">2B</div><div class="tl">2e base</div></div>
-      <div class="tile" onclick="cmd('runner_third')"><div class="ti" style="font-size:13px;font-weight:500;">3B</div><div class="tl">3e base</div></div>
+      <div class="tile" onclick="cmd('runner_first')"><div class="ti" style="font-size:13px;font-weight:500">1B</div><div class="tl">1re base</div></div>
+      <div class="tile" onclick="cmd('runner_second')"><div class="ti" style="font-size:13px;font-weight:500">2B</div><div class="tl">2e base</div></div>
+      <div class="tile" onclick="cmd('runner_third')"><div class="ti" style="font-size:13px;font-weight:500">3B</div><div class="tl">3e base</div></div>
       <div class="tile" onclick="cmd('runners_clear')" style="grid-column:span 2"><div class="ti">✕</div><div class="tl">Effacer coureurs</div></div>
       <div class="tile" onclick="cmd('count_reset')"><div class="ti">↺</div><div class="tl">Reset count</div></div>
     </div>
@@ -206,7 +205,7 @@
       <div class="tile" onclick="cmd('batter_prev')"><div class="ti">↑</div><div class="tl">Précédent</div></div>
       <div class="tile" onclick="cmd('batter_next')"><div class="ti">↓</div><div class="tl">Suivant</div></div>
       <div class="tile" onclick="cmd('lineup_next')"><div class="ti">▶</div><div class="tl">Lineup +</div></div>
-      <div class="tile" style="grid-column:span 3"><div class="ti" style="font-size:14px;">⚾</div><div class="tl" id="ondeck">On deck : —</div></div>
+      <div class="tile" style="grid-column:span 3"><div class="ti" style="font-size:14px">⚾</div><div class="tl" id="ondeck">On deck : —</div></div>
     </div>
   </div>
 
@@ -229,37 +228,32 @@
       <div class="tile" onclick="cmd('inning_prev')"><div class="ti">◀</div><div class="tl">Manche −</div></div>
       <div class="tile" onclick="cmd('toggle_half')"><div class="ti">⇅</div><div class="tl">½ manche</div></div>
       <div class="tile" onclick="cmd('inning_next')"><div class="ti">▶</div><div class="tl">Manche +</div></div>
-      <div class="tile" onclick="cmd('runner_first')"><div class="ti" style="font-size:13px;font-weight:500;">1B</div><div class="tl">1re base</div></div>
-      <div class="tile" onclick="cmd('runner_second')"><div class="ti" style="font-size:13px;font-weight:500;">2B</div><div class="tl">2e base</div></div>
-      <div class="tile" onclick="cmd('runner_third')"><div class="ti" style="font-size:13px;font-weight:500;">3B</div><div class="tl">3e base</div></div>
+      <div class="tile" onclick="cmd('runner_first')"><div class="ti" style="font-size:13px;font-weight:500">1B</div><div class="tl">1re base</div></div>
+      <div class="tile" onclick="cmd('runner_second')"><div class="ti" style="font-size:13px;font-weight:500">2B</div><div class="tl">2e base</div></div>
+      <div class="tile" onclick="cmd('runner_third')"><div class="ti" style="font-size:13px;font-weight:500">3B</div><div class="tl">3e base</div></div>
       <div class="tile" onclick="cmd('copy_obs_url')" style="grid-column:span 3"><div class="ti">📺</div><div class="tl">Copier URL OBS</div></div>
     </div>
   </div>
 
   <div class="sp"></div>
-  <div class="div"></div>
+  <div class="divl"></div>
   <div class="slabel">Zone fixe</div>
 
   <div class="fgrid">
-    <div class="ftile" id="ft-mic" onclick="tog('ft-mic','mute_mic')">
-      <div class="ti">🎙</div><div class="tl">Micro</div>
-    </div>
-    <div class="ftile" id="ft-cam" onclick="tog('ft-cam','mute_cam')">
-      <div class="ti">◉</div><div class="tl">Caméra</div>
-    </div>
-    <div class="ftile" id="ft-brb" onclick="tog('ft-brb','brb')">
-      <div class="ti">⊡</div><div class="tl">BRB</div>
-    </div>
-    <div class="ftile danger" id="ft-panic" onclick="doPanic()">
-      <div class="ti">⚠</div><div class="tl">Panic</div>
-    </div>
+    <div class="ftile" id="ft-mic" onclick="tog('ft-mic','mute_mic')"><div class="ti">🎙</div><div class="tl">Micro</div></div>
+    <div class="ftile" id="ft-cam" onclick="tog('ft-cam','mute_cam')"><div class="ti">◉</div><div class="tl">Caméra</div></div>
+    <div class="ftile" id="ft-brb" onclick="tog('ft-brb','brb')"><div class="ti">⊡</div><div class="tl">BRB</div></div>
+    <div class="ftile danger" id="ft-panic" onclick="doPanic()"><div class="ti">⚠</div><div class="tl">Panic</div></div>
   </div>
 
   <div class="foot">Diamond Pulse · Surface Panel · <span id="codef"></span></div>
 </div>
 
-<script>
-let peer = null, conn = null;
+<script type="module">
+import { joinRoom } from 'https://cdn.jsdelivr.net/npm/trystero@0.21.0/torrent';
+
+const APP_ID = 'diamond-pulse-sync-v1';
+let room, sendCmd;
 
 // Horloge
 setInterval(() => {
@@ -267,7 +261,7 @@ setInterval(() => {
   document.getElementById('clk').textContent = p(n.getHours())+':'+p(n.getMinutes())+':'+p(n.getSeconds());
 }, 1000);
 
-// Saisie code — focus auto entre les champs
+// Saisie code — focus auto
 ['d1','d2','d3','d4'].forEach((id,i,a) => {
   const el = document.getElementById(id);
   el.addEventListener('input', () => {
@@ -286,50 +280,51 @@ function getCode() {
 
 function setSt(msg, cls) {
   const el = document.getElementById('cst');
-  el.textContent = msg; el.className = 'conn-status' + (cls ? ' '+cls : '');
+  el.textContent = msg;
+  el.className = 'cst' + (cls ? ' '+cls : '');
 }
 
-function doConnect() {
+window.doConnect = function() {
   const code = getCode();
   if (code.length !== 4) { setSt('Code à 4 chiffres requis','err'); return; }
-  setSt('Connexion en cours…','');
 
-  // Sans paramètres host = PeerJS Cloud officiel
-  peer = new Peer();
+  document.getElementById('conn-btn').disabled = true;
+  setSt('Connexion via réseau DHT…','');
 
-  peer.on('open', () => {
-    conn = peer.connect('dp-' + code, { reliable: true });
+  room = joinRoom({ appId: APP_ID }, 'room-' + code);
+  const [send,] = room.makeAction('cmd');
+  sendCmd = send;
+  const [, getState] = room.makeAction('state');
 
-    conn.on('open', () => {
-      document.getElementById('codef').textContent = code;
-      setSt('','ok');
-      document.getElementById('screen-connect').style.display = 'none';
-      document.getElementById('screen-panel').classList.add('on');
-    });
+  // Timeout si pas de PC trouvé en 15s
+  const timeout = setTimeout(() => {
+    setSt('Aucun PC trouvé — vérifie le code','err');
+    document.getElementById('conn-btn').disabled = false;
+  }, 15000);
 
-    conn.on('data', d => { if (d.type==='state') applyState(d.payload); });
-
-    conn.on('close', () => {
-      document.getElementById('pdot').className = 'cdot warn';
-    });
-
-    conn.on('error', err => { setSt('Erreur de connexion','err'); console.error(err); });
+  room.onPeerJoin(() => {
+    clearTimeout(timeout);
+    document.getElementById('codef').textContent = code;
+    setSt('','ok');
+    document.getElementById('screen-connect').style.display = 'none';
+    document.getElementById('screen-panel').classList.add('on');
   });
 
-  peer.on('error', err => {
-    setSt('Code incorrect ou PC hors ligne','err');
-    console.error('[panel]', err);
+  room.onPeerLeave(() => {
+    document.getElementById('pdot').className = 'dot warn';
   });
-}
+
+  getState(state => applyState(state));
+};
 
 // Envoie une commande vers Diamond Pulse
-function cmd(action, extra) {
-  if (!conn || !conn.open) return;
-  conn.send({ type:'command', payload:{ action, ...extra } });
+window.cmd = function(action, extra={}) {
+  if (!sendCmd) return;
+  sendCmd({ action, ...extra });
   if (navigator.vibrate) navigator.vibrate(16);
-}
+};
 
-// Applique l'état reçu depuis Diamond Pulse
+// Applique l'état reçu
 function applyState(s) {
   if (!s) return;
   if (s.mode) doMode(s.mode, true);
@@ -339,7 +334,7 @@ function applyState(s) {
   }
   if (s.inning) {
     document.getElementById('inn').textContent =
-      (s.inning.half==='bottom' ? '▼' : '▲') + ' ' + (s.inning.number ?? 1);
+      (s.inning.half==='bottom'?'▼':'▲') + ' ' + (s.inning.number ?? 1);
   }
   if (s.count) {
     document.getElementById('cnt').textContent = (s.count.balls??0)+'-'+(s.count.strikes??0);
@@ -349,28 +344,28 @@ function applyState(s) {
   if (s.onDeck) document.getElementById('ondeck').textContent = 'On deck : '+s.onDeck;
 }
 
-// Change de mode (local + commande vers PC sauf si déclenché par réception d'état)
-function doMode(mode, fromState) {
+// Change de mode
+window.doMode = function(mode, fromState=false) {
   document.querySelectorAll('.mbtn').forEach(b => b.classList.toggle('on', b.dataset.m===mode));
   document.querySelectorAll('.ctx').forEach(c => c.classList.toggle('on', c.id==='ctx-'+mode));
   const badge = document.getElementById('cbadge');
   badge.dataset.m = mode;
-  badge.textContent = { live:'Live', lineup:'Lineup', social:'Social', broadcast:'Broadcast' }[mode] || mode;
-  if (!fromState) cmd('set_mode', { mode });
-}
+  badge.textContent = {live:'Live',lineup:'Lineup',social:'Social',broadcast:'Broadcast'}[mode]||mode;
+  if (!fromState) window.cmd('set_mode', { mode });
+};
 
 // Toggle tuile fixe
-function tog(id, action) {
+window.tog = function(id, action) {
   document.getElementById(id).classList.toggle('on');
-  cmd(action);
-}
+  window.cmd(action);
+};
 
 // Panic
-function doPanic() {
+window.doPanic = function() {
   document.getElementById('ft-panic').classList.toggle('on');
-  cmd('panic');
+  window.cmd('panic');
   if (navigator.vibrate) navigator.vibrate([30,15,30]);
-}
+};
 </script>
 </body>
 </html>
