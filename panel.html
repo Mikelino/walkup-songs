@@ -12,7 +12,7 @@
 :root {
   --bg:  #0d0d14; --bg2: #13131f; --bg3: #1a1a28;
   --bd:  rgba(255,255,255,0.09);
-  --txt: rgba(255,255,255,0.80); --mut: rgba(255,255,255,0.38); --hnt: rgba(255,255,255,0.18);
+  --txt: rgba(255,255,255,0.82); --mut: rgba(255,255,255,0.38); --hnt: rgba(255,255,255,0.18);
   --or:  #FF4500; --live: #E24B4A; --ok: #1D9E75; --warn: #EF9F27;
 }
 html, body {
@@ -21,6 +21,7 @@ html, body {
   font-size: 14px; -webkit-tap-highlight-color: transparent; overflow: hidden;
 }
 
+/* ── CONNECT ──────────────────────────────────────── */
 #sc {
   display: flex; flex-direction: column; align-items: center;
   justify-content: center; height: 100%; gap: 20px; padding: 32px;
@@ -38,147 +39,172 @@ html, body {
 .cbtn {
   width: 100%; max-width: 240px; padding: 15px; background: var(--bg3);
   border: 0.5px solid var(--bd); border-radius: 10px; color: var(--txt);
-  font-size: 14px; font-weight: 500; cursor: pointer; transition: background .15s, transform .1s;
+  font-size: 14px; font-weight: 500; cursor: pointer;
 }
-.cbtn:active { transform: scale(.97); } .cbtn:disabled { opacity: .5; }
+.cbtn:active { opacity: .8; } .cbtn:disabled { opacity: .5; }
 .cst { font-size: 12px; color: var(--mut); min-height: 18px; text-align: center; }
 .cst.err { color: var(--live); } .cst.ok { color: var(--ok); }
 
-#panel { display: none; flex-direction: column; height: 100%; overflow-y: auto; padding: 10px; gap: 9px; }
+/* ── PANEL ────────────────────────────────────────── */
+#panel { display: none; flex-direction: column; height: 100%; padding: 8px; gap: 7px; }
 #panel.on { display: flex; }
 
+/* Status bar */
 .sbar {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 6px 10px; background: var(--bg2); border-radius: 8px;
+  padding: 5px 10px; background: var(--bg2); border-radius: 8px;
   border: 0.5px solid var(--bd); flex-shrink: 0;
 }
 .sleft { display: flex; align-items: center; gap: 8px; }
 .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); flex-shrink: 0; }
 .dot.warn { background: var(--warn); }
 .stxt { font-size: 11px; color: var(--mut); }
-.clk { font-size: 13px; font-weight: 500; color: var(--txt); font-variant-numeric: tabular-nums; }
+.clk { font-size: 12px; font-weight: 500; color: var(--txt); font-variant-numeric: tabular-nums; }
 
-.sec { font-size: 9px; font-weight: 500; letter-spacing: .1em; color: var(--hnt); text-transform: uppercase; padding: 0 2px; flex-shrink: 0; }
-.card { background: var(--bg2); border: 0.5px solid var(--bd); border-radius: 10px; padding: 11px 13px; flex-shrink: 0; }
-
-/* Score */
-.score-row { display: grid; grid-template-columns: 1fr auto 1fr; gap: 6px; align-items: center; }
-.steam { text-align: center; }
-.steam-n { font-size: 10px; color: var(--mut); margin-bottom: 5px; letter-spacing: .04em; }
-.sctrl { display: flex; align-items: center; justify-content: center; gap: 8px; }
-.adj {
-  width: 36px; height: 36px; border-radius: 7px; border: 0.5px solid var(--bd);
-  background: var(--bg3); color: var(--txt); font-size: 20px;
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer; user-select: none; transition: transform .1s;
+/* Score row — always visible above columns */
+.score-row {
+  display: grid; grid-template-columns: 1fr auto 1fr;
+  gap: 6px; align-items: center; flex-shrink: 0;
+  background: var(--bg2); border: 0.5px solid var(--bd); border-radius: 10px; padding: 8px 12px;
 }
-.adj:active { transform: scale(.86); }
+.steam { text-align: center; }
+.steam-n { font-size: 9px; color: var(--mut); margin-bottom: 4px; letter-spacing: .05em; text-transform: uppercase; }
+.sctrl { display: flex; align-items: center; justify-content: center; gap: 6px; }
+.sadj {
+  width: 32px; height: 32px; border-radius: 7px; border: 0.5px solid var(--bd);
+  background: var(--bg3); color: var(--txt); font-size: 18px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; user-select: none;
+}
+.sadj:active { opacity: .7; }
 .snum {
-  font-size: 36px; font-weight: 600; min-width: 44px; text-align: center;
-  font-variant-numeric: tabular-nums; border-radius: 8px;
-  padding: 2px 6px; transition: color .3s, background .3s;
+  font-size: 30px; font-weight: 600; min-width: 38px; text-align: center;
+  font-variant-numeric: tabular-nums; border-radius: 7px; padding: 1px 5px;
+  transition: color .3s, background .3s;
 }
 .snum.batting  { color: var(--or); background: rgba(255,69,0,.12); }
-.snum.fielding { color: var(--mut); background: transparent; }
-.ssep { font-size: 22px; color: var(--hnt); padding: 0 2px; }
+.snum.fielding { color: var(--mut); }
+.ssep { font-size: 18px; color: var(--hnt); }
 
-/* Inning */
-.inning-row { display: flex; align-items: center; gap: 8px; justify-content: center; }
-.adj-lg {
-  width: 42px; height: 42px; border-radius: 8px; border: 0.5px solid var(--bd);
-  background: var(--bg3); color: var(--txt); font-size: 22px;
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer; user-select: none; transition: transform .1s;
+/* Two columns */
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; flex: 1; min-height: 0; }
+.col { display: flex; flex-direction: column; gap: 6px; overflow: hidden; }
+
+/* Section label */
+.sec {
+  font-size: 9px; font-weight: 500; letter-spacing: .1em; color: var(--hnt);
+  text-transform: uppercase; padding: 0 2px; flex-shrink: 0;
 }
-.adj-lg:active { transform: scale(.88); }
-.inn-num { font-size: 40px; font-weight: 600; min-width: 52px; text-align: center; font-variant-numeric: tabular-nums; line-height: 1; }
+
+/* Card */
+.card { background: var(--bg2); border: 0.5px solid var(--bd); border-radius: 9px; padding: 9px 11px; flex-shrink: 0; }
+
+/* ── INNING ───────────────────────────────────────── */
+.inning-row { display: flex; align-items: center; gap: 6px; justify-content: center; }
+.adj {
+  width: 34px; height: 34px; border-radius: 7px; border: 0.5px solid var(--bd);
+  background: var(--bg3); color: var(--txt); font-size: 18px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; user-select: none;
+}
+.adj:active { opacity: .7; }
+.inn-num { font-size: 32px; font-weight: 600; min-width: 40px; text-align: center; font-variant-numeric: tabular-nums; }
 .half-btn {
-  width: 38px; height: 38px; border-radius: 7px; border: 0.5px solid rgba(255,69,0,.35);
-  background: rgba(255,69,0,.08); color: var(--or); font-size: 20px;
+  width: 32px; height: 32px; border-radius: 7px;
+  border: 0.5px solid rgba(255,69,0,.4); background: rgba(255,69,0,.1);
+  color: var(--or); font-size: 17px;
   display: flex; align-items: center; justify-content: center;
-  cursor: pointer; user-select: none; transition: transform .1s;
+  cursor: pointer; user-select: none;
 }
-.half-btn:active { transform: scale(.9); }
+.half-btn:active { opacity: .7; }
 .field-btn {
-  width: 100%; margin-top: 9px; padding: 9px; border-radius: 8px;
-  border: 0.5px solid rgba(255,69,0,.35); background: rgba(255,69,0,.08); color: var(--or);
-  font-size: 13px; font-weight: 500; cursor: pointer; transition: background .15s;
-  text-align: center; user-select: none;
+  width: 100%; margin-top: 6px; padding: 7px;
+  border-radius: 7px; border: 0.5px solid rgba(255,69,0,.35);
+  background: rgba(255,69,0,.08); color: var(--or);
+  font-size: 12px; font-weight: 500; cursor: pointer; text-align: center; user-select: none;
 }
 .field-btn:active { background: rgba(255,69,0,.20); }
 
-/* Count */
-.count-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
-.count-col { display: flex; flex-direction: column; align-items: center; gap: 7px; }
+/* ── COUNT ────────────────────────────────────────── */
+.count-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 6px; }
+.count-col { display: flex; flex-direction: column; align-items: center; gap: 5px; }
 .count-lbl { font-size: 9px; color: var(--mut); letter-spacing: .08em; text-transform: uppercase; }
-.dots { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+.dots { display: flex; gap: 5px; justify-content: center; flex-wrap: wrap; }
 .mdot {
-  width: 24px; height: 24px; border-radius: 50%;
+  width: 22px; height: 22px; border-radius: 50%;
   border: 1.5px solid rgba(255,255,255,.2); background: transparent;
-  cursor: pointer; transition: all .15s; user-select: none;
+  cursor: pointer; user-select: none; transition: all .12s;
 }
 .mdot.sq { border-radius: 4px; transform: rotate(45deg); }
 .mdot.on { background: var(--or); border-color: var(--or); }
-.count-actions { display: flex; gap: 6px; margin-top: 8px; }
-.ca-btn {
-  flex: 1; padding: 9px 4px; border-radius: 8px; border: 0.5px solid var(--bd);
-  background: var(--bg3); color: var(--mut); font-size: 11px; font-weight: 500;
-  text-align: center; cursor: pointer; transition: all .12s; user-select: none;
+
+/* Pitch count display */
+.pitch-row {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  margin-top: 6px; padding-top: 6px; border-top: 0.5px solid var(--bd);
 }
-.ca-btn:active { transform: scale(.94); }
+.pitch-lbl { font-size: 9px; color: var(--mut); text-transform: uppercase; letter-spacing: .08em; }
+.pitch-num { font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; min-width: 32px; text-align: center; }
+
+/* Count actions */
+.count-actions { display: flex; gap: 5px; margin-top: 6px; }
+.ca-btn {
+  flex: 1; padding: 8px 4px; border-radius: 7px; border: 0.5px solid var(--bd);
+  background: var(--bg3); color: var(--mut); font-size: 11px; font-weight: 500;
+  text-align: center; cursor: pointer; user-select: none;
+}
+.ca-btn:active { opacity: .7; }
 .ca-btn.walk  { border-color: rgba(255,69,0,.4);  color: var(--or);   background: rgba(255,69,0,.1); }
 .ca-btn.so    { border-color: rgba(226,75,74,.4); color: var(--live); background: rgba(226,75,74,.1); }
-.ca-btn.reset { font-size: 10px; }
 
-/* Runners */
-.runners-wrap { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.runner-btns { display: flex; flex-direction: column; gap: 6px; flex: 1; }
+/* ── RUNNERS ──────────────────────────────────────── */
+.runners-wrap { display: flex; align-items: center; gap: 10px; }
+.runner-btns { display: flex; flex-direction: column; gap: 5px; flex: 1; }
 .rbtn {
-  padding: 9px 10px; border-radius: 8px; border: 0.5px solid var(--bd);
+  padding: 8px 8px; border-radius: 7px; border: 0.5px solid var(--bd);
   background: var(--bg3); color: var(--mut); font-size: 11px; font-weight: 500;
-  text-align: center; cursor: pointer; transition: all .12s; user-select: none;
+  text-align: center; cursor: pointer; user-select: none;
 }
-.rbtn:active { transform: scale(.94); }
+.rbtn:active { opacity: .7; }
 .rbtn.on { background: rgba(255,69,0,.15); border-color: rgba(255,69,0,.5); color: var(--or); }
 .rbtn.clear { border-color: rgba(226,75,74,.3); color: var(--live); font-size: 10px; }
-.rbtn.clear:active { background: rgba(226,75,74,.1); }
 
-/* Batter */
-.batter-row { display: flex; align-items: center; gap: 7px; margin-bottom: 7px; }
+/* ── BATTER ───────────────────────────────────────── */
+.batter-row { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; }
 .batter-row:last-child { margin-bottom: 0; }
-.batter-lbl { font-size: 9px; color: var(--mut); letter-spacing: .08em; text-transform: uppercase; width: 50px; flex-shrink: 0; }
-.batter-nav {
-  width: 34px; height: 34px; border-radius: 7px; border: 0.5px solid var(--bd);
-  background: var(--bg3); color: var(--txt); font-size: 16px;
+.batter-lbl { font-size: 9px; color: var(--mut); text-transform: uppercase; letter-spacing: .05em; width: 44px; flex-shrink: 0; }
+.bnav {
+  width: 30px; height: 30px; border-radius: 6px; border: 0.5px solid var(--bd);
+  background: var(--bg3); color: var(--txt); font-size: 14px;
   display: flex; align-items: center; justify-content: center;
-  cursor: pointer; user-select: none; transition: transform .1s; flex-shrink: 0;
+  cursor: pointer; user-select: none; flex-shrink: 0;
 }
-.batter-nav:active { transform: scale(.88); }
-.batter-display {
-  flex: 1; padding: 7px 10px; background: var(--bg3);
+.bnav:active { opacity: .7; }
+.bdisp {
+  flex: 1; padding: 6px 8px; background: var(--bg3);
   border: 0.5px solid var(--bd); border-left: 3px solid var(--or);
-  border-radius: 7px; font-size: 13px; font-weight: 500;
+  border-radius: 7px; font-size: 12px; font-weight: 500;
   color: var(--txt); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.batter-display.ondeck { border-left-color: rgba(255,255,255,.15); color: var(--mut); font-weight: 400; }
+.bdisp.ondeck { border-left-color: rgba(255,255,255,.15); color: var(--mut); font-weight: 400; }
 
-/* Sponsors */
-.sponsor-btns { display: flex; flex-direction: column; gap: 7px; }
+/* ── SPONSORS ─────────────────────────────────────── */
 .sp-btn {
-  width: 100%; padding: 12px 14px; border-radius: 9px; border: 0.5px solid var(--bd);
-  background: var(--bg3); color: var(--txt); font-size: 13px; font-weight: 500;
-  text-align: left; cursor: pointer; transition: all .12s;
-  display: flex; align-items: center; gap: 9px; user-select: none;
+  width: 100%; padding: 9px 12px; border-radius: 8px; border: 0.5px solid var(--bd);
+  background: var(--bg3); color: var(--txt); font-size: 12px; font-weight: 500;
+  text-align: left; cursor: pointer; display: flex; align-items: center; gap: 8px; user-select: none;
+  margin-bottom: 5px;
 }
-.sp-btn:active { transform: scale(.98); }
+.sp-btn:last-child { margin-bottom: 0; }
+.sp-btn:active { opacity: .7; }
 .sp-btn.on { border-color: var(--or); color: var(--or); background: rgba(255,69,0,.1); }
-.sp-icon { font-size: 14px; flex-shrink: 0; }
 
-.foot { font-size: 9px; color: var(--hnt); text-align: center; padding: 4px 0 2px; flex-shrink: 0; }
+.foot { font-size: 9px; color: var(--hnt); text-align: center; flex-shrink: 0; padding: 2px 0; }
 </style>
 </head>
 <body>
 
+<!-- ── CONNEXION ─────────────────────────────────── -->
 <div id="sc">
   <div class="logo">◆ Diamond Pulse · Broadcast</div>
   <p class="hint">Code affiché en bas à gauche<br>de Diamond Pulse sur le PC</p>
@@ -192,8 +218,10 @@ html, body {
   <div class="cst" id="cst">En attente du code…</div>
 </div>
 
+<!-- ── PANEL ─────────────────────────────────────── -->
 <div id="panel">
 
+  <!-- Status bar -->
   <div class="sbar">
     <div class="sleft">
       <div class="dot" id="pdot"></div>
@@ -202,146 +230,161 @@ html, body {
     <span class="clk" id="clk">--:--:--</span>
   </div>
 
-  <!-- Score -->
-  <div class="sec">Score</div>
-  <div class="card">
-    <div class="score-row">
-      <div class="steam">
-        <div class="steam-n">Domicile</div>
-        <div class="sctrl">
-          <div class="adj" onclick="cmd('score_home_dec')">−</div>
-          <div class="snum fielding" id="sh">0</div>
-          <div class="adj" onclick="cmd('score_home_inc')">+</div>
-        </div>
+  <!-- Score (pleine largeur) -->
+  <div class="score-row">
+    <div class="steam">
+      <div class="steam-n">Domicile</div>
+      <div class="sctrl">
+        <div class="sadj" onclick="cmd('score_home_dec')">−</div>
+        <div class="snum fielding" id="sh">0</div>
+        <div class="sadj" onclick="cmd('score_home_inc')">+</div>
       </div>
-      <div class="ssep">–</div>
-      <div class="steam">
-        <div class="steam-n">Visiteurs</div>
-        <div class="sctrl">
-          <div class="adj" onclick="cmd('score_away_dec')">−</div>
-          <div class="snum fielding" id="sa">0</div>
-          <div class="adj" onclick="cmd('score_away_inc')">+</div>
-        </div>
+    </div>
+    <div class="ssep">–</div>
+    <div class="steam">
+      <div class="steam-n">Visiteurs</div>
+      <div class="sctrl">
+        <div class="sadj" onclick="cmd('score_away_dec')">−</div>
+        <div class="snum fielding" id="sa">0</div>
+        <div class="sadj" onclick="cmd('score_away_inc')">+</div>
       </div>
     </div>
   </div>
 
-  <!-- Manche -->
-  <div class="sec">Manche</div>
-  <div class="card">
-    <div class="inning-row">
-      <div class="adj-lg" onclick="cmd('inning_prev')">−</div>
-      <div class="inn-num" id="inn-num">1</div>
-      <div class="adj-lg" onclick="cmd('inning_next')">+</div>
-      <div class="half-btn" id="half-btn" onclick="cmd('toggle_half')">▲</div>
-    </div>
-    <div class="field-btn" onclick="cmd('change_field')">⇄ Change Field</div>
-  </div>
+  <!-- 2 colonnes -->
+  <div class="cols">
 
-  <!-- Count -->
-  <div class="sec">Count</div>
-  <div class="card">
-    <div class="count-row">
-      <div class="count-col">
-        <div class="count-lbl">Balls</div>
-        <div class="dots">
-          <div class="mdot" id="b0" onclick="tapCount('balls')"></div>
-          <div class="mdot" id="b1" onclick="tapCount('balls')"></div>
-          <div class="mdot" id="b2" onclick="tapCount('balls')"></div>
+    <!-- ── COLONNE GAUCHE : Pitching ─────────────── -->
+    <div class="col">
+
+      <!-- Manche -->
+      <div class="sec">Manche</div>
+      <div class="card">
+        <div class="inning-row">
+          <div class="adj" onclick="cmd('inning_prev')">−</div>
+          <div class="inn-num" id="inn-num">1</div>
+          <div class="adj" onclick="cmd('inning_next')">+</div>
+          <div class="half-btn" id="half-btn" onclick="cmd('toggle_half')">▲</div>
+        </div>
+        <div class="field-btn" onclick="cmd('change_field')">⇄ Change Field</div>
+      </div>
+
+      <!-- Count -->
+      <div class="sec">Count</div>
+      <div class="card">
+        <div class="count-row">
+          <!-- Balls -->
+          <div class="count-col">
+            <div class="count-lbl">Balls</div>
+            <div class="dots">
+              <div class="mdot" id="b0" onclick="tapCount('balls')"></div>
+              <div class="mdot" id="b1" onclick="tapCount('balls')"></div>
+              <div class="mdot" id="b2" onclick="tapCount('balls')"></div>
+            </div>
+          </div>
+          <!-- Strikes -->
+          <div class="count-col">
+            <div class="count-lbl">Strikes</div>
+            <div class="dots">
+              <div class="mdot" id="s0" onclick="tapCount('strikes')"></div>
+              <div class="mdot" id="s1" onclick="tapCount('strikes')"></div>
+            </div>
+          </div>
+          <!-- Outs -->
+          <div class="count-col">
+            <div class="count-lbl">Outs</div>
+            <div class="dots">
+              <div class="mdot sq" id="o0" onclick="tapCount('outs')"></div>
+              <div class="mdot sq" id="o1" onclick="tapCount('outs')"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pitch count -->
+        <div class="pitch-row">
+          <span class="pitch-lbl">Pitches</span>
+          <span class="pitch-num" id="pitch-num">0</span>
+        </div>
+
+        <!-- Actions -->
+        <div class="count-actions">
+          <div class="ca-btn walk" onclick="cmd('walk')">Walk</div>
+          <div class="ca-btn so"   onclick="cmd('strikeout')">Strikeout</div>
+          <div class="ca-btn"      onclick="cmd('count_reset')">↺ Reset</div>
         </div>
       </div>
-      <div class="count-col">
-        <div class="count-lbl">Strikes</div>
-        <div class="dots">
-          <div class="mdot" id="s0" onclick="tapCount('strikes')"></div>
-          <div class="mdot" id="s1" onclick="tapCount('strikes')"></div>
+
+      <!-- Sponsors -->
+      <div class="sec">Sponsors</div>
+      <div class="card">
+        <div class="sp-btn" id="sp-silver"   onclick="toggleSponsor('silver')">
+          <span>▶</span>Bloc Silver
+        </div>
+        <div class="sp-btn" id="sp-ballgame" onclick="toggleSponsor('ballgame')">
+          <span>⚾</span>Ball Game
         </div>
       </div>
-      <div class="count-col">
-        <div class="count-lbl">Outs</div>
-        <div class="dots">
-          <div class="mdot sq" id="o0" onclick="tapCount('outs')"></div>
-          <div class="mdot sq" id="o1" onclick="tapCount('outs')"></div>
+
+    </div>
+
+    <!-- ── COLONNE DROITE : Runners & Batter ─────── -->
+    <div class="col">
+
+      <!-- Runners -->
+      <div class="sec">Coureurs</div>
+      <div class="card">
+        <div class="runners-wrap">
+          <!-- Diamond SVG -->
+          <svg width="96" height="96" viewBox="0 0 100 100" style="flex-shrink:0">
+            <line x1="50" y1="8"  x2="90" y2="50" stroke="rgba(255,255,255,.12)" stroke-width="1"/>
+            <line x1="90" y1="50" x2="50" y2="92" stroke="rgba(255,255,255,.12)" stroke-width="1"/>
+            <line x1="50" y1="92" x2="10" y2="50" stroke="rgba(255,255,255,.12)" stroke-width="1"/>
+            <line x1="10" y1="50" x2="50" y2="8"  stroke="rgba(255,255,255,.12)" stroke-width="1"/>
+            <polygon points="50,98 43,89 43,83 57,83 57,89"
+              fill="rgba(255,255,255,.08)" stroke="rgba(255,255,255,.2)" stroke-width="1.5"/>
+            <rect id="svg2" x="40" y="2" width="20" height="20" rx="2" transform="rotate(45 50 12)"
+              fill="transparent" stroke="rgba(255,255,255,.22)" stroke-width="1.5"
+              style="cursor:pointer;transition:fill .15s,stroke .15s"
+              onclick="tapRunner('second')"/>
+            <rect id="svg1" x="80" y="40" width="20" height="20" rx="2" transform="rotate(45 90 50)"
+              fill="transparent" stroke="rgba(255,255,255,.22)" stroke-width="1.5"
+              style="cursor:pointer;transition:fill .15s,stroke .15s"
+              onclick="tapRunner('first')"/>
+            <rect id="svg3" x="0" y="40" width="20" height="20" rx="2" transform="rotate(45 10 50)"
+              fill="transparent" stroke="rgba(255,255,255,.22)" stroke-width="1.5"
+              style="cursor:pointer;transition:fill .15s,stroke .15s"
+              onclick="tapRunner('third')"/>
+            <text x="50" y="11" text-anchor="middle" font-family="sans-serif" font-size="6" fill="rgba(255,255,255,.3)" style="pointer-events:none">2B</text>
+            <text x="89" y="53" text-anchor="middle" font-family="sans-serif" font-size="6" fill="rgba(255,255,255,.3)" style="pointer-events:none">1B</text>
+            <text x="11" y="53" text-anchor="middle" font-family="sans-serif" font-size="6" fill="rgba(255,255,255,.3)" style="pointer-events:none">3B</text>
+          </svg>
+          <!-- Boutons -->
+          <div class="runner-btns">
+            <div class="rbtn" id="rb3" onclick="tapRunner('third')">3e base</div>
+            <div class="rbtn" id="rb2" onclick="tapRunner('second')">2e base</div>
+            <div class="rbtn" id="rb1" onclick="tapRunner('first')">1re base</div>
+            <div class="rbtn clear" onclick="tapClearRunners()">✕ Effacer</div>
+          </div>
         </div>
       </div>
-    </div>
-    <div class="count-actions">
-      <div class="ca-btn walk"  onclick="cmd('walk')">Walk</div>
-      <div class="ca-btn so"    onclick="cmd('strikeout')">Strike out</div>
-      <div class="ca-btn reset" onclick="cmd('count_reset')">↺ Reset</div>
-    </div>
-    <div style="margin-top:8px;display:flex;align-items:center;justify-content:center;gap:6px;">
-      <span style="font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut)">Pitches</span>
-      <span id="pitch-count" style="font-size:20px;font-weight:600;color:var(--txt);font-variant-numeric:tabular-nums;min-width:28px;text-align:center">0</span>
-    </div>
-  </div>
 
-  <!-- Runners -->
-  <div class="sec">Coureurs</div>
-  <div class="card">
-    <div class="runners-wrap">
-      <svg width="114" height="114" viewBox="0 0 100 100">
-        <line x1="50" y1="8"  x2="90" y2="50" stroke="rgba(255,255,255,.12)" stroke-width="1"/>
-        <line x1="90" y1="50" x2="50" y2="92" stroke="rgba(255,255,255,.12)" stroke-width="1"/>
-        <line x1="50" y1="92" x2="10" y2="50" stroke="rgba(255,255,255,.12)" stroke-width="1"/>
-        <line x1="10" y1="50" x2="50" y2="8"  stroke="rgba(255,255,255,.12)" stroke-width="1"/>
-        <polygon points="50,98 43,89 43,83 57,83 57,89"
-          fill="rgba(255,255,255,.08)" stroke="rgba(255,255,255,.2)" stroke-width="1.5"/>
-        <!-- 2nd base -->
-        <rect id="svg2" x="40" y="2" width="20" height="20" rx="2" transform="rotate(45 50 12)"
-          fill="transparent" stroke="rgba(255,255,255,.22)" stroke-width="1.5"
-          style="cursor:pointer;transition:fill .15s,stroke .15s"
-          onclick="tapRunner('second')"/>
-        <!-- 1st base -->
-        <rect id="svg1" x="80" y="40" width="20" height="20" rx="2" transform="rotate(45 90 50)"
-          fill="transparent" stroke="rgba(255,255,255,.22)" stroke-width="1.5"
-          style="cursor:pointer;transition:fill .15s,stroke .15s"
-          onclick="tapRunner('first')"/>
-        <!-- 3rd base -->
-        <rect id="svg3" x="0" y="40" width="20" height="20" rx="2" transform="rotate(45 10 50)"
-          fill="transparent" stroke="rgba(255,255,255,.22)" stroke-width="1.5"
-          style="cursor:pointer;transition:fill .15s,stroke .15s"
-          onclick="tapRunner('third')"/>
-        <text x="50" y="11" text-anchor="middle" font-family="sans-serif" font-size="6" fill="rgba(255,255,255,.3)" style="pointer-events:none">2B</text>
-        <text x="89" y="53" text-anchor="middle" font-family="sans-serif" font-size="6" fill="rgba(255,255,255,.3)" style="pointer-events:none">1B</text>
-        <text x="11" y="53" text-anchor="middle" font-family="sans-serif" font-size="6" fill="rgba(255,255,255,.3)" style="pointer-events:none">3B</text>
-      </svg>
-      <div class="runner-btns">
-        <div class="rbtn" id="rb3" onclick="tapRunner('third')">3e base</div>
-        <div class="rbtn" id="rb2" onclick="tapRunner('second')">2e base</div>
-        <div class="rbtn" id="rb1" onclick="tapRunner('first')">1re base</div>
-        <div class="rbtn clear" onclick="tapClearRunners()">✕ Effacer</div>
+      <!-- Frappeur -->
+      <div class="sec">Frappeur</div>
+      <div class="card">
+        <div class="batter-row">
+          <div class="batter-lbl">At bat</div>
+          <div class="bnav" onclick="cmd('batter_prev')">◀</div>
+          <div class="bdisp" id="bat-disp">—</div>
+          <div class="bnav" onclick="cmd('batter_next')">▶</div>
+        </div>
+        <div class="batter-row">
+          <div class="batter-lbl">On deck</div>
+          <div style="width:30px;flex-shrink:0"></div>
+          <div class="bdisp ondeck" id="deck-disp">—</div>
+          <div style="width:30px;flex-shrink:0"></div>
+        </div>
       </div>
-    </div>
-  </div>
 
-  <!-- Frappeur -->
-  <div class="sec">Frappeur</div>
-  <div class="card">
-    <div class="batter-row">
-      <div class="batter-lbl">At bat</div>
-      <div class="batter-nav" onclick="cmd('batter_prev')">◀</div>
-      <div class="batter-display" id="bat-disp">—</div>
-      <div class="batter-nav" onclick="cmd('batter_next')">▶</div>
-    </div>
-    <div class="batter-row">
-      <div class="batter-lbl">On deck</div>
-      <div style="width:34px;flex-shrink:0"></div>
-      <div class="batter-display ondeck" id="deck-disp">—</div>
-      <div style="width:34px;flex-shrink:0"></div>
-    </div>
-  </div>
-
-  <!-- Sponsors -->
-  <div class="sec">Sponsors</div>
-  <div class="card">
-    <div class="sponsor-btns">
-      <div class="sp-btn" id="sp-silver"   onclick="toggleSponsor('silver')">
-        <span class="sp-icon">▶</span>Bloc Silver
-      </div>
-      <div class="sp-btn" id="sp-ballgame" onclick="toggleSponsor('ballgame')">
-        <span class="sp-icon">⚾</span>Ball Game
-      </div>
     </div>
   </div>
 
@@ -354,7 +397,7 @@ const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 
 let sb = null, ch = null;
 
-// État local — source de vérité du panel (mise à jour optimiste)
+// Etat local
 const state = {
   score:   { home: 0, away: 0 },
   inning:  { number: 1, half: 'top' },
@@ -370,7 +413,7 @@ setInterval(() => {
   document.getElementById('clk').textContent = p(n.getHours())+':'+p(n.getMinutes())+':'+p(n.getSeconds());
 }, 1000);
 
-// Focus auto
+// Focus auto entre digits
 ['d1','d2','d3','d4'].forEach((id,i,a) => {
   const el = document.getElementById(id);
   el.addEventListener('input', () => {
@@ -389,7 +432,7 @@ function setSt(msg, cls) {
   el.textContent = msg; el.className = 'cst'+(cls?' '+cls:'');
 }
 
-// ── Connexion ──────────────────────────────────────
+// ── Connexion Supabase ─────────────────────────────
 function doConnect() {
   const code = getCode();
   if (code.length !== 4) { setSt('Code à 4 chiffres requis','err'); return; }
@@ -412,7 +455,6 @@ function doConnect() {
         document.getElementById('sc').style.display = 'none';
         document.getElementById('panel').classList.add('on');
       }
-      // Fusionne l'état reçu dans l'état local et redessine
       mergeState(payload);
       render();
     })
@@ -426,23 +468,21 @@ function doConnect() {
 
 // ── Commande vers Diamond Pulse ────────────────────
 function cmd(action, extra={}) {
-  console.log("[panel] cmd", action, "ch=", !!ch, extra);
   if (!ch) return;
   ch.send({ type:'broadcast', event:'cmd', payload:{ action, ...extra } });
   if (navigator.vibrate) navigator.vibrate(16);
 }
 
-// ── Count : update optimiste + envoi commande ──────
+// ── Count : optimiste + envoi count_inc ───────────
 function tapCount(type) {
   const maxes = { balls: 3, strikes: 2, outs: 2 };
   const max = maxes[type] || 3;
   state.count[type] = state.count[type] < max ? state.count[type] + 1 : 0;
-
   renderCount();
   cmd('count_inc', { type });
 }
 
-// ── Runners : update optimiste + envoi commande ────
+// ── Runners : optimiste ───────────────────────────
 function tapRunner(base) {
   state.runners[base] = !state.runners[base];
   renderRunners();
@@ -455,25 +495,34 @@ function tapClearRunners() {
   cmd('runners_clear');
 }
 
-// ── Sponsors ───────────────────────────────────────
+// ── Sponsors ──────────────────────────────────────
 function toggleSponsor(key) {
   sponsors[key] = !sponsors[key];
   document.getElementById('sp-'+key).classList.toggle('on', sponsors[key]);
   cmd(key === 'silver' ? 'broadcast_silver' : 'broadcast_ballgame');
 }
 
-// ── Merge état reçu du PC dans l'état local ────────
+// ── Merge état reçu ───────────────────────────────
 function mergeState(s) {
   if (!s) return;
   if (s.score)   { state.score.home = s.score.home ?? 0; state.score.away = s.score.away ?? 0; }
   if (s.inning)  { state.inning.number = s.inning.number ?? 1; state.inning.half = s.inning.half ?? 'top'; }
-  if (s.count)   { state.count.balls = s.count.balls ?? 0; state.count.strikes = s.count.strikes ?? 0; state.count.outs = s.count.outs ?? 0; state.count.pitches = s.count.pitches ?? 0; }
-  if (s.runners) { state.runners.first = !!s.runners.first; state.runners.second = !!s.runners.second; state.runners.third = !!s.runners.third; }
+  if (s.count)   {
+    state.count.balls   = s.count.balls   ?? 0;
+    state.count.strikes = s.count.strikes ?? 0;
+    state.count.outs    = s.count.outs    ?? 0;
+    state.count.pitches = s.count.pitches ?? 0;
+  }
+  if (s.runners) {
+    state.runners.first  = !!s.runners.first;
+    state.runners.second = !!s.runners.second;
+    state.runners.third  = !!s.runners.third;
+  }
   if (s.atBat  !== undefined) state.atBat  = s.atBat  || '—';
   if (s.onDeck !== undefined) state.onDeck = s.onDeck || '—';
 }
 
-// ── Rendu complet ──────────────────────────────────
+// ── Render complet ────────────────────────────────
 function render() {
   renderScore();
   renderInning();
@@ -487,34 +536,29 @@ function renderScore() {
   document.getElementById('sh').textContent = state.score.home;
   document.getElementById('sa').textContent = state.score.away;
   const isBottom = state.inning.half === 'bottom';
-  document.getElementById('sh').className = 'snum ' + (isBottom ? 'batting' : 'fielding');
+  document.getElementById('sh').className = 'snum ' + (isBottom  ? 'batting' : 'fielding');
   document.getElementById('sa').className = 'snum ' + (!isBottom ? 'batting' : 'fielding');
 }
 
 function renderInning() {
   document.getElementById('inn-num').textContent = state.inning.number;
   document.getElementById('half-btn').textContent = state.inning.half === 'bottom' ? '▼' : '▲';
-  renderScore(); // score color dépend de half
+  renderScore();
 }
 
 function renderCount() {
   const ids = { balls:['b0','b1','b2'], strikes:['s0','s1'], outs:['o0','o1'] };
-  const pc = document.getElementById('pitch-count');
-  if (pc) pc.textContent = state.count.pitches ?? 0;
   Object.entries(ids).forEach(([type, dotIds]) => {
-    const val = state.count[type];
+    const val = state.count[type] || 0;
     dotIds.forEach((id, i) => {
       document.getElementById(id).classList.toggle('on', i < val);
     });
   });
+  document.getElementById('pitch-num').textContent = state.count.pitches || 0;
 }
 
 function renderRunners() {
-  const map = {
-    first:  { btn:'rb1', svg:'svg1' },
-    second: { btn:'rb2', svg:'svg2' },
-    third:  { btn:'rb3', svg:'svg3' },
-  };
+  const map = { first:{btn:'rb1',svg:'svg1'}, second:{btn:'rb2',svg:'svg2'}, third:{btn:'rb3',svg:'svg3'} };
   Object.entries(map).forEach(([base, els]) => {
     const on = state.runners[base];
     document.getElementById(els.btn).classList.toggle('on', on);
