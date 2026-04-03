@@ -48,7 +48,7 @@
 
   function getState() {
     return {
-      score:   {
+      score: {
         home: readInt('#matchScoreHome'),
         away: readInt('#matchScoreAway'),
       },
@@ -60,7 +60,7 @@
         balls:   countDots('#matchBalls .match-dot'),
         strikes: countDots('#matchStrikes .match-dot'),
         outs:    countDots('#matchOuts .match-dot'),
-        pitches: readInt('#matchPitchCount'),
+        pitches: matchState ? (matchState.pitchCount || 0) : 0,
       },
       runners: {
         first:  isBaseOn('matchBase1'),
@@ -76,85 +76,76 @@
     const e = document.querySelector(sel);
     return e ? (parseInt(e.textContent) || 0) : 0;
   }
-
   function readText(sel) {
     const e = document.querySelector(sel);
     return e ? e.textContent.trim() : '';
   }
-
   function readHalf() {
     const e = document.getElementById('matchInningArrow');
     return e && e.textContent.trim() === '▼' ? 'bottom' : 'top';
   }
-
   function countDots(sel) {
     let n = 0;
     document.querySelectorAll(sel).forEach(el => {
-      const inlineBg = el.style.background || el.style.backgroundColor || '';
-      const computed  = window.getComputedStyle(el).backgroundColor;
+      const bg = el.style.background || el.style.backgroundColor || '';
+      const computed = window.getComputedStyle(el).backgroundColor;
       if (
-        el.classList.contains('active') ||
-        el.classList.contains('on') ||
-        (inlineBg && inlineBg !== 'transparent') ||
+        el.classList.contains('active') || el.classList.contains('on') ||
+        (bg && bg !== 'transparent') ||
         (computed && computed !== 'rgba(0, 0, 0, 0)' && computed !== 'transparent')
       ) n++;
     });
     return n;
   }
-
   function isBaseOn(id) {
     const el = document.getElementById(id);
     if (!el) return false;
     if (el.style.fill && el.style.fill !== 'transparent' && el.style.fill !== 'none') return true;
     const attr = el.getAttribute('fill') || 'transparent';
-    if (attr !== 'transparent' && attr !== 'none' && attr !== '') return true;
-    if (el.classList.contains('active') || el.classList.contains('on')) return true;
-    return false;
+    return attr !== 'transparent' && attr !== 'none' && attr !== '';
   }
 
   // ─── Commandes reçues depuis la Surface ────────────────────────────────────
 
   function handleCmd(payload) {
     const { action } = payload;
-    console.log('[dp-sync] commande:', action);
+    console.log('[dp-sync] commande:', action, payload);
 
     switch (action) {
-      // Score
       case 'score_home_inc': callFn('matchScoreAdj', 'home',  1); break;
       case 'score_home_dec': callFn('matchScoreAdj', 'home', -1); break;
       case 'score_away_inc': callFn('matchScoreAdj', 'away',  1); break;
       case 'score_away_dec': callFn('matchScoreAdj', 'away', -1); break;
 
-      // Inning
       case 'inning_next':  callFn('matchInningAdj',  1); break;
       case 'inning_prev':  callFn('matchInningAdj', -1); break;
       case 'toggle_half':  callFn('matchInningToggle');  break;
       case 'change_field': callFn('matchChangeField');   break;
 
-      // Count — toujours via clic DOM pour déclencher matchSetCount
-      // et ainsi incrémenter le pitch count correctement
-      case 'set_count':   setCountViaDom(payload.type, payload.value); break;
+      // count_inc : incrémente un type (balls/strikes/outs) via matchSetCount
+      // matchSetCount(type, idx) avec idx = valeur_courante (0-based)
+      // → si balls = 1, on appelle matchSetCount('balls', 1) pour passer à 2
+      case 'count_inc':
+        countIncrement(payload.type);
+        break;
+
       case 'count_reset': callFn('matchResetCount'); break;
       case 'walk':        callFn('matchWalk');        break;
       case 'strikeout':   callFn('matchStrikeout');   break;
 
-      // Runners
       case 'toggle_runner_first':  callFn('matchToggleRunner', 'first');  break;
       case 'toggle_runner_second': callFn('matchToggleRunner', 'second'); break;
       case 'toggle_runner_third':  callFn('matchToggleRunner', 'third');  break;
       case 'runners_clear':        callFn('matchClearRunners');            break;
 
-      // Batter
       case 'batter_next': callFn('matchBatterAdj',  1); break;
       case 'batter_prev': callFn('matchBatterAdj', -1); break;
 
-      // Sponsors
       case 'broadcast_silver':   callFn('broadcastSilverBlock'); break;
       case 'broadcast_ballgame': callFn('broadcastBallGame');    break;
 
-      // Sons
-      case 'stop_all':   if (typeof liveSoundStopAll === 'function') liveSoundStopAll(); break;
-      case 'play_sound': if (typeof liveSoundPlay    === 'function') liveSoundPlay(payload.soundId); break;
+      case 'stop_all':     if (typeof liveSoundStopAll === 'function') liveSoundStopAll(); break;
+      case 'play_sound':   if (typeof liveSoundPlay    === 'function') liveSoundPlay(payload.soundId); break;
       case 'copy_obs_url': callFn('matchCopyOverlayUrl'); break;
 
       default: console.warn('[dp-sync] commande inconnue:', action);
@@ -170,35 +161,35 @@
   }
 
   /**
-   * Simule le clic sur le dot correspondant dans le DOM de Diamond Pulse.
-   * C'est la seule façon correcte — matchSetCount incrémente aussi le pitch count
-   * pour balls et strikes, et cette logique ne doit pas être dupliquée ici.
+   * Incrémente un compteur via matchSetCount.
    *
-   * Le sélecteur onclick="matchSetCount('balls',N)" correspond exactement
-   * aux dots dans #matchBalls / #matchStrikes / #matchOuts du HTML.
+   * matchSetCount(type, idx) :
+   *   - idx est 0-based (0 = premier dot)
+   *   - si matchState[type] === idx+1 → décoche (toggle)
+   *   - sinon → met la valeur à idx+1
+   *
+   * Pour incrémenter de façon sûre :
+   *   - on lit la valeur courante dans matchState
+   *   - on appelle matchSetCount(type, currentVal) 
+   *     → currentVal est l'index du prochain dot (0-based)
+   *     → si currentVal est déjà le max, matchResetCount
    */
-  function setCountViaDom(type, value) {
-    const containerSel = {
-      balls:   '#matchBalls',
-      strikes: '#matchStrikes',
-      outs:    '#matchOuts',
-    }[type];
-    if (!containerSel) return;
-
-    const dots = document.querySelectorAll(containerSel + ' .match-dot');
-    if (!dots.length) {
-      console.warn('[dp-sync] dots non trouvés pour:', type);
+  function countIncrement(type) {
+    if (typeof matchState === 'undefined') {
+      console.warn('[dp-sync] matchState non disponible');
       return;
     }
+    const maxes = { balls: 3, strikes: 2, outs: 2 };
+    const current = matchState[type] || 0;
+    const max = maxes[type] || 3;
 
-    if (value === 0) {
-      // Reset : on clique sur le premier dot actif pour revenir à 0
-      // matchSetCount(type, 0) clique le dot index 0
-      if (dots[0]) dots[0].click();
+    if (current >= max) {
+      // Déjà au max — reset
+      callFn('matchResetCount');
     } else {
-      // value = 1, 2 ou 3 → on clique le dot à l'index value-1
-      const targetDot = dots[value - 1];
-      if (targetDot) targetDot.click();
+      // Appelle matchSetCount avec l'index du prochain dot (= current, 0-based)
+      // Exemple : balls = 1 → appelle matchSetCount('balls', 1) → balls devient 2
+      callFn('matchSetCount', type, current);
     }
   }
 
