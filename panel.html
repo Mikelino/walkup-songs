@@ -426,6 +426,7 @@ function doConnect() {
 
 // ── Commande vers Diamond Pulse ────────────────────
 function cmd(action, extra={}) {
+  console.log("[panel] cmd", action, "ch=", !!ch, extra);
   if (!ch) return;
   ch.send({ type:'broadcast', event:'cmd', payload:{ action, ...extra } });
   if (navigator.vibrate) navigator.vibrate(16);
