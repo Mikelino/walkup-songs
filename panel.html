@@ -498,6 +498,7 @@ function renderInning() {
 }
 
 function renderCount() {
+  const ids = { balls:['b0','b1','b2'], strikes:['s0','s1'], outs:['o0','o1'] };
   const pc = document.getElementById('pitch-count');
   if (pc) pc.textContent = state.count.pitches ?? 0;
   Object.entries(ids).forEach(([type, dotIds]) => {
