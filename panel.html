@@ -252,6 +252,25 @@ html, body {
 .spo-send:active { opacity: .8; }
 .spo-send.active { background: var(--live); }
 
+/* ── SPOTLIGHT player select ──────────────────────── */
+.spo-select-wrap {
+  padding: 14px 18px 10px 22px;
+  flex-shrink: 0;
+  border-bottom: 0.5px solid var(--bd);
+}
+.spo-select-label {
+  font-size: 10px; color: var(--mut); text-transform: uppercase;
+  letter-spacing: .1em; display: block; margin-bottom: 6px;
+}
+.spo-select {
+  width: 100%; padding: 10px 12px; border-radius: 8px;
+  border: 0.5px solid var(--bd); background: var(--bg3);
+  color: var(--txt); font-size: 14px; font-weight: 500;
+  -webkit-appearance: none; appearance: none; cursor: pointer;
+  outline: none;
+}
+.spo-select:focus { border-color: var(--or); }
+
 /* Spotlight button in batter section */
 .spo-trigger {
   width: 100%; margin-top: 6px; padding: 8px;
@@ -457,7 +476,7 @@ html, body {
           <div class="bdisp ondeck" id="deck-disp">—</div>
           <div style="width:30px;flex-shrink:0"></div>
         </div>
-        <div class="spo-trigger" onclick="openSpotlight()">★ Spotlight joueur</div>
+        <div class="spo-trigger" onclick="openSpotlight()">★ Player Spotlight</div>
       </div>
 
     </div>
@@ -469,6 +488,14 @@ html, body {
 <!-- ── SPOTLIGHT OVERLAY ─────────────────────────── -->
 <div id="spotlight-overlay">
   <div class="spo-close" onclick="closeSpotlight()">✕</div>
+
+  <!-- Player selector -->
+  <div class="spo-select-wrap">
+    <label class="spo-select-label" for="spo-player-select">Select player</label>
+    <select id="spo-player-select" class="spo-select" onchange="onSpotlightPlayerChange()">
+      <option value="">— Choose a player —</option>
+    </select>
+  </div>
 
   <div class="spo-body">
     <!-- Info gauche -->
@@ -485,7 +512,7 @@ html, body {
   </div>
 
   <div class="spo-footer">
-    <button class="spo-send" id="spo-send-btn" onclick="sendSpotlight()">▶ Diffuser sur écran</button>
+    <button class="spo-send" id="spo-send-btn" onclick="sendSpotlight()">▶ Broadcast on screen</button>
   </div>
 </div>
 
@@ -669,38 +696,78 @@ function renderRunners() {
   });
 }
 
-// ── Spotlight ─────────────────────────────────────
+// ── Player Spotlight ──────────────────────────────
 let spotlightActive = false;
+let spoPlayers = [];
+let spoSelectedPlayer = null;
 
-function parsePlayer(raw) {
-  if (!raw || raw === '—') return { number: '', name: '—', photo: null };
-  // Formats attendus : "#7 John Smith", "7 - John Smith", "John Smith"
-  const m = raw.match(/^#?(\d+)\s*[-–]?\s*(.+)/);
-  if (m) return { number: '#' + m[1], name: m[2].trim(), photo: null };
-  return { number: '', name: raw.trim(), photo: null };
+async function loadSpotlightPlayers() {
+  try {
+    const res = await fetch(
+      `${SUPA_URL}/rest/v1/config?select=key,value&key=eq.app`,
+      { headers: { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${SUPA_KEY}` } }
+    );
+    const rows = await res.json();
+    const app = rows?.[0]?.value || {};
+    const allPlayers = app.allPlayers || {};
+    const currentTeamId = app.currentTeamId || Object.keys(app.teams || {})[0] || '';
+    const homeTeam = (app.teams || {})[currentTeamId];
+    const lineupEntries = (homeTeam?.lineup || []).filter(e => e && e.present !== false);
+    spoPlayers = lineupEntries.map(e => {
+      const p = allPlayers[e.pid];
+      if (!p) return null;
+      return {
+        name:     p.name || '',
+        number:   e.jersey ? '#' + e.jersey : '',
+        position: e.pos || '',
+        photo:    p.photo || null,
+      };
+    }).filter(Boolean);
+    populateSpotlightSelect();
+  } catch(e) { console.error('[spotlight] loadSpotlightPlayers error', e); }
 }
 
-function openSpotlight() {
-  const p = parsePlayer(state.atBat);
-  document.getElementById('spo-num').textContent  = p.number;
-  document.getElementById('spo-name').textContent = p.name;
-  document.getElementById('spo-pos').textContent  = '';
+function populateSpotlightSelect() {
+  const sel = document.getElementById('spo-player-select');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">— Choose a player —</option>';
+  spoPlayers.forEach((p, i) => {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = [p.number, p.name, p.position ? '· ' + p.position : ''].filter(Boolean).join(' ');
+    sel.appendChild(opt);
+  });
+}
 
-  // Photo
+function onSpotlightPlayerChange() {
+  const sel = document.getElementById('spo-player-select');
+  const idx = parseInt(sel.value);
   const img = document.getElementById('spo-photo');
   const ph  = document.getElementById('spo-placeholder');
-  const photoUrl = state.playerPhotoUrl || null;
-  if (photoUrl) {
-    img.src = photoUrl; img.style.display = 'block'; ph.style.display = 'none';
+  if (isNaN(idx)) {
+    spoSelectedPlayer = null;
+    document.getElementById('spo-num').textContent  = '#';
+    document.getElementById('spo-name').textContent = '—';
+    document.getElementById('spo-pos').textContent  = '';
+    img.style.display = 'none'; ph.style.display = 'flex';
+    return;
+  }
+  spoSelectedPlayer = spoPlayers[idx];
+  document.getElementById('spo-num').textContent  = spoSelectedPlayer.number || '#';
+  document.getElementById('spo-name').textContent = spoSelectedPlayer.name   || '—';
+  document.getElementById('spo-pos').textContent  = spoSelectedPlayer.position || '';
+  if (spoSelectedPlayer.photo) {
+    img.src = spoSelectedPlayer.photo; img.style.display = 'block'; ph.style.display = 'none';
   } else {
     img.style.display = 'none'; ph.style.display = 'flex';
   }
+}
 
-  // Bouton état
+function openSpotlight() {
+  if (spoPlayers.length === 0) loadSpotlightPlayers();
   const btn = document.getElementById('spo-send-btn');
-  btn.textContent = spotlightActive ? '◼ Masquer sur écran' : '▶ Diffuser sur écran';
+  btn.textContent = spotlightActive ? '◼ Hide from screen' : '▶ Broadcast on screen';
   btn.classList.toggle('active', spotlightActive);
-
   document.getElementById('spotlight-overlay').classList.add('on');
 }
 
@@ -708,32 +775,39 @@ function closeSpotlight() {
   document.getElementById('spotlight-overlay').classList.remove('on');
 }
 
-function sendSpotlight() {
+async function sendSpotlight() {
+  if (!spotlightActive && !spoSelectedPlayer) return;
   spotlightActive = !spotlightActive;
-  const p = parsePlayer(state.atBat);
-  if (spotlightActive) {
-    cmd('player_spotlight', {
-      name:   p.name,
-      number: p.number,
-      photo:  state.playerPhotoUrl || null,
+
+  const value = spotlightActive && spoSelectedPlayer ? {
+    active:   true,
+    name:     spoSelectedPlayer.name,
+    number:   spoSelectedPlayer.number,
+    position: spoSelectedPlayer.position,
+    photo:    spoSelectedPlayer.photo || null,
+  } : { active: false };
+
+  try {
+    await fetch(`${SUPA_URL}/rest/v1/config`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPA_KEY,
+        'Authorization': `Bearer ${SUPA_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'resolution=merge-duplicates',
+      },
+      body: JSON.stringify([{ key: 'spotlight', value }]),
     });
-  } else {
-    cmd('player_spotlight_hide');
-  }
+  } catch(e) { console.error('[spotlight] write error', e); }
+
   const btn = document.getElementById('spo-send-btn');
-  btn.textContent = spotlightActive ? '◼ Masquer sur écran' : '▶ Diffuser sur écran';
+  btn.textContent = spotlightActive ? '◼ Hide from screen' : '▶ Broadcast on screen';
   btn.classList.toggle('active', spotlightActive);
   if (navigator.vibrate) navigator.vibrate(20);
 }
 
-// Réinitialise le spotlight actif si le batter change
-function checkSpotlightReset(prevBat) {
-  if (spotlightActive && prevBat !== state.atBat) {
-    spotlightActive = false;
-    const btn = document.getElementById('spo-send-btn');
-    if (btn) { btn.textContent = '▶ Diffuser sur écran'; btn.classList.remove('active'); }
-  }
-}
+// no-op: spotlight is now independent from batter changes
+function checkSpotlightReset(prevBat) {}
 
 window.addEventListener('beforeunload', () => {
   if (ch) ch.send({ type:'broadcast', event:'leave', payload:{} });
