@@ -229,6 +229,7 @@
             channel.send({ type: 'broadcast', event: 'state', payload: state });
           });
         }
+        if (typeof window.onPanelConnected === 'function') window.onPanelConnected();
       })
       .on('broadcast', { event: 'leave' }, () => {
         setBadge(dot, lbl, 'waiting', code);
@@ -238,6 +239,7 @@
           watcher = null;
         }
         console.log('[dp-sync] Surface déconnectée');
+        if (typeof window.onPanelDisconnected === 'function') window.onPanelDisconnected();
       })
       .on('broadcast', { event: 'cmd' }, ({ payload }) => {
         handleCmd(payload);

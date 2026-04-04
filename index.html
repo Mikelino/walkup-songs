@@ -2251,5 +2251,20 @@
 
 <script src="js/dp-sync.js"></script>
 
+<script>
+  // ── Hide Broadcast column when tablet (panel.html) connects ──
+  window.onPanelConnected = function() {
+    document.getElementById('liveColBroadcast').style.display  = 'none';
+    document.getElementById('liveResizer4').style.display      = 'none';
+    document.getElementById('liveTabBroadcast').style.display  = 'none';
+  };
+
+  window.onPanelDisconnected = function() {
+    document.getElementById('liveColBroadcast').style.display  = '';
+    document.getElementById('liveResizer4').style.display      = '';
+    document.getElementById('liveTabBroadcast').style.display  = '';
+  };
+</script>
+
 </body>
 </html>
