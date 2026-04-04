@@ -413,7 +413,7 @@ html, body {
         <div class="pitch-row">
           <span class="pitch-lbl">Pitches</span>
           <span class="pitch-num" id="pitch-num">0</span>
-          <div class="ca-btn" style="padding:3px 8px;font-size:11px;margin-left:6px" onclick="cmd('pitch_reset')">↺</div>
+          <div class="ca-btn" style="padding:3px 8px;font-size:11px;margin-left:6px" onclick="state.count.pitches=0;renderCount();cmd('pitch_reset')">↺</div>
         </div>
 
         <!-- Actions -->
