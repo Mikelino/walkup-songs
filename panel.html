@@ -316,14 +316,14 @@ html, body {
 <!-- ── CONNEXION ─────────────────────────────────── -->
 <div id="sc">
   <div class="logo">◆ Diamond Pulse · Broadcast</div>
-  <p class="hint">Code affiché en bas à gauche<br>de Diamond Pulse sur le PC</p>
+  <p class="hint">Code displayed at the bottom left<br>of Diamond Pulse on the PC</p>
   <div class="ci">
     <input class="cd" id="d1" type="tel" maxlength="1" placeholder="·">
     <input class="cd" id="d2" type="tel" maxlength="1" placeholder="·">
     <input class="cd" id="d3" type="tel" maxlength="1" placeholder="·">
     <input class="cd" id="d4" type="tel" maxlength="1" placeholder="·">
   </div>
-  <button class="cbtn" id="cbtn" onclick="doConnect()">Connecter</button>
+  <button class="cbtn" id="cbtn" onclick="doConnect()">Connect</button>
   <div class="cst" id="cst">Waiting for code…</div>
 </div>
 
@@ -339,7 +339,7 @@ html, body {
     <span class="clk" id="clk">--:--:--</span>
   </div>
 
-  <!-- Score (pleine largeur) -->
+  <!-- Score (full width) -->
   <div class="score-row">
     <div class="steam">
       <div class="steam-n">Home</div>
@@ -414,9 +414,12 @@ html, body {
           <div class="ca-btn walk" onclick="cmd('walk')">Walk</div>
           <div class="ca-btn so"   onclick="cmd('strikeout')">Strikeout</div>
           <div class="ca-btn" onclick="countResetLocal()">↺ Reset Count</div>
-          <div class="ca-btn" onclick="pitchResetLocal()">
-            ↺ Reset Pitches<br>
-            <span style="font-size:18px;font-weight:700;color:var(--txt)" id="pitch-num">0</span>
+          <div style="display:flex;gap:7px">
+            <div class="ca-btn" style="flex:1;pointer-events:none">
+              <span style="font-size:9px;color:var(--mut);text-transform:uppercase;letter-spacing:.08em">Pitches</span><br>
+              <span style="font-size:20px;font-weight:700;color:var(--txt)" id="pitch-num">0</span>
+            </div>
+            <div class="ca-btn" style="flex:1" onclick="pitchResetLocal()">↺ Reset<br>Pitches</div>
           </div>
         </div>
       </div>
