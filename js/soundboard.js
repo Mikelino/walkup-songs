@@ -837,12 +837,14 @@ function applyFeatures() {
   const tabBtn  = document.getElementById('liveTabBroadcast');
   if (col) {
     col.dataset.hasBroadcast = '1';
-    if (window.innerWidth > 700) {
-      col.style.display = '';
-      col.style.flex = '1 1 0';
-      if (resizer) resizer.style.display = '';
-    } else {
-      if (tabBtn) tabBtn.style.display = '';
+    if (!window.panelConnected) {
+      if (window.innerWidth > 700) {
+        col.style.display = '';
+        col.style.flex = '1 1 0';
+        if (resizer) resizer.style.display = '';
+      } else {
+        if (tabBtn) tabBtn.style.display = '';
+      }
     }
   }
   matchAutoSetPitcher();

@@ -2254,15 +2254,24 @@
 <script>
   // ── Hide Broadcast column when tablet (panel.html) connects ──
   window.onPanelConnected = function() {
+    window.panelConnected = true;
     document.getElementById('liveColBroadcast').style.display  = 'none';
     document.getElementById('liveResizer4').style.display      = 'none';
     document.getElementById('liveTabBroadcast').style.display  = 'none';
   };
 
   window.onPanelDisconnected = function() {
-    document.getElementById('liveColBroadcast').style.display  = '';
-    document.getElementById('liveResizer4').style.display      = '';
-    document.getElementById('liveTabBroadcast').style.display  = '';
+    window.panelConnected = false;
+    const col = document.getElementById('liveColBroadcast');
+    if (col && col.dataset.hasBroadcast === '1') {
+      if (window.innerWidth > 700) {
+        col.style.display = '';
+        col.style.flex = '1 1 0';
+        document.getElementById('liveResizer4').style.display = '';
+      } else {
+        document.getElementById('liveTabBroadcast').style.display = '';
+      }
+    }
   };
 </script>
 
