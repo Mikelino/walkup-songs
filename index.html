@@ -2252,12 +2252,35 @@
 <script src="js/dp-sync.js"></script>
 
 <script>
-  // ── Hide Broadcast column when tablet (panel.html) connects ──
+  // ── Hide/show Broadcast column when tablet (panel.html) connects ──
+  const ALL_COLS    = ['liveColSounds','liveColField','liveColWalkup','liveColVisitors','liveColBroadcast'];
+  const ALL_RESIZERS = ['liveResizer1','liveResizer2','liveResizer3','liveResizer4'];
+
+  function rebalanceCols() {
+    if (window.innerWidth <= 700) return;
+    // Reset all visible cols to equal flex so they fill the space naturally
+    ALL_COLS.forEach(id => {
+      const el = document.getElementById(id);
+      if (el && el.style.display !== 'none') el.style.flex = '1 1 0';
+    });
+    // Sync resizers: show only between two visible cols
+    const visible = ALL_COLS.filter(id => {
+      const el = document.getElementById(id);
+      return el && el.style.display !== 'none';
+    });
+    ALL_RESIZERS.forEach((rid, i) => {
+      const r = document.getElementById(rid);
+      if (!r) return;
+      // Resizer i sits between visible[i] and visible[i+1]
+      r.style.display = i < visible.length - 1 ? '' : 'none';
+    });
+  }
+
   window.onPanelConnected = function() {
     window.panelConnected = true;
-    document.getElementById('liveColBroadcast').style.display  = 'none';
-    document.getElementById('liveResizer4').style.display      = 'none';
-    document.getElementById('liveTabBroadcast').style.display  = 'none';
+    document.getElementById('liveColBroadcast').style.display = 'none';
+    document.getElementById('liveTabBroadcast').style.display = 'none';
+    rebalanceCols();
   };
 
   window.onPanelDisconnected = function() {
@@ -2266,12 +2289,11 @@
     if (col && col.dataset.hasBroadcast === '1') {
       if (window.innerWidth > 700) {
         col.style.display = '';
-        col.style.flex = '1 1 0';
-        document.getElementById('liveResizer4').style.display = '';
       } else {
         document.getElementById('liveTabBroadcast').style.display = '';
       }
     }
+    rebalanceCols();
   };
 </script>
 
